@@ -1,0 +1,2515 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MicroMove — 微運動冒險 (AI驗證版)</title>
+<meta name="description" content="透過遊戲化微運動降低運動門檻，每天1-5分鐘，輕鬆建立健康習慣！">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{
+  font-family:'Noto Sans TC',system-ui,sans-serif;
+  background:var(--bg);color:var(--t);
+  min-height:100vh;max-width:430px;margin:0 auto;
+  overflow-x:hidden;position:relative;
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input{font-family:inherit}
+a{text-decoration:none;color:inherit}
+img{display:block;max-width:100%}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--p-l);border-radius:2px}
+
+:root{
+  --p:#8B5CF6;--p-l:#A78BFA;--p-d:#7C3AED;--p-xl:#F5F3FF;
+  --s:#FBBF24;--s-l:#FDE68A;
+  --g:#34D399;--r:#F87171;
+  --bg:#FAFAFA;--c1:#FFFFFF;--c2:#F3F4F6;--c3:#E5E7EB;
+  --bd:rgba(0,0,0,0.06);
+  --t:#1F2937;--tm:#6B7280;--td:#9CA3AF;
+  --sh-p:0 8px 24px rgba(139,92,246,0.25);
+  --sh-s:0 8px 24px rgba(251,191,36,0.25);
+  --sh-g:0 8px 24px rgba(52,211,153,0.25);
+  --sh-c:0 12px 32px rgba(0,0,0,0.04);
+}
+
+#app{min-height:100vh;padding-bottom:88px}
+.page{display:none}
+.page.active{display:block;animation:fadeUp .3s ease}
+
+#bnav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:430px;
+  background:rgba(255,255,255,.9);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-top:1px solid var(--bd);
+  display:flex; justify-content:space-around; align-items:center;
+  padding:8px 0 max(12px, env(safe-area-inset-bottom));
+  z-index:100;
+  box-shadow:0 -4px 24px rgba(0,0,0,0.03);
+}
+.nbtn{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:8px 12px;border-radius:14px;
+  color:var(--td);font-size:10px;font-weight:600;
+  transition:all .2s cubic-bezier(.34,1.56,.64,1);
+}
+.nbtn .ni{font-size:22px;transition:transform .25s}
+.nbtn.on{color:var(--p-d)}
+.nbtn.on .ni{transform:scale(1.18);filter:drop-shadow(0 4px 8px rgba(139,92,246,.3))}
+
+.card{background:var(--c1);border:1px solid var(--c1);border-radius:20px;padding:16px;box-shadow:var(--sh-c)}
+.card2{background:var(--c1);border:1px solid var(--bd);border-radius:16px;padding:14px;box-shadow:0 4px 12px rgba(0,0,0,0.02)}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px 24px;border-radius:14px;
+  font-size:15px;font-weight:700;
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:all .2s cubic-bezier(.34,1.56,.64,1);
+  font-family:'Noto Sans TC',sans-serif;
+  white-space:nowrap;
+}
+.btn::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(rgba(255,255,255,.2),transparent);
+  opacity:0;transition:opacity .2s;
+}
+.btn:hover::after{opacity:1}
+.btn:active{transform:scale(.95)!important}
+
+.btn-p{background:linear-gradient(135deg,var(--p),var(--p-l));color:#fff;box-shadow:var(--sh-p)}
+.btn-s{background:linear-gradient(135deg,var(--s),var(--s-l));color:#fff;box-shadow:var(--sh-s);text-shadow:0 1px 2px rgba(0,0,0,.1)}
+.btn-g{background:linear-gradient(135deg,#10B981,var(--g));color:#fff;box-shadow:var(--sh-g)}
+.btn-ol{background:transparent;color:var(--p-d);border:1.5px solid var(--p)}
+.btn-ol:hover{background:var(--p-xl)}
+.btn-gh{background:var(--c1);color:var(--t);border:1px solid var(--bd);box-shadow:0 2px 8px rgba(0,0,0,0.02)}
+.btn-gh:hover{background:var(--c2)}
+.btn-full{width:100%}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:10px}
+.btn-lg{padding:18px 32px;font-size:17px;border-radius:16px}
+.btn-ico{width:44px;height:44px;padding:0;border-radius:12px;font-size:20px;flex-shrink:0}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none}
+
+.chip{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:4px 10px;border-radius:100px;
+  font-size:11px;font-weight:700;white-space:nowrap;
+}
+.cp{background:var(--p-xl);color:var(--p-d);border:1px solid rgba(139,92,246,.2)}
+.cs{background:#FEF3C7;color:#D97706;border:1px solid rgba(251,191,36,.3)}
+.cg{background:#D1FAE5;color:#059669;border:1px solid rgba(52,211,153,.3)}
+.cb{background:#DBEAFE;color:#2563EB;border:1px solid rgba(59,130,246,.3)}
+.cr{background:#FEE2E2;color:#DC2626;border:1px solid rgba(239,68,68,.3)}
+
+.barw{background:var(--c3);border-radius:100px;overflow:hidden}
+.barf{
+  height:100%;border-radius:100px;
+  background:linear-gradient(90deg,var(--p),var(--p-l));
+  transition:width .9s cubic-bezier(.34,1.56,.64,1);
+  position:relative;overflow:hidden;
+}
+.barf::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);
+  animation:shimmer 2.2s infinite;transform:translateX(-100%);
+}
+
+.ftabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px}
+.ftabs::-webkit-scrollbar{display:none}
+.ftab{
+  padding:7px 16px;border-radius:100px;
+  font-size:13px;font-weight:600;
+  border:1.5px solid var(--c1);background:var(--c1);color:var(--tm);
+  white-space:nowrap;cursor:pointer;
+  transition:all .2s;
+  box-shadow:0 2px 8px rgba(0,0,0,0.02);
+}
+.ftab.on{background:var(--p);border-color:var(--p);color:#fff;box-shadow:var(--sh-p)}
+
+.inp{
+  width:100%;background:var(--c1);border:1px solid var(--bd);
+  border-radius:14px;padding:14px 16px;
+  font-size:15px;color:var(--t);
+  outline:none;transition:all .2s;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,0.01);
+}
+.inp:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--p-xl)}
+.inp::placeholder{color:var(--td)}
+
+.stit{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:12px;color:var(--t)}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:50px 20px 16px}
+.ph1{font-size:26px;font-weight:900;color:var(--t)}
+.divider{height:1px;background:var(--bd);margin:16px 0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hscroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:12px}
+.hscroll::-webkit-scrollbar{display:none}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bounceSolo{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes pop{0%{transform:scale(0) rotate(-8deg);opacity:0}60%{transform:scale(1.08) rotate(4deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes shimmer{to{transform:translateX(200%)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+@keyframes shakeBox{0%,100%{transform:rotate(0)}25%{transform:rotate(-15deg)}75%{transform:rotate(15deg)}}
+@keyframes scanLine { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+
+.hd-hdr{background:linear-gradient(180deg,var(--p-xl) 0%,var(--bg) 100%);padding:50px 20px 20px;}
+.hd-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.greet-sm{font-size:13px;color:var(--tm);font-weight:600}
+.greet-nm{font-size:22px;font-weight:900;color:var(--t)}
+.lv-badge{background:var(--p-xl);border:1px solid rgba(139,92,246,.3);border-radius:100px;padding:6px 14px;font-size:12px;font-weight:800;color:var(--p-d);cursor:pointer;transition:all .2s;}
+.lv-badge:hover{transform:scale(1.05);background:var(--p-l);color:#fff;}
+.exp-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--tm);margin-bottom:6px;font-weight:700}
+
+.statsrow{display:flex;gap:10px;padding:0 16px;margin:14px 0}
+.sbox{flex:1;background:var(--c1);border:1px solid var(--c1);border-radius:18px;padding:16px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:var(--sh-c);min-height:86px;}
+.sbox .sv{font-size:22px;font-weight:900;font-family:'Outfit',sans-serif;color:var(--s)}
+.sbox .sl{font-size:10px;color:var(--tm);font-weight:700;margin-top:2px}
+
+.water-widget{
+  margin:0 16px 16px; padding:16px;
+  background:linear-gradient(135deg,rgba(59,130,246,.1),rgba(6,182,212,.05));
+  border:1px solid rgba(59,130,246,.3);border-radius:20px;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  box-shadow:0 4px 16px rgba(59,130,246,.08);
+}
+
+.pet-sec{
+  margin:0 16px 14px;background:var(--c1);border-radius:24px;
+  padding:20px;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;box-shadow:var(--sh-c);
+}
+.daily-c{
+  margin:0 16px 14px;background:linear-gradient(135deg,#F5F3FF,#FFFBEB);
+  border:1px solid #FFFFFF;border-radius:22px;padding:18px;
+  position:relative;overflow:hidden;cursor:pointer;
+  box-shadow:0 12px 30px rgba(139,92,246,.08);
+}
+.daily-ttl{font-size:11px;font-weight:800;color:var(--s);letter-spacing:1px;margin-bottom:6px}
+.daily-nm{font-size:18px;font-weight:900;color:var(--t);margin-bottom:8px}
+.daily-meta{display:flex;gap:6px;flex-wrap:wrap}
+
+.pf-hero{
+  padding:50px 20px 24px;background:linear-gradient(180deg,var(--p-xl) 0%,var(--bg) 100%);
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+}
+.pf-av{width:82px;height:82px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--p-l));display:flex;align-items:center;justify-content:center;font-size:42px;margin-bottom:12px;box-shadow:0 0 0 4px rgba(139,92,246,.25),var(--sh-p)}
+.pf-nm{font-size:22px;font-weight:900;margin-bottom:4px;color:var(--t)}
+.pf-title{font-size:13px;color:var(--p-d);font-weight:700;cursor:pointer;padding:4px 12px;background:rgba(139,92,246,0.1);border-radius:12px;transition:all .2s;}
+.pf-title:hover{background:rgba(139,92,246,0.2);}
+.pf-stats{display:flex;gap:0;margin-top:20px;width:100%;background:var(--c1);border-radius:18px;padding:14px 0;box-shadow:var(--sh-c)}
+.pf-stat{flex:1;border-right:1px solid var(--bd)}
+.pf-stat:last-child{border-right:none}
+.psv{font-size:18px;font-weight:900;color:var(--s);font-family:'Outfit'}
+.psl{font-size:10px;color:var(--tm);font-weight:700;margin-top:2px}
+
+.qcard{
+  background:var(--c1);border:1px solid var(--c1);border-radius:18px;
+  padding:16px;margin-bottom:12px;cursor:pointer;
+  transition:all .2s;position:relative;overflow:hidden;
+  display:flex;gap:14px;align-items:flex-start;box-shadow:var(--sh-c);
+}
+.qcard::before{content:'';position:absolute;top:0;left:0;bottom:0;width:4px;border-radius:18px 0 0 18px;}
+.qcard.desk::before{background:linear-gradient(180deg,#60A5FA,#3B82F6)}
+.qcard.active-mode::before{background:linear-gradient(180deg,#FBBF24,#EF4444)}
+.qcard.done{opacity:.6;background:var(--c2)}
+.qnm{font-size:15px;font-weight:800;margin-bottom:4px;color:var(--t)}
+.qdesc{font-size:12px;color:var(--tm);margin-bottom:8px}
+.qmeta{display:flex;gap:6px;flex-wrap:wrap}
+
+.fav-btn{position:absolute; top:12px; right:12px; font-size:20px; color:var(--td); transition:color .2s;}
+.fav-btn.on{color:var(--s); filter:drop-shadow(0 2px 4px rgba(251,191,36,.4));}
+
+.store-item{
+  background:var(--c1); border:1px solid var(--bd); border-radius:16px; padding:14px;
+  display:flex; align-items:center; gap:12px; margin-bottom:10px;box-shadow:0 4px 12px rgba(0,0,0,0.02);
+}
+.gacha-box{font-size:80px; margin-bottom:20px; filter:drop-shadow(0 10px 20px rgba(139,92,246,.3));}
+.gacha-box.shaking{animation:shakeBox .4s ease-in-out infinite;}
+
+.dex-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.dex-item { background: var(--c2); border-radius: 16px; padding: 12px 8px; text-align: center; cursor: pointer; transition: transform .2s; }
+.dex-item:active { transform: scale(0.95); }
+.dex-item.locked { opacity: 0.6; filter: grayscale(1); }
+.dex-item.locked .dex-emo { filter: brightness(0); opacity: 0.3; }
+.dex-emo { font-size: 36px; margin-bottom: 8px; }
+.dex-nm { font-size: 12px; font-weight: 700; color: var(--t); }
+
+.qa-head{display:flex;align-items:center;gap:12px;padding:50px 20px 16px;}
+.timer-wrap{position:relative;width:220px;height:220px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+.timer-svg{transform:rotate(-90deg)}
+.t-track{fill:none;stroke:var(--c3);stroke-width:12}
+.t-fill{fill:none;stroke-width:12;stroke-linecap:round;transition:stroke-dashoffset 1s linear}
+.t-center{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.t-time{font-size:52px;font-weight:900;font-family:'Outfit',sans-serif;letter-spacing:-3px;color:var(--t);line-height:1;transition:color .3s;}
+
+.step-c{background:var(--c1);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;display:flex;gap:10px;margin-bottom:8px;box-shadow:0 2px 6px rgba(0,0,0,0.02)}
+.step-n{width:22px;height:22px;border-radius:50%;background:var(--p-xl);color:var(--p-d);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0}
+
+.rank-item{
+  background:var(--c1);border:1px solid var(--bd);border-radius:16px;
+  padding:12px 16px;display:flex;align-items:center;gap:14px;margin-bottom:10px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.02);
+}
+.rank-num{font-family:'Outfit';font-size:18px;font-weight:900;width:28px;text-align:center;color:var(--tm)}
+.rank-num.top1{color:#F59E0B;font-size:22px}
+.rank-num.top2{color:#94A3B8;font-size:20px}
+.rank-num.top3{color:#D97706;font-size:20px}
+
+.map-timeline { padding: 10px 0 20px; position: relative; }
+.map-timeline::before { content: ''; position: absolute; left: 24px; top: 0; bottom: 0; width: 2px; background: var(--c3); }
+.map-node { position: relative; padding-left: 54px; margin-bottom: 28px; transition: opacity .3s; }
+.map-node:last-child { margin-bottom: 0; }
+.map-node:not(.reached) { opacity: 0.6; }
+.map-dot { position: absolute; left: 14px; top: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--c3); border: 4px solid var(--c1); z-index: 1; transition: all .3s;}
+.map-node.reached .map-dot { background: var(--p); box-shadow: 0 0 0 4px var(--p-xl); }
+.map-node.current .map-dot { background: var(--s); box-shadow: 0 0 0 4px #FEF3C7; animation: pulse 2s infinite; }
+.map-lv { font-size: 16px; font-weight: 900; color: var(--t); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
+.map-exp { font-size: 12px; color: var(--tm); font-weight: 600; }
+.map-box { background: var(--c1); border: 1px solid var(--bd); border-radius: 12px; padding: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+.map-reward { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+.vid-card { position:relative; border-radius:16px; overflow:hidden; margin-bottom:12px; background:var(--t); color:#fff; display:flex; flex-direction:column; justify-content:flex-end; padding:16px; min-height:140px; box-shadow:0 4px 12px rgba(0,0,0,0.1); cursor:pointer; transition:transform .2s;}
+.vid-card:active { transform:scale(0.97); }
+.vid-bg { position:absolute; inset:0; background-size:cover; background-position:center; opacity:0.5; transition:opacity .3s; }
+.vid-card:hover .vid-bg { opacity: 0.6; }
+.vid-card::before { content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 60%, transparent 100%); z-index:1; }
+.vid-content { position:relative; z-index:2; }
+.vip-badge { position:absolute; top:12px; right:12px; background:#10B981; color:#fff; font-size:11px; font-weight:900; padding:4px 10px; border-radius:6px; letter-spacing:1px; z-index:2; box-shadow:0 2px 8px rgba(16,185,129,0.4); }
+.vid-title { font-size:16px; font-weight:900; margin-bottom:8px; line-height:1.3; text-shadow:0 2px 4px rgba(0,0,0,0.5); }
+.vid-meta { display:flex; gap:6px; }
+.vid-chip { background:rgba(255,255,255,0.2); backdrop-filter:blur(4px); padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; }
+.vip-hero { background:linear-gradient(135deg,#1F2937,#111827); border-radius:20px; padding:24px; color:#fff; text-align:center; position:relative; overflow:hidden; margin-bottom:20px; box-shadow:0 12px 32px rgba(0,0,0,0.15); }
+.vip-hero::after { content:'VIP'; position:absolute; right:-20px; bottom:-20px; font-size:100px; font-weight:900; font-family:'Outfit'; opacity:0.05; pointer-events:none; }
+
+.modal-bg{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(255,255,255,.7);backdrop-filter:blur(12px);
+  display:none;align-items:flex-end;justify-content:center;
+}
+.modal-bg.open{display:flex;animation:slideUp .35s cubic-bezier(.34,1.56,.64,1)}
+.modal-box{
+  background:var(--c1);border:1px solid var(--bd);
+  border-radius:32px 32px 0 0;padding:28px 24px 48px;
+  width:100%;max-width:430px;box-shadow:0 -12px 40px rgba(0,0,0,0.06);
+}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-ttl{font-size:18px;font-weight:900;color:var(--t)}
+
+.fullscreen-ov{
+  position:fixed;inset:0;z-index:900;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:40px;
+}
+.fullscreen-ov.show{display:flex;animation:fadeUp .4s ease}
+.ov-emo{font-size:88px;animation:pop .5s}
+.ov-ttl{font-size:30px;font-weight:900;margin-top:20px;color:var(--t);animation:pop .5s .2s both}
+
+#camera-ov {
+  position: fixed; inset: 0; z-index: 999; background: #000;
+  display: none; flex-direction: column; align-items: center; justify-content: space-between;
+  padding: 40px 20px 80px; color: #fff;
+}
+#camera-ov.show { display: flex; animation: slideUp .3s ease-out; }
+.cam-frame {
+  flex: 1; width: 100%; max-width: 340px; border: 2px dashed rgba(255,255,255,0.3);
+  border-radius: 24px; margin: 30px 0; position: relative;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  background: rgba(255,255,255,0.05);
+}
+.cam-corner { position: absolute; width: 30px; height: 30px; border: 4px solid #fff; }
+.cam-corner.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+.cam-corner.tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+.cam-corner.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+.cam-corner.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+
+.cam-frame::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: var(--p-l); box-shadow: 0 0 16px var(--p-l); display: none; z-index: 10;
+}
+.cam-frame.scanning::after { display: block; animation: scanLine 1.5s ease-in-out infinite alternate; }
+
+.cam-btn {
+  width: 76px; height: 76px; border-radius: 50%; border: 4px solid #fff;
+  background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center;
+  font-size: 32px; cursor: pointer; transition: all .2s;
+}
+.cam-btn:active { transform: scale(0.9); background: #fff; color: #000; }
+
+#toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-130px);
+  background:rgba(255,255,255,.95);backdrop-filter:blur(12px);
+  border:1px solid var(--bd);border-radius:100px;
+  padding:14px 24px;font-size:14px;font-weight:700;color:var(--t);
+  z-index:1000;transition:transform .4s;
+  white-space:nowrap;display:flex;align-items:center;gap:10px;
+  box-shadow:0 12px 32px rgba(0,0,0,0.08);max-width:90vw;
+}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#conf-cv{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:500}
+</style>
+</head>
+<body>
+
+<canvas id="conf-cv"></canvas>
+<div id="toast"><span id="t-ico">✨</span><span id="t-msg">通知</span></div>
+
+<!-- CAMERA OVERLAY -->
+<div id="camera-ov">
+  <button class="btn btn-gh btn-ico" style="align-self:flex-start;background:rgba(255,255,255,0.15);color:#fff;border:none" onclick="closeCamera()">✕</button>
+  <div style="text-align:center;margin-top:10px">
+    <div style="font-size:26px;font-weight:900" id="cam-ttl">📸 拍照驗證</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.7);margin-top:8px" id="cam-desc">請將畫面框住目標</div>
+  </div>
+  
+  <div class="cam-frame" id="cam-frame">
+    <div class="cam-corner tl"></div><div class="cam-corner tr"></div>
+    <div class="cam-corner bl"></div><div class="cam-corner br"></div>
+    <div style="font-size:80px;opacity:0.3" id="cam-icon">💧</div>
+    <div id="cam-scan-txt" style="position:absolute;bottom:30px;font-size:15px;font-weight:800;color:var(--p-l);background:rgba(0,0,0,0.6);padding:6px 16px;border-radius:100px;display:none;z-index:20;">⏳ AI 視覺掃描中...</div>
+  </div>
+  
+  <div class="cam-btn" id="cam-btn" onclick="takePicture()">📷</div>
+</div>
+
+<!-- GACHA OVERLAY -->
+<div class="fullscreen-ov" id="gacha-ov">
+  <div class="gacha-box" id="gacha-box-emo">🎁</div>
+  <div class="ov-ttl" id="gacha-ttl" style="display:none">解鎖新夥伴！</div>
+  <div style="font-size:18px;color:var(--s);font-weight:700;margin-top:8px;display:none;animation:pop .5s .3s both" id="gacha-nm"></div>
+  <button class="btn btn-p btn-lg" style="margin-top:32px;display:none;animation:pop .5s .5s both" id="gacha-btn" onclick="closeGacha()">太棒了！</button>
+</div>
+
+<!-- LEVEL UP OVERLAY -->
+<div class="fullscreen-ov" id="lu-ov">
+  <div style="position:absolute;inset:0;background:conic-gradient(from 0deg,transparent 0deg,rgba(139,92,246,.08) 60deg,transparent 120deg);animation:spin 6s linear infinite;pointer-events:none"></div>
+  <div style="font-size:48px;position:relative;animation:pop .4s">🎊</div>
+  <div style="font-size:100px;font-weight:900;font-family:'Outfit';background:linear-gradient(135deg,var(--p),var(--s));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;position:relative;animation:pop .5s .2s both" id="lu-lv">10</div>
+  <div class="ov-ttl">升級！<span id="lu-ttl-txt"></span></div>
+  <button class="btn btn-s btn-lg" style="margin-top:36px;position:relative;animation:pop .5s .6s both" onclick="closeLU()">繼續衝 🔥</button>
+</div>
+
+<!-- COMPLETE OVERLAY -->
+<div class="fullscreen-ov" id="co-ov">
+  <div class="ov-emo" id="co-emo">🎉</div>
+  <div class="ov-ttl">任務完成！</div>
+  <div style="font-size:24px;color:var(--p-d);font-weight:900;font-family:'Outfit';margin-top:10px;animation:pop .5s .4s both" id="co-exp"></div>
+  <div style="font-size:20px;color:var(--s);font-weight:900;font-family:'Outfit';margin-top:4px;animation:pop .5s .5s both" id="co-coin"></div>
+  <div style="font-size:15px;color:var(--tm);font-weight:600;margin-top:10px;animation:pop .5s .6s both" id="co-sub"></div>
+  
+  <div style="margin-top:20px;width:100%;max-width:280px;animation:pop .5s .7s both">
+    <button class="btn btn-s btn-full" id="co-gift-btn" style="background:linear-gradient(135deg,#F59E0B,#FBBF24);color:#fff;box-shadow:0 8px 24px rgba(245,158,11,0.3)" onclick="openQuestGiftBox()">🎁 開啟任務驚喜禮物盒！</button>
+  </div>
+
+  <div style="margin-top:12px;display:flex;flex-direction:column;gap:12px;width:100%;max-width:280px;animation:pop .5s .8s both">
+    <button class="btn btn-p btn-full btn-lg" onclick="closeCO()">繼續探索 🚀</button>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-bg" id="share-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-ttl">分享成就 🌟</div>
+      <button class="btn btn-gh btn-ico" onclick="closeShare()">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--tm);margin-bottom:12px;text-align:center;font-weight:600" id="share-tip">首次分享可獲得 50 W幣！💰</div>
+    <canvas id="share-cv" style="width:100%;border-radius:16px;display:block;margin-bottom:16px;box-shadow:0 4px 12px rgba(0,0,0,0.05)"></canvas>
+    <div class="g2" style="margin-bottom:10px">
+      <button class="btn btn-ol btn-full" onclick="doShare('dl')">💾 儲存圖片</button>
+      <button class="btn btn-p btn-full" onclick="doShare('link')">🔗 複製連結</button>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-gh btn-full btn-sm" onclick="doShare('line')">💬 LINE</button>
+      <button class="btn btn-gh btn-full btn-sm" onclick="doShare('ig')">📸 IG</button>
+      <button class="btn btn-gh btn-full btn-sm" onclick="doShare('fb')">👍 FB</button>
+    </div>
+  </div>
+</div>
+
+<!-- PET EXPEDITION MODAL -->
+<div class="modal-bg" id="expedition-modal">
+  <div class="modal-box" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-head">
+      <div class="modal-ttl">🗺️ 寵物派遣尋寶</div>
+      <button class="btn btn-gh btn-ico" onclick="closeExpedition()">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--tm);margin-bottom:16px;font-weight:600">派沒在運動的夥伴出去探險，帶回寶藏與珍貴道具！</div>
+    <div id="expedition-content"></div>
+  </div>
+</div>
+
+<!-- GIFT BOX POPUP MODAL -->
+<div class="modal-bg" id="gift-modal">
+  <div class="modal-box" style="text-align:center;padding-bottom:32px">
+    <div style="font-size:64px;margin-bottom:12px;animation:pop 0.5s cubic-bezier(.34,1.56,.64,1)" id="gift-icon">🎁</div>
+    <div style="font-size:20px;font-weight:900;color:var(--t);margin-bottom:6px" id="gift-title">獲得獎勵！</div>
+    <div style="font-size:14px;color:var(--tm);font-weight:600;margin-bottom:20px" id="gift-desc">拆開禮盒獲得珍貴道具</div>
+    <button class="btn btn-p btn-full btn-lg" onclick="closeGiftModal()">收下好禮 🌟</button>
+  </div>
+</div>
+
+<!-- RANKING MODAL -->
+<div class="modal-bg" id="rank-modal">
+  <div class="modal-box" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-head">
+      <div class="modal-ttl">🏆 全球戰友排位榜</div>
+      <button class="btn btn-gh btn-ico" onclick="closeRank()">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--tm);margin-bottom:16px;text-align:center;font-weight:600">依據本週累積 EXP 進行排名</div>
+    <div id="rank-list-content"></div>
+  </div>
+</div>
+
+<!-- LEVEL MAP MODAL -->
+<div class="modal-bg" id="map-modal">
+  <div class="modal-box" style="max-height:85vh;overflow-y:auto;padding-bottom:24px;">
+    <div class="modal-head" style="position:sticky;top:0;background:var(--c1);z-index:10;padding-top:8px;margin-bottom:0;padding-bottom:12px;">
+      <div class="modal-ttl">🗺️ 冒險升級地圖</div>
+      <button class="btn btn-gh btn-ico" onclick="closeMap()">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--tm);margin-bottom:16px;font-weight:600">完成任務累積 EXP，解鎖更棒的獎勵！</div>
+    <div id="map-list-content"></div>
+  </div>
+</div>
+
+<!-- VIDEO RECOMMENDATION MODAL -->
+<div class="modal-bg" id="vid-rec-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-ttl">🎬 專屬進階推薦</div>
+      <button class="btn btn-gh btn-ico" onclick="closeVidRec()">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--tm);margin-bottom:16px;font-weight:600" id="vid-rec-desc">剛剛的微運動做得很棒！想要更進一步嗎？</div>
+    <div id="vid-rec-content"></div>
+    <button class="btn btn-gh btn-full" style="margin-top:12px" onclick="closeVidRec()">下次再說</button>
+  </div>
+</div>
+
+<!-- VIP UPSELL MODAL -->
+<div class="modal-bg" id="vip-modal">
+  <div class="modal-box" style="padding-bottom:24px">
+    <button class="btn btn-gh btn-ico" style="position:absolute;top:16px;right:16px;z-index:10" onclick="closeVIP()">✕</button>
+    <div class="vip-hero" style="margin-top:12px">
+      <div style="font-size:48px;margin-bottom:12px;animation:pop 0.5s ease">👑</div>
+      <div style="font-size:22px;font-weight:900;margin-bottom:8px">升級 Welltivity VIP</div>
+      <div style="font-size:14px;color:var(--td);line-height:1.5">看來你很喜歡這個系列的課程！<br>直接升級 VIP，解鎖全站所有專業影音課程！</div>
+    </div>
+    <div class="step-c" style="background:var(--c2)"><div class="step-n">✨</div><div style="font-size:14px;font-weight:700;color:var(--t)">萊美 LES MILLS、皮拉提斯全解鎖</div></div>
+    <div class="step-c" style="background:var(--c2)"><div class="step-n">✨</div><div style="font-size:14px;font-weight:700;color:var(--t)">免廣告、高畫質中文字幕</div></div>
+    <div style="margin-top:24px">
+      <button class="btn btn-p btn-full btn-lg" style="background:linear-gradient(135deg,#10B981,#059669);box-shadow:0 8px 24px rgba(16,185,129,0.3)" onclick="buyVIP()">💎 支付 100 W幣 成為 VIP</button>
+    </div>
+  </div>
+</div>
+
+<!-- BAG MODAL -->
+<div class="modal-bg" id="bag-modal">
+  <div class="modal-box" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-head">
+      <div class="modal-ttl">🎒 我的道具背包</div>
+      <button class="btn btn-gh btn-ico" onclick="closeBag()">✕</button>
+    </div>
+    <div id="bag-list-content"></div>
+  </div>
+</div>
+
+<!-- DEX MODAL (圖鑑列表) -->
+<div class="modal-bg" id="dex-modal">
+  <div class="modal-box" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-head">
+      <div class="modal-ttl" id="dex-modal-ttl">📖 圖鑑</div>
+      <button class="btn btn-gh btn-ico" onclick="closeDex()">✕</button>
+    </div>
+    <div id="dex-content"></div>
+  </div>
+</div>
+
+<!-- DEX DETAIL MODAL (圖鑑詳細資訊) -->
+<div class="modal-bg" id="dex-detail-modal" style="z-index: 250;">
+  <div class="modal-box" style="text-align:center; padding-bottom:32px;">
+    <button class="btn btn-gh btn-ico" style="position:absolute;top:16px;right:16px" onclick="closeDexDetail()">✕</button>
+    <div id="dex-detail-content"></div>
+  </div>
+</div>
+
+<div id="app"></div>
+
+<nav id="bnav" style="display:none">
+  <button class="nbtn on" id="nb-home" onclick="go('home')"><span class="ni">🏠</span><span>首頁</span></button>
+  <button class="nbtn" id="nb-quests" onclick="go('quests')"><span class="ni">⚡</span><span>任務</span></button>
+  <button class="nbtn" id="nb-team" onclick="go('team')"><span class="ni">👥</span><span>社交</span></button>
+  <button class="nbtn" id="nb-shop" onclick="go('shop')"><span class="ni">🏪</span><span>商城</span></button>
+  <button class="nbtn" id="nb-profile" onclick="go('profile')"><span class="ni">👤</span><span>我的</span></button>
+</nav>
+
+<script>
+'use strict';
+
+const CHARS=[
+  {id:0,name:'兔兔寶',emo:'🐰',type:'元氣型',col:'#F9A8D4',skill:'全能量提升：微運動獎勵 G幣 +10%',bonus:'gcoin_10'},
+  {id:1,name:'火狐俠',emo:'🦊',type:'速度型',col:'#FCA5A5',skill:'敏捷連擊：連續打卡加成提升為 30%',bonus:'combo_30'},
+  {id:2,name:'龍兒',  emo:'🐉',type:'力量型',col:'#86EFAC',skill:'龍之力量：起身類任務獲得雙倍 EXP',bonus:'active_exp'},
+  {id:3,name:'水豚君',emo:'🦫',type:'慵懶型',col:'#D97706',rarity:'R',skill:'悠閒時刻：辦公桌任務加成 +20% G幣',bonus:'desk_20'},
+  {id:4,name:'筋肉貓',emo:'😼',type:'猛男型',col:'#9333EA',rarity:'SR',skill:'肌肉撕裂：全運動 EXP 額外 +15 點',bonus:'flat_exp'},
+  {id:5,name:'彩虹獨角獸',emo:'🦄',type:'神話型',col:'#F472B6',rarity:'SSR',skill:'幸運光環：運動隨機掉落 W幣 與高階道具',bonus:'drop_wcoin'},
+];
+
+const ITEM_DEFS = {
+  'food': { name: '寵物罐頭', icon: '🥫', desc: '餵食寵物增加 30 飽食度，維持飽腹狀態，讓寵物幫你賺取額外 15% 任務獎勵！', usable: true },
+  'repair_pen': { name: '補簽修復筆', icon: '✏️', desc: '使用後可修復昨天中斷的簽到紀錄，重置連續打卡天數！是維持大獎進度的必備神器。', usable: true },
+  'double_exp': { name: '雙倍經驗卡', icon: '⚡', desc: '啟動後，接下來 3 次運動任務結算時，將獲得 200% EXP 經驗值暴擊！', usable: true },
+  'pet_feast': { name: '寵物豪華大餐', icon: '🍱', desc: '頂級美食，使用後直接將目前寵物飽食度補滿 100%，並獲得極佳心情！', usable: true },
+  'expedition_boots': { name: '尋寶加速鞋', icon: '👟', desc: '具有魔法的鞋子，使用後讓正在進行中的尋寶速度變為 1.5 倍（每趟尋寶限用一次）！', usable: true },
+  'clover': { name: '幸運四葉草', icon: '🍀', desc: '神秘的植物，據說帶在身上可以大幅提升下次任務拆禮物盒獲得稀有道具的機率！', usable: true }
+};
+
+const MOODS={
+  happy:['精神抖擻！好棒好棒～','你真的超棒！一起加油💕','今天也要一起努力哦！','感覺到你的活力了！'],
+  lazy:['...zzz 好久沒動了...','主人快來運動啦 QAQ','我想要變強強...','起來動動嘛！😴'],
+  excited:['哇哦！你也太厲害了！✨','繼續！繼續！！加油！！','我感受到你的能量！💥','今天的你超帥的！🔥'],
+};
+
+// Video Courses Data
+const VIDEOS = [
+  {id:'v1', title:'新辦公室運動_椅子伸展操 (中文字幕)', cat:'stretch', kcal:'30kcal', dur:'11分鐘', lv:'L1', cost:200, bg:'linear-gradient(45deg, #4F46E5, #3B82F6)'},
+  {id:'v2', title:'按摩放鬆伸展 (中文字幕)', cat:'stretch', kcal:'27kcal', dur:'10分鐘', lv:'L1', cost:200, bg:'linear-gradient(45deg, #059669, #34D399)'},
+  {id:'v3', title:'全身槓鈴鍛鍊 (中文字幕)', cat:'strength', kcal:'91kcal', dur:'24分鐘', lv:'L1', cost:250, bg:'linear-gradient(45deg, #4B5563, #9CA3AF)'},
+  {id:'v4', title:'高效燃脂槓鈴鍛鍊 CBS-58', cat:'strength', kcal:'132kcal', dur:'29分鐘', lv:'L2', cost:300, bg:'linear-gradient(45deg, #B45309, #F59E0B)'},
+  {id:'v5', title:'快燃拳擊有氧_終結卡路里', cat:'boxing', kcal:'180kcal', dur:'27分鐘', lv:'L3', cost:300, bg:'linear-gradient(45deg, #BE123C, #F43F5E)'},
+  {id:'v6', title:'高燃間歇運動 (中文字幕)', cat:'hiit', kcal:'193kcal', dur:'27分鐘', lv:'L2', cost:250, bg:'linear-gradient(45deg, #6D28D9, #8B5CF6)'},
+];
+
+const LEVELS=[
+  {lv:1,title:'初學者',exp:0, rwG:0, rwW:0, desc:'解鎖基礎任務'},
+  {lv:2,title:'微動者',exp:100, rwG:100, rwW:2, desc:''},
+  {lv:3,title:'活力新手',exp:250, rwG:150, rwW:5, desc:''},
+  {lv:4,title:'健康勇者',exp:450, rwG:200, rwW:0, desc:'解鎖 力量型夥伴'},
+  {lv:5,title:'運動達人',exp:700, rwG:0, rwW:10, desc:'自選 1 枚菁英勳章'},
+  {lv:6,title:'鋼鐵意志',exp:1000, rwG:300, rwW:15, desc:''},
+  {lv:7,title:'燃燒戰士',exp:1350, rwG:0, rwW:20, desc:'解鎖 夥伴高級特效'},
+  {lv:8,title:'微動菁英',exp:1750, rwG:500, rwW:25, desc:''},
+  {lv:9,title:'傳說鬥士',exp:2200, rwG:800, rwW:30, desc:''},
+  {lv:10,title:'微運動之神',exp:2700, rwG:1000, rwW:50, desc:'神秘實體兌換券'},
+];
+
+function lvInfo(totalExp){
+  let cur=LEVELS[0],nxt=LEVELS[1];
+  for(let i=0;i<LEVELS.length;i++){
+    if(totalExp>=LEVELS[i].exp){cur=LEVELS[i];nxt=LEVELS[i+1]||null}
+  }
+  const inLv=totalExp-cur.exp;
+  const need=nxt?nxt.exp-cur.exp:999;
+  const pct=nxt?Math.min(100,Math.round(inLv/need*100)):100;
+  return{lv:cur.lv,title:cur.title,inLv,need,pct,nxt};
+}
+
+const QUESTS=[
+  {id:'q1',type:'desk',name:'頸部伸展',emo:'🧘',desc:'緩解頸部僵硬，改善血液循環',dur:60,exp:15,vCat:'stretch',steps:['坐直，雙腳平放地面','頭慢慢向右傾，停留 15 秒','回正，再向左傾 15 秒','頭緩緩向前低，感受後頸伸展','重複 2 次，放鬆頸部']},
+  {id:'q2',type:'desk',name:'深呼吸練習',emo:'🌬️',desc:'舒緩壓力，提升專注力與氧氣攝入',dur:120,exp:20,steps:['坐直靠背，雙手放膝上','鼻子吸氣 4 秒，感受腹部脹起','屏住呼吸 4 秒','嘴巴緩緩吐氣 6 秒','重複 6 次完整呼吸循環']},
+  {id:'q3',type:'desk',name:'手腕活化',emo:'✋',desc:'預防滑鼠手，放鬆前臂肌肉',dur:60,exp:12,vCat:'stretch',steps:['雙手向前伸直平放','手腕順時針慢轉 10 圈','逆時針再轉 10 圈','雙手握拳後用力張開，重複 8 次','雙手十指交扣往外推伸，停 15 秒']},
+  {id:'q4',type:'desk',name:'肩膀放鬆',emo:'💆',desc:'消除肩頸緊繃，釋放壓力',dur:60,exp:15,vCat:'stretch',steps:['坐直，雙手自然下垂','雙肩同時向上聳起，靠近耳朵','停留 3 秒後瞬間放鬆落下','向後畫圈轉動肩膀 5 次','向前畫圈轉動肩膀 5 次']},
+  {id:'q5',type:'desk',name:'護眼遠眺',emo:'👀',desc:'緩解眼睛疲勞，預防近視',dur:60,exp:10,steps:['暫停手邊工作，離開螢幕','找一個距離至少 6 公尺遠的目標','專注盯著目標看 20 秒','快速眨眼 10 次','閉上眼睛休息 10 秒']},
+  
+  {id:'q7',type:'active',name:'深蹲挑戰',emo:'🏋️',desc:'強化下半身肌群，提升整體代謝',dur:120,exp:40,vCat:'strength',steps:['雙腳與肩同寬站立，腳尖微外八','背打直，視線朝前','慢慢蹲下直到大腿平行地面','起身時收緊臀部，完全站直','完成 20 下標準深蹲']},
+  {id:'q8',type:'active',name:'原地踏步',emo:'🚶',desc:'喚醒全身循環，輕鬆有氧熱身',dur:180,exp:30,steps:['站立，雙手自然放鬆','開始原地抬腿踏步','膝蓋盡量抬高至腰部位置','保持穩定呼吸與節奏','持續踏步 3 分鐘不中斷']},
+  {id:'q9',type:'active',name:'開合跳',emo:'🏃',desc:'快速提升心率，全身燃脂',dur:60,exp:35,vCat:'hiit',steps:['站直，雙腳併攏，雙手自然下垂','跳起時雙腳向外張開，雙手舉過頭頂擊掌','再次跳起，回到起始姿勢','保持輕快的節奏','完成 30 下開合跳']},
+  {id:'q10',type:'active',name:'靠牆半蹲',emo:'🪑',desc:'強化大腿股四頭肌，保護膝關節',dur:60,exp:40,vCat:'strength',steps:['背部平貼牆壁站立','雙腳向前走約一步距離','慢慢下蹲，直到大腿與地面平行','膝蓋不超過腳尖，背部緊貼牆面','保持這個姿勢撐住 60 秒']},
+  {id:'q12',type:'active',name:'平板撐核心',emo:'🔥',desc:'終極核心訓練，全身發力抗阻',dur:60,exp:50,vCat:'strength',steps:['俯臥，前臂撐地（肘在肩正下方）','腳尖點地，抬起全身','從頭到腳維持完美一直線','腹部核心收緊，不要塌腰','保持姿勢撐住 60 秒！加油！']},
+  
+  {id:'q13',type:'active',name:'基礎直拳連擊',emo:'🥊',desc:'釋放壓力，體驗基礎拳擊節奏',dur:60,exp:45,vCat:'boxing',steps:['雙腳微彎，雙手護住臉頰','左手向前快速擊出並收回','右手向前擊出，身體微轉','保持呼吸，不要憋氣','持續左右交替出拳 60 秒']},
+  {id:'q14',type:'active',name:'爆發高抬腿',emo:'💦',desc:'快速提升心率，HIIT前置訓練',dur:60,exp:50,vCat:'hiit',steps:['站直，雙手放在腰際','右膝快速抬高碰觸右手','左膝快速抬高碰觸左手','像跑步一樣加快節奏','全力以赴維持 60 秒']},
+  {id:'q15',type:'active',name:'毛巾肌力抗阻',emo:'🏋️',desc:'利用毛巾進行全身肌力喚醒',dur:90,exp:45,vCat:'strength',steps:['拿一條毛巾，雙手拉直','雙手高舉過頭，用力向外扯','保持向外拉力，慢慢將毛巾降至胸前','再慢慢推回頭頂','重複動作，感受背部與手臂發力']},
+  {id:'q16',type:'active',name:'全身深層拉伸',emo:'🧘‍♀️',desc:'運動後必備，恢復肌肉彈性',dur:120,exp:35,vCat:'stretch',steps:['雙腳打開與肩同寬','雙手十指交扣，掌心向上推','身體向右側彎，停留 15 秒','身體向左側彎，停留 15 秒','雙手在背後交扣，挺胸停留 30 秒']}
+];
+
+const BDEFS=[
+  {id:'first',nm:'第一步',emo:'👣',desc:'完成第一個任務',chk:s=>s.done>=1},
+  {id:'s3',nm:'3天不斷',emo:'🔥',desc:'連續3天',chk:s=>s.streak>=3},
+  {id:'s7',nm:'一週王者',emo:'📅',desc:'連續7天',chk:s=>s.streak>=7},
+  {id:'act10',nm:'燃燒吧！',emo:'🔥',desc:'10個起身任務',chk:s=>s.actDone>=10},
+  {id:'lv5',nm:'菁英稱號',emo:'🌟',desc:'達到5級',chk:s=>s.lv>=5},
+  {id:'team',nm:'隊伍夥伴',emo:'🤝',desc:'加入一支隊伍',chk:s=>s.hasTeam},
+  {id:'water8',nm:'水分大師',emo:'💧',desc:'單日喝滿 8 杯水',chk:s=>s.water>=8},
+  {id:'friend1',nm:'交個朋友',emo:'👋',desc:'加入第一位好友',chk:s=>(s.friends||[]).length>=1},
+  {id:'friend3',nm:'好友達人',emo:'🫂',desc:'加入 3 位好友',chk:s=>(s.friends||[]).length>=3},
+  {id:'poke5',nm:'戳戳王',emo:'👉',desc:'累積戳好友 5 次',chk:s=>(s.pokeCount||0)>=5},
+  {id:'exp3',nm:'尋寶家',emo:'🗺️',desc:'完成 3 次寵物尋寶',chk:s=>(s.expDone||0)>=3},
+  {id:'allpets',nm:'收藏家',emo:'🏆',desc:'收集全部夥伴',chk:s=>CHARS.every(c=>s.unlockedChars.includes(c.id))},
+  {id:'share',nm:'社群新星',emo:'📣',desc:'首次分享成就卡',chk:s=>s.shared},
+  {id:'q50',nm:'微動百戰',emo:'💯',desc:'累積完成 50 個任務',chk:s=>s.done>=50},
+];
+
+// Lv5 自選菁英勳章（五選一）
+const ELITE=[
+  {id:'e_fire',nm:'烈焰菁英',emo:'🔥',desc:'燃燒熱情，永不熄滅的運動魂'},
+  {id:'e_bolt',nm:'閃電菁英',emo:'⚡',desc:'速度與爆發力的象徵'},
+  {id:'e_leaf',nm:'森林菁英',emo:'🌿',desc:'穩定持續，讓健康自然生長'},
+  {id:'e_wave',nm:'海浪菁英',emo:'🌊',desc:'柔韌如水，伸展自如'},
+  {id:'e_star',nm:'星辰菁英',emo:'🌟',desc:'閃耀全場的微運動明星'},
+];
+
+// 示範用好友資料庫（原型沒有後端，用固定代碼模擬其他玩家）
+const FRIEND_DIR={
+  'MM-ERIC88':{name:'艾瑞克',emo:'🦁',lv:8},
+  'MM-MIMI23':{name:'小米',emo:'🐱',lv:7},
+  'MM-JAY456':{name:'阿傑',emo:'🦊',lv:5},
+  'MM-PANDA7':{name:'小綠',emo:'🐼',lv:4},
+  'MM-DOUDOU':{name:'豆豆',emo:'🐨',lv:3},
+};
+
+const DS={
+  v:11, done:0, onboarded:false, charId:0, name:'旅行者',
+  exp:0, lv:1, streak:0, lastDate:null,
+  todayDone:[], actDone:0, badges:[],
+  hasTeam:false, teamName:'', wexp:0, wStart:null,
+  gcoin:0, wcoin:0, favQs:[], unlockedChars:[0,1,2],
+  water:0, waterCD:0, shared:false, refUsed:false, teamClaimed:false,
+  teamSteps: 8500, claimedLvs: [1], 
+  inventory: [
+    { id: 'repair_pen', name: '補簽修復筆', icon: '✏️', desc: '可修復中斷的連續簽到紀錄，重置連續天數！', qty: 1 },
+    { id: 'double_exp', name: '雙倍經驗卡', icon: '⚡', desc: '使用後接下來 3 次任務獲得 2 倍 EXP！', qty: 1 }
+  ],
+  chkInStreak: 0, chkToday: false, lastChkDate: null, brokenChkStreak: 0, brokenDate: null,
+  unlockedVids: [], isVIP: false, qsSinceLastRec: 0,
+  food: 3, satiety: 80, expeditions: [], doubleExpBuff: 0,
+  myCode: null, friends: [], pokes: {}, pokeCount: 0, pokeInbox: [],
+  expCD: 0, expDone: 0, eliteMedal: null
+};
+
+let S={};
+
+function loadS(){
+  try{
+    const raw=localStorage.getItem('mm_s');
+    const saved=raw?JSON.parse(raw):{};
+    S={...DS,...saved};
+    if(!S.inventory) S.inventory = [
+      { id: 'repair_pen', name: '補簽修復筆', icon: '✏️', desc: '可修復中斷的連續簽到紀錄，重置連續天數！', qty: 1 }
+    ];
+    if(!S.unlockedVids) S.unlockedVids = [];
+    if(S.food === undefined) S.food = 3;
+    if(S.satiety === undefined) S.satiety = 80;
+    if(!S.expeditions) S.expeditions = [];
+    if(S.doubleExpBuff === undefined) S.doubleExpBuff = 0;
+    if(S.waterCD === undefined) S.waterCD = 0;
+    if(!S.myCode) S.myCode = genFriendCode();
+    if(!Array.isArray(S.friends)) S.friends = [];
+    if(!S.pokes) S.pokes = {};
+    if(!Array.isArray(S.pokeInbox)) S.pokeInbox = [];
+    if(S.expCD === undefined) S.expCD = 0;
+    if(S.expDone === undefined) S.expDone = 0;
+    if(S.eliteMedal === undefined) S.eliteMedal = null;
+    if(S.v!==DS.v){ S.v=DS.v; saveS(); }
+  }catch(e){S={...DS}; S.myCode = genFriendCode();}
+}
+function saveS(){localStorage.setItem('mm_s',JSON.stringify(S))}
+
+function genFriendCode(){
+  const cs='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let c='MM-'; for(let i=0;i<6;i++) c+=cs[Math.floor(Math.random()*cs.length)];
+  return c;
+}
+function fmtHMS(sec){
+  sec=Math.max(0,Math.ceil(sec));
+  const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),r=sec%60;
+  const pad=n=>(n<10?'0':'')+n;
+  return h>0?`${h}:${pad(m)}:${pad(r)}`:`${m}:${pad(r)}`;
+}
+
+function wkStart(){
+  const d=new Date();d.setHours(0,0,0,0);
+  d.setDate(d.getDate()-d.getDay());return d.toDateString();
+}
+
+function dailyReset(){
+  const today=new Date().toDateString();
+  const yest=new Date(Date.now()-86400000).toDateString();
+  
+  if(S.brokenDate && S.brokenDate !== today){ S.brokenChkStreak = 0; S.brokenDate = null; }
+  if(S.lastChkDate !== today){
+    if(S.lastChkDate !== yest && S.lastChkDate !== null){ 
+      if(S.chkInStreak > 0){ S.brokenChkStreak = S.chkInStreak; S.brokenDate = today; }
+      S.chkInStreak = 0; 
+    }
+    S.chkToday = false;
+  }
+
+  if(S.lastDate===today)return;
+  
+  if(S.lastDate===yest&&S.todayDone.length>0){S.streak+=1}
+  else if(S.lastDate&&S.lastDate!==yest){S.streak=0}
+  
+  S.todayDone=[]; S.lastDate=today;
+  S.water=0; S.waterCD=0;
+  
+  S.satiety = Math.max(0, (S.satiety || 80) - 25);
+
+  S.teamClaimedSteps = false; S.teamClaimedWater = false; S.teamClaimedQuests = false;
+  S.teamClaimedSquats = false; S.teamClaimedPlanks = false;
+  S.teamSteps = Math.floor(Math.random()*4000)+5000;
+  S.teamWater = Math.floor(Math.random()*15)+10; 
+  S.teamQuests = Math.floor(Math.random()*10)+5;
+  S.teamSquats = Math.floor(Math.random()*20)+15; 
+  S.teamPlanks = Math.floor(Math.random()*10)+10; 
+  
+  const ws=wkStart();
+  if(S.wStart!==ws){S.wStart=ws;S.wexp=0}
+  saveS();
+}
+
+let tTout=null;
+function toast(msg,ico){
+  const el=document.getElementById('toast');
+  if(el){
+    document.getElementById('t-msg').textContent=msg;
+    document.getElementById('t-ico').textContent=ico||'✨';
+    el.classList.add('show');
+    if(tTout)clearTimeout(tTout);
+    tTout=setTimeout(()=>el.classList.remove('show'),3200);
+  }
+}
+
+function fmtT(s){const m=Math.floor(s/60),r=s%60;return m===0?r+'秒':r===0?m+'分':m+'分'+r+'秒'}
+function fmtTimer(s){const m=Math.floor(s/60),r=s%60;return m+':'+(r<10?'0':'')+r}
+
+function addExp(amt){
+  let totalAmt = amt;
+  if(S.doubleExpBuff > 0) {
+    totalAmt *= 2;
+    S.doubleExpBuff -= 1;
+    toast('⚡ 雙倍經驗暴擊！獲得 ' + totalAmt + ' EXP', '🔥');
+  }
+
+  const before=lvInfo(S.exp);
+  S.exp+=totalAmt;S.wexp+=totalAmt;
+  const after=lvInfo(S.exp);
+  S.lv=after.lv;saveS();
+  if(after.lv>before.lv){
+    setTimeout(()=>showLU(after.lv,after.title),1800);
+  }
+}
+
+function completeQ(qid){
+  if(S.todayDone.includes(qid))return null;
+  const q=QUESTS.find(x=>x.id===qid);if(!q)return null;
+  const first=S.todayDone.length===0;
+  S.todayDone.push(qid);S.done+=1;
+  if(q.type==='active')S.actDone+=1;
+  if(first&&S.streak===0)S.streak=1;
+  S.lastDate=new Date().toDateString();
+
+  let baseG = q.exp;
+  const pet = CHARS.find(c => c.id === S.charId);
+  let petBonus = 0;
+
+  if (pet && pet.bonus === 'gcoin_10') petBonus += Math.floor(baseG * 0.1);
+  if (pet && pet.bonus === 'desk_20' && q.type === 'desk') petBonus += Math.floor(baseG * 0.2);
+
+  let streakMult = S.streak >= 3 ? (pet && pet.bonus === 'combo_30' ? 0.3 : 0.2) : 0;
+  let bonusG = Math.floor(baseG * streakMult);
+
+  let satietyBonus = (S.satiety >= 70) ? Math.floor(baseG * 0.15) : 0;
+
+  let totalG = baseG + bonusG + petBonus + satietyBonus;
+  S.gcoin += totalG;
+
+  S.food = (S.food || 0) + 1;
+  
+  addExp(q.exp); chkBadges(); saveS();
+  return { exp: q.exp, gcoin: totalG, bonus: bonusG, petBonus, satietyBonus };
+}
+
+function addItemToBag(itemId, qty = 1) {
+  if (!S.inventory) S.inventory = [];
+  const def = ITEM_DEFS[itemId];
+  const existing = S.inventory.find(i => i.id === itemId);
+  if (existing) {
+    existing.qty = (existing.qty || 1) + qty;
+  } else if (def) {
+    S.inventory.push({ id: itemId, name: def.name, icon: def.icon, desc: def.desc, qty: qty });
+  } else {
+    S.inventory.push({ id: itemId, name: itemId, icon: '🎁', desc: '神秘道具', qty: qty });
+  }
+  saveS();
+}
+
+function chkBadges(){
+  const nb=[];
+  BDEFS.forEach(b=>{
+    if(!S.badges.includes(b.id)&&b.chk(S)){
+      S.badges.push(b.id);nb.push(b);
+    }
+  });
+  nb.forEach(b=>setTimeout(()=>toast(`🏅 解鎖勳章：${b.nm}！`,b.emo),2200));
+}
+
+function toggleFav(qid, e){
+  e.stopPropagation();
+  if(S.favQs.includes(qid)){
+    S.favQs = S.favQs.filter(id=>id!==qid);
+    toast('已取消收藏','⭐');
+  }else{
+    S.favQs.push(qid);
+    toast('已加入常用任務','🌟');
+  }
+  saveS();
+  if(curPage==='quests') go('quests');
+}
+
+let camType = '';
+let camQuestRes = null;
+
+window.openCamera = function(type, res) {
+  camType = type;
+  camQuestRes = res;
+  const ov = document.getElementById('camera-ov');
+  const ttl = document.getElementById('cam-ttl');
+  const desc = document.getElementById('cam-desc');
+  const icon = document.getElementById('cam-icon');
+  
+  document.getElementById('cam-frame').classList.remove('scanning');
+  document.getElementById('cam-scan-txt').style.display = 'none';
+  document.getElementById('cam-btn').style.display = 'flex';
+
+  if (type === 'water') {
+    ttl.textContent = '📸 喝水驗證';
+    desc.textContent = '請拍下你喝水的杯子或水壺';
+    icon.textContent = '💧';
+  } else if (type === 'quest') {
+    ttl.textContent = '📸 動作驗證';
+    desc.textContent = '請拍下你完成運動的畫面或器材';
+    icon.textContent = '🏃';
+  }
+  ov.classList.add('show');
+}
+
+window.closeCamera = function() {
+  document.getElementById('camera-ov').classList.remove('show');
+  if(camType === 'quest') {
+    toast('已取消驗證，未獲得任務獎勵', '⚠️');
+    go('home');
+  }
+}
+
+window.takePicture = function() {
+  const frame = document.getElementById('cam-frame');
+  const btn = document.getElementById('cam-btn');
+  const scanTxt = document.getElementById('cam-scan-txt');
+  
+  btn.style.display = 'none';
+  frame.classList.add('scanning');
+  scanTxt.style.display = 'block';
+
+  // Mock AI delay
+  setTimeout(() => {
+    document.getElementById('camera-ov').classList.remove('show');
+    if (camType === 'water') {
+      actualDrinkWater();
+    } else if (camType === 'quest') {
+      const res = completeQ(curQid);
+      if (res) {
+        toast('AI 驗證成功！姿勢非常標準 🌟', '✅');
+        showCO(QUESTS.find(x => x.id === curQid), res);
+        fireConfetti();
+      } else {
+        go('home');
+      }
+    }
+  }, 2200);
+}
+
+// Global loop to update CD timers on UI without reloading
+setInterval(() => {
+  if (curPage !== 'home') return;
+  const btnCD = document.getElementById('btn-water-cd');
+  if (btnCD && S.waterCD) {
+    const now = Date.now();
+    if (now >= S.waterCD) {
+      S.waterCD = 0; saveS();
+      go('home'); // Refresh to show ready button
+    } else {
+      const left = Math.ceil((S.waterCD - now) / 1000);
+      const m = Math.floor(left / 60);
+      const s = left % 60;
+      btnCD.textContent = `${m}:${s<10?'0':''}${s}`;
+    }
+  }
+}, 1000);
+
+function petHTML(){
+  const ch=CHARS.find(c=>c.id===S.charId)||CHARS[0];
+  const e=S.lv>=7?3:S.lv>=4?2:1;
+  const m=S.todayDone.length===0?'lazy':S.todayDone.length>=3?'excited':'happy';
+  const txt=MOODS[m][Math.floor(Math.random()*MOODS[m].length)];
+  const sz={1:'78px',2:'98px',3:'118px'}[e];
+
+  const sat = S.satiety || 0;
+  const satCls = sat >= 70 ? '#10B981' : sat >= 30 ? '#F59E0B' : '#EF4444';
+
+  return`
+  <div style="position:relative;display:inline-block;text-align:center">
+    <span style="font-size:${sz};display:block;animation:bounceSolo 2s ease-in-out infinite;filter:drop-shadow(0 8px 22px ${ch.col||'#A78BFA'}50)">${ch.emo}</span>
+  </div>
+  <div style="font-size:14px;font-weight:800;color:var(--t);margin-top:8px;display:flex;align-items:center;gap:6px">
+    <span>${ch.name}${e===3?' 💫':e===2?' ✨':''}</span>
+    <span class="chip cp" style="font-size:10px;padding:2px 8px">${ch.type}</span>
+  </div>
+  
+  <div style="width:100%;max-width:260px;margin-top:10px;background:var(--c2);border-radius:12px;padding:10px">
+    <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:4px">
+      <span style="color:var(--tm)">🍖 飽食度 (${sat}/100)</span>
+      <span style="color:${satCls}">${sat >= 70 ? '元氣滿滿 (+15%獎勵)' : sat >= 30 ? '正常狀態' : '肚子餓了 🥺'}</span>
+    </div>
+    <div class="barw" style="height:6px"><div class="barf" style="width:${sat}%;background:${satCls}"></div></div>
+    
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+      <div style="font-size:11px;color:var(--tm);font-weight:600">罐頭庫存: <b style="color:var(--p-d)">${S.food || 0}</b> 🥫</div>
+      <button class="btn btn-s btn-sm" style="padding:4px 12px;font-size:11px" onclick="feedPet()">餵食 🥫</button>
+    </div>
+  </div>
+
+  <div style="margin-top:8px;font-size:11px;color:var(--p-d);background:var(--p-xl);border:1px solid rgba(139,92,246,0.2);padding:6px 12px;border-radius:10px;font-weight:700">
+    ⚡ 專屬天賦：${ch.skill}
+  </div>
+
+  <div style="font-size:12px;color:var(--tm);margin-top:8px;text-align:center">${txt}</div>
+  
+  <button class="btn btn-ol btn-sm btn-full" style="margin-top:12px" onclick="openExpedition()">🗺️ 派遣其他夥伴去尋寶 ➔</button>`;
+}
+
+window.feedPet = function() {
+  if (!S.food || S.food <= 0) {
+    toast('罐頭不足！完成任務或尋寶可獲得罐頭！', '🥫');
+    return;
+  }
+  if (S.satiety >= 100) {
+    toast('寵物已經飽到吃不下了！', '😋');
+    return;
+  }
+  S.food -= 1;
+  S.satiety = Math.min(100, S.satiety + 30);
+  saveS();
+  toast('嚼嚼嚼... 飽食度 +30！', '🥫');
+  if (curPage === 'home') go('home');
+  else if (curPage === 'profile') go('profile');
+}
+
+function getWaterMsg(){
+  if(S.water===0) return "你再不喝水，你的腎就要罷工了...🥀";
+  if(S.water<3) return "沙漠都比你水潤，快去喝水！🐪";
+  if(S.water<6) return "有點進步，但還不夠水嫩喔🥛";
+  return "水嫩嫩的，你今天超棒！✨";
+}
+
+function getWaterBtnHtml() {
+  const now = Date.now();
+  if (S.waterCD && S.waterCD > now) {
+    return `<button class="btn" style="background:var(--c3);color:var(--tm);width:64px;height:48px;border-radius:14px;font-size:14px;padding:0;font-weight:800;cursor:not-allowed" id="btn-water-cd">--:--</button>`;
+  } else {
+    return `<button class="btn" style="background:#3B82F6;color:#fff;width:48px;height:48px;border-radius:14px;font-size:24px;padding:0;box-shadow:0 4px 12px rgba(59,130,246,.3)" onclick="openCamera('water')">+</button>`;
+  }
+}
+
+window.actualDrinkWater = function() {
+  S.water++; 
+  S.waterCD = Date.now() + 15 * 60 * 1000; // 15 mins cooldown
+  saveS();
+  chkBadges();
+  toast('AI 驗證成功！咕嚕咕嚕... 💧', '🥛');
+  go('home');
+}
+
+window.doCheckIn = function(){
+  if(S.chkToday) return;
+  const rewards = [1, 2, 3, 4, 5, 6, 10];
+  const cycleDay = S.chkInStreak % 7;
+  const reward = rewards[cycleDay];
+
+  S.gcoin += reward;
+  S.chkInStreak += 1;
+  S.chkToday = true;
+  S.lastChkDate = new Date().toDateString();
+  saveS();
+
+  toast(`簽到成功！獲得 ${reward} G幣 🪙`, '📅');
+  fireConfetti();
+  go('home');
+}
+
+window.useRepairPen = function() {
+  const item = S.inventory ? S.inventory.find(i => i.id === 'repair_pen') : null;
+  if (!item || item.qty <= 0) {
+    toast('你沒有補簽修復筆！可至商城或拆禮物盒獲得。', '✏️');
+    return;
+  }
+
+  if (!S.brokenChkStreak || S.brokenChkStreak <= 0) {
+    toast('連續簽到沒有中斷，不需要使用修復筆！', '✏️');
+    return;
+  }
+
+  item.qty -= 1;
+  if (item.qty <= 0) S.inventory = S.inventory.filter(i => i.id !== 'repair_pen');
+
+  const restored = S.brokenChkStreak;
+  S.chkInStreak = restored + (S.chkInStreak || 0);
+  if (!S.chkToday) S.lastChkDate = new Date(Date.now()-86400000).toDateString();
+  S.brokenChkStreak = 0; S.brokenDate = null;
+  saveS();
+
+  toast(`成功使用修復筆！恢復 ${restored} 天的連續簽到紀錄 ✏️🔥`, '🎉');
+  fireConfetti();
+  go('home');
+}
+
+function renderCheckInWidget() {
+  const rewards = [1, 2, 3, 4, 5, 6, 10];
+  let completedDaysInCycle = S.chkToday ? ((S.chkInStreak - 1) % 7) + 1 : S.chkInStreak % 7;
+
+  let itemsHtml = '';
+  for (let i = 0; i < rewards.length; i++) {
+    let rw = rewards[i];
+    let state = '';
+    if (i < completedDaysInCycle) state = 'done';
+    else if (i === completedDaysInCycle && !S.chkToday) state = 'ready';
+    else state = 'future';
+
+    let bg = state === 'done' ? 'var(--c2)' : state === 'ready' ? '#FFFBEB' : 'var(--c1)';
+    let bd = state === 'ready' ? '1.5px solid var(--s)' : '1px solid var(--bd)';
+    let o = state === 'future' ? 0.5 : 1;
+    let ico = state === 'done' ? '✅' : '🪙';
+    if (i === 6 && state !== 'done') ico = '🎁';
+
+    let glow = state === 'ready' ? 'box-shadow:0 0 0 3px rgba(251,191,36,0.2); transform:scale(1.05); z-index:1;' : '';
+    let color = i === 6 ? '#EF4444' : 'var(--s)';
+
+    itemsHtml += `
+      <div style="position:relative; flex:1; max-width:48px; background:${bg}; border:${bd}; border-radius:10px; padding:8px 2px; text-align:center; opacity:${o}; transition:all 0.3s; ${glow}">
+        <div style="font-size:11px; font-weight:800; color:${color}; margin-bottom:4px">+${rw}</div>
+        <div style="font-size:16px">${ico}</div>
+        <div style="font-size:10px; font-weight:700; color:var(--tm); margin-top:4px; transform:scale(0.9)">D${i + 1}</div>
+      </div>`;
+  }
+
+  const hasPen = S.inventory && S.inventory.some(i => i.id === 'repair_pen' && i.qty > 0);
+
+  return `
+  <div class="card" style="margin: 0 16px 14px; padding: 16px; background:linear-gradient(180deg,#FFFFFF,#F9FAFB);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div style="font-size:15px; font-weight:800; color:var(--t)">📅 7日連續簽到</div>
+      <div style="font-size:12px; color:var(--tm); font-weight:700">${S.chkToday ? '已連續 ' + S.chkInStreak + ' 天' : '等你來領獎'}</div>
+    </div>
+    <div style="display:flex; justify-content:space-between; gap:4px;">
+      ${itemsHtml}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn ${S.chkToday ? 'btn-gh' : 'btn-s'} btn-full btn-sm" style="flex:1" ${S.chkToday ? 'disabled' : ''} onclick="doCheckIn()">
+        ${S.chkToday ? '明天再來領取！' : '馬上簽到領取 G幣！'}
+      </button>
+      ${(S.brokenChkStreak > 0 && hasPen) ? `<button class="btn btn-ol btn-sm" onclick="useRepairPen()" title="使用修復筆救回 ${S.brokenChkStreak} 天連續紀錄">✏️ 補簽</button>` : ''}
+    </div>
+  </div>`;
+}
+
+let curPage='';
+let timerIv=null,timerSec=0,timerTotal=0,timerOn=false,curQid=null;
+const NAV_IDS={home:'nb-home',quests:'nb-quests',team:'nb-team',shop:'nb-shop',profile:'nb-profile'};
+
+function go(page,data){
+  if(timerIv){clearInterval(timerIv);timerIv=null;timerOn=false}
+  Object.values(NAV_IDS).forEach(id=>{
+    const el=document.getElementById(id);if(el)el.classList.remove('on');
+  });
+  if(NAV_IDS[page]){
+    const el=document.getElementById(NAV_IDS[page]);if(el)el.classList.add('on');
+  }
+  curPage=page;
+  const app=document.getElementById('app');
+  const renders={home:pgHome,quests:pgQuests,team:pgTeam,shop:pgShop,profile:pgProfile};
+
+  if(page==='qa'){
+    curQid=data;
+    app.innerHTML=`<div class="page active">${pgQA(data)}</div>`;
+    initTimer(data);
+  }else if(renders[page]){
+    app.innerHTML=`<div class="page active">${renders[page]()}</div>`;
+  }
+  window.scrollTo(0,0);
+}
+
+function renderSplash(){
+  document.getElementById('app').innerHTML=`
+  <div class="page active" id="pgs" style="position:relative;min-height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:24px">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% -15%,rgba(139,92,246,.15) 0%,transparent 60%),var(--bg);pointer-events:none"></div>
+    <div style="position:relative;z-index:1;width:100%;max-width:320px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:24px;animation:pop .6s">
+        <span class="logo-ico" style="font-size:56px;display:block;animation:bounceSolo 2.5s ease-in-out infinite">🏃</span>
+        <span style="font-size:44px;font-weight:900;letter-spacing:-2px;background:linear-gradient(135deg,#8B5CF6,#FBBF24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:block;margin-top:4px;font-family:'Outfit',sans-serif;">MicroMove</span>
+        <div style="font-size:14px;color:var(--tm);margin-top:6px;font-weight:600">每天 1 分鐘，輕鬆拿 W幣 兌換健康好禮</div>
+      </div>
+      <div id="ss1" style="width:100%">
+        <div style="font-size:16px;font-weight:800;margin-bottom:16px;text-align:center;color:var(--t)">你叫什麼名字？</div>
+        <input class="inp" id="ninp" placeholder="輸入你的暱稱" maxlength="12" oninput="document.getElementById('nnxt').disabled=this.value.trim().length<1">
+        <button class="btn btn-p btn-full btn-lg" style="margin-top:20px" id="nnxt" disabled onclick="startGame()">出發冒險！🚀</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function startGame(){
+  S.name=document.getElementById('ninp').value.trim()||'旅行者';
+  S.onboarded=true; S.lastDate=new Date().toDateString();
+  if(S.streak===0)S.streak=1;
+  saveS(); document.getElementById('bnav').style.display='flex';
+  go('home'); toast(`歡迎加入 MicroMove！`,'🎉');
+}
+
+function pgHome(){
+  const lv=lvInfo(S.exp);
+  const daily=QUESTS.find(q=>q.type==='active'&&!S.todayDone.includes(q.id))||QUESTS[5];
+  return`
+  <div class="hd-hdr">
+    <div class="hd-top">
+      <div>
+        <div class="greet-sm">歡迎回來 👋</div>
+        <div class="greet-nm">${S.name}</div>
+      </div>
+      <div class="lv-badge" onclick="openMap()" title="點擊查看升級地圖">⚔️ Lv.${lv.lv} ${lv.title} ➔</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <div class="chip cs" style="font-size:13px;padding:6px 12px">🪙 ${S.gcoin} G幣</div>
+      <div class="chip cp" style="font-size:13px;padding:6px 12px">💰 ${S.wcoin} W幣</div>
+      <div class="chip cg" style="font-size:13px;padding:6px 12px">🥫 ${S.food || 0} 罐頭</div>
+    </div>
+    <div>
+      <div class="exp-lbl">
+        <span>⚡ ${S.exp} EXP ${S.doubleExpBuff > 0 ? `<b style="color:var(--p-d)">(雙倍暴擊剩 ${S.doubleExpBuff} 次)</b>` : ''}</span>
+        <span>${lv.pct}% → Lv.${lv.lv+1}</span>
+      </div>
+      <div class="barw" style="height:8px"><div class="barf" style="width:${lv.pct}%"></div></div>
+    </div>
+  </div>
+
+  <div class="statsrow">
+    <div class="sbox"><div class="sv">${S.streak}</div><div class="sl">連續天數</div></div>
+    <div class="sbox"><div class="sv">${S.wexp}</div><div class="sl">本週 EXP</div></div>
+    <div class="sbox"><div class="sv">${S.todayDone.length}</div><div class="sl">今日完成</div></div>
+  </div>
+
+  ${renderPokeBanner()}
+  ${renderCheckInWidget()}
+
+  <div class="water-widget">
+    <div>
+      <div style="font-size:14px;font-weight:800;color:#2563EB;margin-bottom:4px">💧 喝水打卡 (${S.water}/8 杯)</div>
+      <div style="font-size:12px;color:#3B82F6;line-height:1.4">${getWaterMsg()}</div>
+    </div>
+    ${getWaterBtnHtml()}
+  </div>
+
+  <div class="pet-sec">${petHTML()}</div>
+
+  <div class="daily-c" onclick="go('qa','${daily.id}')">
+    <div class="daily-ttl">⚡ 今日推薦</div>
+    <div class="daily-nm">${daily.emo} ${daily.name}</div>
+    <div class="daily-meta">
+      <span class="chip cp">⚡ +${daily.exp}</span>
+      <span class="chip cs">🪙 +${daily.exp} G幣</span>
+      <span class="chip cg">⏱ ${fmtT(daily.dur)}</span>
+    </div>
+  </div>`;
+}
+
+function pgQuests(){
+  return`
+  <div class="ph">
+    <div class="ph1">⚡ 任務清單</div>
+    <div style="font-size:13px;color:var(--tm);font-weight:600">${S.todayDone.length} 已完成</div>
+  </div>
+  <div style="padding:0 16px 16px">
+    <div class="ftabs" id="ftabs">
+      <button class="ftab on" onclick="fltr('all',this)">全部</button>
+      <button class="ftab" onclick="fltr('fav',this)">🌟 收藏</button>
+      <button class="ftab" onclick="fltr('desk',this)">🪑 辦公桌</button>
+      <button class="ftab" onclick="fltr('active',this)">🚶 起身</button>
+    </div>
+    <div id="qlist">${qListHTML('all')}</div>
+  </div>`;
+}
+
+function qListHTML(f){
+  let qs=[...QUESTS];
+  if(f==='desk') qs=qs.filter(q=>q.type==='desk');
+  else if(f==='active') qs=qs.filter(q=>q.type==='active');
+  else if(f==='fav') qs=qs.filter(q=>S.favQs.includes(q.id));
+  
+  qs.sort((a,b)=>{
+    const aFav = S.favQs.includes(a.id)?1:0;
+    const bFav = S.favQs.includes(b.id)?1:0;
+    return bFav - aFav;
+  });
+
+  if(!qs.length)return`<div style="text-align:center;padding:40px 0;color:var(--td)"><div style="font-size:40px;margin-bottom:12px">🎉</div><div style="font-weight:700">這裡沒有任務哦！</div></div>`;
+  
+  return qs.map(q=>{
+    const done=S.todayDone.includes(q.id);
+    const isFav=S.favQs.includes(q.id);
+    return`
+    <div class="qcard ${q.type}${done?' done':''}" onclick="${done?'':` go('qa','${q.id}')`}">
+      <div style="font-size:36px;flex-shrink:0">${q.emo}</div>
+      <div style="flex:1">
+        <div class="qnm">${q.name}${done?' ✓':''}</div>
+        <div class="qdesc">${q.desc}</div>
+        <div class="qmeta">
+          <span class="chip cp">⚡ +${q.exp}</span>
+          <span class="chip cs">🪙 +${q.exp} G幣</span>
+          <span class="chip cg">⏱ ${fmtT(q.dur)}</span>
+        </div>
+      </div>
+      <div class="fav-btn ${isFav?'on':''}" onclick="toggleFav('${q.id}', event)">★</div>
+    </div>`;
+  }).join('');
+}
+
+function fltr(f,el){
+  document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('qlist').innerHTML=qListHTML(f);
+}
+
+function pgQA(qid){
+  const q=QUESTS.find(x=>x.id===qid);if(!q)return'';
+  const C=2*Math.PI*96;
+  const isCombo = S.streak >= 3;
+  const done=S.todayDone.includes(qid);
+  return`
+  <div id="pg-qa">
+    <div class="qa-head">
+      <button class="btn btn-gh btn-ico" onclick="go('quests')">←</button>
+      <div>
+        <div style="font-size:11px;color:var(--tm);font-weight:600">${q.type==='desk'?'🪑 辦公桌級':'🚶 起身級'}</div>
+        <div style="font-size:18px;font-weight:900;color:var(--t)">${q.name}</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:0 20px 8px">
+      <div style="font-size:52px;animation:bounceSolo 2s infinite;margin-bottom:6px">${q.emo}</div>
+      <div style="font-size:13px;color:var(--tm)">${q.desc}</div>
+    </div>
+
+    <div class="timer-wrap">
+      <svg class="timer-svg" width="220" height="220" viewBox="0 0 220 220">
+        <defs><linearGradient id="tg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#8B5CF6"/><stop offset="100%" stop-color="#FBBF24"/></linearGradient></defs>
+        <circle class="t-track" cx="110" cy="110" r="96"/>
+        <circle class="t-fill" id="t-ring" cx="110" cy="110" r="96" stroke="url(#tg)" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${C.toFixed(2)}"/>
+      </svg>
+      <div class="t-center">
+        <div class="t-time" id="t-disp">${fmtTimer(q.dur)}</div>
+        <div style="font-size:13px;color:var(--tm);margin-top:4px" id="t-pct">0% 完成</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+      <span class="chip cp">⚡ +${q.exp} EXP</span>
+      <span class="chip cs">🪙 +${q.exp} G幣</span>
+      <span class="chip cg">🥫 +1 罐頭</span>
+    </div>
+    ${isCombo ? `<div style="text-align:center;font-size:12px;color:var(--s);font-weight:700;margin-bottom:16px;animation:pulse 1s infinite">🔥 連擊加成：結算額外獲得 G幣 加成！</div>` : '<div style="margin-bottom:16px"></div>'}
+
+    <div style="padding:0 20px;margin-bottom:24px" id="t-ctrl">
+      ${done?`
+      <div style="text-align:center;padding:20px;background:var(--c1);border:1px solid rgba(52,211,153,.3);border-radius:18px;box-shadow:0 4px 12px rgba(52,211,153,.1)">
+        <div style="font-size:40px;margin-bottom:8px">✅</div>
+        <div style="font-size:18px;font-weight:900;color:var(--g)">今日已完成！</div>
+        <div style="font-size:13px;color:var(--tm);margin-top:4px">明天繼續加油！💪</div>
+      </div>`:`
+      <button class="btn btn-p btn-full btn-lg" id="t-start" onclick="startT()">▶️ 開始任務</button>
+      <button class="btn btn-gh btn-full" style="display:none;margin-top:10px" id="t-pause" onclick="pauseT()">⏸ 暫停</button>
+      <div id="t-cheat-msg" style="display:none;text-align:center;font-size:12px;color:var(--r);margin-top:12px;font-weight:700">請堅持到計時結束，無法提早完成喔！⏳</div>`}
+    </div>
+
+    <div style="padding:0 20px 20px">
+      <div class="stit">📝 動作步驟</div>
+      ${q.steps.map((s,i)=>`<div class="step-c"><div class="step-n">${i+1}</div><div style="font-size:14px;color:var(--t)">${s}</div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function initTimer(qid){
+  const q=QUESTS.find(x=>x.id===qid);
+  if(!q)return;
+  timerTotal=q.dur;timerSec=q.dur;
+  updTimer();
+}
+
+window.startT = function(){
+  if(timerOn)return;
+  timerOn=true;
+  document.getElementById('t-start').style.display='none';
+  document.getElementById('t-pause').style.display='flex';
+  const cheatMsg = document.getElementById('t-cheat-msg');
+  if(cheatMsg) cheatMsg.style.display='block';
+  
+  timerIv=setInterval(()=>{
+    timerSec--;updTimer();
+    if(timerSec<=0){
+      clearInterval(timerIv);timerIv=null;timerOn=false;
+      if(cheatMsg) cheatMsg.style.display='none';
+      autoFinish();
+    }
+  },1000);
+}
+
+window.pauseT = function(){
+  clearInterval(timerIv);timerIv=null;timerOn=false;
+  const ts=document.getElementById('t-start');
+  const tp=document.getElementById('t-pause');
+  const msg=document.getElementById('t-cheat-msg');
+  if(ts){ts.style.display='flex';ts.innerHTML='▶️ 繼續任務'}
+  if(tp)tp.style.display='none';
+  if(msg)msg.style.display='none';
+}
+
+function updTimer(){
+  const disp=document.getElementById('t-disp');
+  const pct=document.getElementById('t-pct');
+  const ring=document.getElementById('t-ring');
+  if(!disp)return;
+  const elapsed=timerTotal-timerSec;
+  const prog=timerTotal>0?elapsed/timerTotal:0;
+  const C=2*Math.PI*96;
+  const offset=C*(1-prog);
+  disp.textContent=fmtTimer(timerSec);
+  if(pct)pct.textContent=Math.round(prog*100)+'% 完成';
+  if(ring)ring.style.strokeDashoffset=offset.toFixed(2);
+  
+  if(timerSec<=10&&timerSec>0){
+    disp.style.color='#EF4444';
+  } else {
+    disp.style.color='var(--t)';
+  }
+}
+
+function autoFinish(){
+  if(S.todayDone.includes(curQid)) { go('home'); return; }
+  openCamera('quest', null);
+}
+
+function renderVidCard(v) {
+  const isUnlocked = S.isVIP || (S.unlockedVids && S.unlockedVids.includes(v.id));
+  return `
+  <div class="vid-card" onclick="clickVideo('${v.id}')">
+    <div class="vid-bg" style="background:${v.bg}"></div>
+    ${!isUnlocked ? '<div class="vip-badge">VIP</div>' : '<div class="vip-badge" style="background:var(--p);box-shadow:0 2px 8px rgba(139,92,246,0.4)">已解鎖</div>'}
+    <div class="vid-content">
+      <div class="vid-title">${v.title}</div>
+      <div class="vid-meta">
+        <span class="vid-chip">${v.lv}</span>
+        <span class="vid-chip">⏱ ${v.dur}</span>
+        <span class="vid-chip">🔥 ${v.kcal}</span>
+      </div>
+      ${!isUnlocked ? `<div style="margin-top:12px;font-size:13px;font-weight:700;color:var(--s)">🪙 ${v.cost} G幣 兌換</div>` : ''}
+    </div>
+  </div>`;
+}
+
+window.clickVideo = function(vid) {
+  if(S.isVIP || S.unlockedVids.includes(vid)) {
+    toast('▶️ 開始播放影片...', '🎬');
+    if(curPage !== 'shop') {
+      closeVidRec(false); go('shop');
+    }
+    return;
+  }
+  
+  const v = VIDEOS.find(x=>x.id===vid);
+  const sameCatUnlocked = VIDEOS.filter(x => x.cat === v.cat && S.unlockedVids.includes(x.id)).length;
+  
+  if(sameCatUnlocked >= 1 && !S.isVIP) {
+    if(document.getElementById('vid-rec-modal').classList.contains('open')) closeVidRec(false);
+    document.getElementById('vip-modal').classList.add('open');
+    return;
+  }
+
+  if(confirm(`確定要花費 ${v.cost} G幣解鎖【${v.title}】嗎？`)) {
+    if(S.gcoin >= v.cost) {
+      S.gcoin -= v.cost; S.unlockedVids.push(vid); saveS();
+      toast('解鎖成功！快開始訓練吧！', '🔓');
+      if(curPage === 'shop') go('shop');
+      else { closeVidRec(false); go('shop'); }
+    } else {
+      toast('G幣不足！多做點任務賺取吧！', '⚠️');
+    }
+  }
+}
+
+window.closeVidRec = function(goHome = true) {
+  document.getElementById('vid-rec-modal').classList.remove('open');
+  if (goHome && curPage === 'qa') go('home');
+}
+window.closeVIP = function() {
+  document.getElementById('vip-modal').classList.remove('open');
+  if (curPage === 'qa') go('home');
+}
+
+window.buyVIP = function() {
+  if(S.wcoin >= 100) {
+    S.wcoin -= 100; S.isVIP = true; saveS();
+    closeVIP();
+    toast('恭喜成為 VIP！全站影片已為您解鎖！', '👑');
+    go('shop');
+    fireConfetti();
+  } else {
+    toast('W幣不足！需要 100 W幣', '⚠️');
+  }
+}
+
+function pgShop(){
+  return `
+  <div class="ph"><div class="ph1">🏪 Welltivity 商城</div></div>
+  <div style="padding:0 16px 16px">
+    <div class="card2" style="display:flex;justify-content:space-around;margin-bottom:20px;background:linear-gradient(135deg,#FFFBEB,#F5F3FF);border:1px solid #FFFFFF;box-shadow:0 8px 24px rgba(139,92,246,.08)">
+      <div style="text-align:center"><div style="font-size:12px;color:var(--tm);font-weight:700">我的 G幣</div><div style="font-size:22px;font-weight:900;color:var(--s);font-family:'Outfit'">${S.gcoin}</div></div>
+      <div style="width:1px;background:var(--bd)"></div>
+      <div style="text-align:center"><div style="font-size:12px;color:var(--tm);font-weight:700">我的 W幣</div><div style="font-size:22px;font-weight:900;color:var(--p-d);font-family:'Outfit'">${S.wcoin}</div></div>
+    </div>
+
+    <div class="stit">🔄 貨幣兌換</div>
+    <div class="store-item" style="background:var(--c1)">
+      <div style="font-size:32px">🪙</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:800;color:var(--t)">兌換 1 W幣</div>
+        <div style="font-size:12px;color:var(--tm)">花費 100 G幣兌換真實 W幣</div>
+      </div>
+      <button class="btn btn-p btn-sm" onclick="exchangeW()">兌換</button>
+    </div>
+    
+    <div class="stit" style="margin-top:24px;justify-content:space-between">
+      <span>🎬 專業影音課程</span>
+      ${S.isVIP ? '<span class="chip cp" style="font-size:12px;background:var(--s);color:#fff">👑 VIP身份</span>' : '<button class="btn btn-sm btn-ol" style="padding:4px 10px;font-size:12px" onclick="document.getElementById(\'vip-modal\').classList.add(\'open\')">升級 VIP</button>'}
+    </div>
+    <div style="margin-bottom:20px">
+      ${VIDEOS.map(v => renderVidCard(v)).join('')}
+    </div>
+
+    <div class="stit" style="margin-top:24px">🎁 吉祥物盲盒抽卡</div>
+    <div class="store-item" style="border:1.5px solid var(--p-l);background:#F5F3FF">
+      <div style="font-size:32px">✨</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:800;color:var(--t)">隨機夥伴盲盒</div>
+        <div style="font-size:12px;color:var(--tm)">花費 50 G幣 隨機解鎖新夥伴！</div>
+      </div>
+      <button class="btn btn-s btn-sm" onclick="rollGacha()">抽卡</button>
+    </div>
+
+    <div class="stit" style="margin-top:24px">🛒 實體健康商品 (測試)</div>
+    <div class="store-item">
+      <div style="font-size:32px">🥛</div>
+      <div style="flex:1"><div style="font-size:15px;font-weight:800;color:var(--t)">無糖高纖豆漿</div><div style="font-size:12px;color:var(--s);font-weight:700">20 W幣</div></div>
+      <button class="btn btn-gh btn-sm" onclick="buyItem(20,'無糖高纖豆漿','🥛')">兌換</button>
+    </div>
+    <div class="store-item">
+      <div style="font-size:32px">🍗</div>
+      <div style="flex:1"><div style="font-size:15px;font-weight:800;color:var(--t)">即食舒肥雞胸肉</div><div style="font-size:12px;color:var(--s);font-weight:700">45 W幣</div></div>
+      <button class="btn btn-gh btn-sm" onclick="buyItem(45,'即食舒肥雞胸肉','🍗')">兌換</button>
+    </div>
+    <div class="store-item">
+      <div style="font-size:32px">🍌</div>
+      <div style="flex:1"><div style="font-size:15px;font-weight:800;color:var(--t)">健康香蕉 (單根)</div><div style="font-size:12px;color:var(--s);font-weight:700">15 W幣</div></div>
+      <button class="btn btn-gh btn-sm" onclick="buyItem(15,'健康香蕉','🍌')">兌換</button>
+    </div>
+  </div>`;
+}
+
+window.exchangeW = function(){
+  if(S.gcoin>=100){ S.gcoin-=100; S.wcoin+=1; saveS(); toast('兌換 1 W幣成功！','💰'); go('shop'); }
+  else toast('G幣不足！需要 100 G幣','⚠️');
+}
+
+window.buyItem = function(cost, name, icon){
+  if(S.wcoin>=cost){ 
+    S.wcoin-=cost; 
+    addItemToBag(name, 1);
+    toast(`成功兌換 ${name}！已放入背包。`,'🎒'); 
+    go('shop'); 
+  }
+  else toast(`W幣不足！需要 ${cost} W幣`,'⚠️');
+}
+
+window.rollGacha = function(){
+  if(CHARS.every(c=>S.unlockedChars.includes(c.id))){ toast('所有夥伴都已收集完成！敬請期待新夥伴 ✨','🎉'); return; }
+  if(S.gcoin<50){ toast('G幣不足！需要 50 G幣','⚠️'); return; }
+  S.gcoin-=50; saveS(); go('shop');
+  
+  const ov = document.getElementById('gacha-ov');
+  const box = document.getElementById('gacha-box-emo');
+  const ttl = document.getElementById('gacha-ttl');
+  const nm = document.getElementById('gacha-nm');
+  const btn = document.getElementById('gacha-btn');
+  
+  box.textContent = '🎁'; box.className = 'gacha-box shaking';
+  ttl.style.display = 'none'; nm.style.display = 'none'; btn.style.display = 'none';
+  ov.classList.add('show');
+
+  setTimeout(() => {
+    box.className = 'gacha-box'; 
+    const locked = CHARS.filter(c=>!S.unlockedChars.includes(c.id));
+    if(locked.length===0){
+      box.textContent = '🎉'; ttl.textContent = '夥伴全齊了！'; nm.textContent = '已退還 50 G幣';
+      S.gcoin+=50;
+    } else {
+      const win = locked[Math.floor(Math.random()*locked.length)];
+      S.unlockedChars.push(win.id); S.charId = win.id; chkBadges();
+      box.textContent = win.emo; ttl.textContent = '解鎖新夥伴！'; nm.textContent = `${win.name} (${win.rarity||'N'}) 加入了！`;
+    }
+    saveS();
+    ttl.style.display = 'block'; nm.style.display = 'block'; btn.style.display = 'inline-block';
+    fireConfetti();
+  }, 1200);
+}
+
+window.closeGacha = function(){ document.getElementById('gacha-ov').classList.remove('show'); go('shop'); }
+
+function pgTeam(){ return pgTeamMain() + friendsSectionHTML(); }
+
+function friendActiveToday(code){
+  const key=code+new Date().toDateString();
+  let h=0; for(const ch of key) h=(h*31+ch.charCodeAt(0))%1000;
+  return h%3!==0;
+}
+
+function friendsSectionHTML(){
+  const today=new Date().toDateString();
+  const list=(S.friends||[]).map(f=>{
+    const active=friendActiveToday(f.code);
+    const poked=S.pokes[f.code]===today;
+    return `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--bd)">
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--c2);display:flex;align-items:center;justify-content:center;font-size:20px">${f.emo}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:800;color:var(--t)">${f.name} <span style="font-size:11px;color:var(--tm);font-weight:600">Lv.${f.lv}</span></div>
+        <div style="font-size:11px;font-weight:700;color:${active?'#059669':'#D97706'}">${active?'✅ 今天已經運動了':'😴 今天還沒運動'}</div>
+      </div>
+      <button class="btn ${poked?'btn-gh':'btn-s'} btn-sm" ${poked?'disabled':''} onclick="pokeFriend('${f.code}')">${poked?'今天已戳':'👉 戳戳他'}</button>
+    </div>`;
+  }).join('');
+  return `
+  <div style="padding:0 16px 16px">
+    <div class="stit" style="margin-top:8px">🫂 我的好友 (${(S.friends||[]).length})</div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">
+        <div>
+          <div style="font-size:11px;color:var(--tm);font-weight:700">我的好友代碼</div>
+          <div style="font-size:20px;font-weight:900;font-family:'Outfit';color:var(--p-d);letter-spacing:1px">${S.myCode}</div>
+        </div>
+        <button class="btn btn-ol btn-sm" onclick="copyMyCode()">📋 複製</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <input type="text" class="inp" id="friend-inp" placeholder="輸入好友代碼，例如 MM-ERIC88" style="padding:10px;font-size:14px;text-transform:uppercase" maxlength="9">
+        <button class="btn btn-p btn-sm" onclick="addFriend()">加好友</button>
+      </div>
+      <div style="font-size:11px;color:var(--td);margin-top:8px">示範代碼：MM-ERIC88、MM-MIMI23、MM-JAY456、MM-PANDA7、MM-DOUDOU</div>
+    </div>
+    <div class="card">
+      ${list || '<div style="text-align:center;padding:16px;font-size:13px;color:var(--tm)">還沒有好友，輸入好友代碼一起運動吧！</div>'}
+    </div>
+  </div>`;
+}
+
+window.copyMyCode = function(){
+  if(navigator.clipboard) navigator.clipboard.writeText(S.myCode).catch(()=>{});
+  toast(`已複製好友代碼 ${S.myCode}`,'📋');
+}
+
+window.addFriend = function(){
+  const el=document.getElementById('friend-inp');
+  const code=(el?el.value:'').toUpperCase().trim();
+  if(!/^MM-[A-Z0-9]{6}$/.test(code)){ toast('代碼格式不正確，應為 MM- 加 6 碼','❌'); return; }
+  if(code===S.myCode){ toast('不能加自己為好友喔！','😅'); return; }
+  if(S.friends.some(f=>f.code===code)){ toast('你們已經是好友了！','🤝'); return; }
+  const info=FRIEND_DIR[code];
+  if(!info){ toast('找不到這位玩家，請確認代碼','🔍'); return; }
+  S.friends.push({code,name:info.name,emo:info.emo,lv:info.lv});
+  chkBadges(); saveS();
+  toast(`已和 ${info.name} 成為好友！`,'🎉');
+  go('team');
+}
+
+window.pokeFriend = function(code){
+  const f=S.friends.find(x=>x.code===code); if(!f) return;
+  const today=new Date().toDateString();
+  if(S.pokes[code]===today){ toast('今天已經戳過了，明天再來！','👉'); return; }
+  S.pokes[code]=today; S.pokeCount=(S.pokeCount||0)+1;
+  chkBadges(); saveS();
+  toast(`你戳了 ${f.name}，提醒他記得運動！`,'👉');
+  go('team');
+  // 模擬好友回戳
+  if(Math.random()<0.5){
+    setTimeout(()=>{
+      S.pokeInbox.push({name:f.name,emo:f.emo,time:Date.now()}); saveS();
+      toast(`${f.name} 回戳了你！快去動一動 💪`,'👈');
+      if(curPage==='home') go('home');
+    },4000);
+  }
+}
+
+function renderPokeBanner(){
+  if(!S.pokeInbox||S.pokeInbox.length===0) return '';
+  const last=S.pokeInbox[S.pokeInbox.length-1];
+  const more=S.pokeInbox.length>1?` 等 ${S.pokeInbox.length} 位好友`:'';
+  return `
+  <div class="card" style="margin:0 16px 14px;display:flex;align-items:center;gap:12px;background:#FFFBEB;border:1.5px solid var(--s)">
+    <div style="font-size:30px">${last.emo}</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:14px;font-weight:800;color:var(--t)">👉 ${last.name}${more} 戳了你！</div>
+      <div style="font-size:12px;color:var(--tm)">提醒你今天要記得運動喔</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button class="btn btn-s btn-sm" onclick="S.pokeInbox=[];saveS();go('quests')">去運動</button>
+      <button class="btn btn-gh btn-sm" onclick="S.pokeInbox=[];saveS();go('home')">知道了</button>
+    </div>
+  </div>`;
+}
+
+function pgTeamMain(){
+  if(!S.hasTeam){
+    return`<div class="ph"><div class="ph1">👥 隊伍</div></div><div style="padding:0 16px 16px;text-align:center"><div style="font-size:64px;margin-bottom:16px;animation:bounceSolo 2s infinite">🤝</div><div style="font-size:20px;font-weight:900;margin-bottom:8px;color:var(--t)">加入隊伍，一起更強！</div><div style="display:flex;flex-direction:column;gap:10px;margin-top:20px"><button class="btn btn-p btn-full btn-lg" onclick="toast('加入隊伍功能建置中...','🔍')">🔍 加入公開隊伍</button><button class="btn btn-ol btn-full" onclick="S.hasTeam=true;S.teamName='MicroMove 先鋒隊';saveS();go('team')">➕ 建立體驗隊伍</button></div></div>`;
+  }
+
+  const curSteps = (S.teamSteps || 0) + S.actDone * 150; 
+  const curWater = (S.teamWater || 0) + S.water;
+  const curQs = (S.teamQuests || 0) + S.todayDone.length;
+  
+  const userSquat = S.todayDone.includes('q7') ? 1 : 0;
+  const curSquats = (S.teamSquats || 0) + userSquat;
+  
+  const userPlank = S.todayDone.includes('q12') ? 1 : 0;
+  const curPlanks = (S.teamPlanks || 0) + userPlank;
+
+  const pctSteps = Math.min(100, Math.round(curSteps/10000*100));
+  const pctWater = Math.min(100, Math.round(curWater/30*100));
+  const pctQs = Math.min(100, Math.round(curQs/20*100));
+  const pctSquats = Math.min(100, Math.round(curSquats/50*100));
+  const pctPlanks = Math.min(100, Math.round(curPlanks/30*100));
+
+  return`
+  <div class="ph">
+    <div class="ph1">👥 ${S.teamName}</div>
+    <button class="btn btn-gh btn-sm" onclick="openRank()">🏆 排行榜</button>
+  </div>
+  <div style="padding:0 16px 16px">
+    
+    <div class="stit">🎯 今日團隊任務</div>
+
+    ${renderTeamQuest('steps', '👟 團隊步數挑戰', curSteps, 10000, '步', pctSteps, S.teamClaimedSteps, 50, '#10B981', '#34D399')}
+    ${renderTeamQuest('water', '💧 團隊喝水挑戰', curWater, 30, '杯', pctWater, S.teamClaimedWater, 30, '#3B82F6', '#60A5FA')}
+    ${renderTeamQuest('squats', '🏋️ 團隊深蹲馬拉松', curSquats, 50, '次', pctSquats, S.teamClaimedSquats, 60, '#F59E0B', '#FBBF24')}
+    ${renderTeamQuest('planks', '🔥 團隊平板撐鐵人', curPlanks, 30, '次', pctPlanks, S.teamClaimedPlanks, 80, '#EF4444', '#F87171')}
+    ${renderTeamQuest('quests', '⚡ 團隊任務挑戰', curQs, 20, '個', pctQs, S.teamClaimedQuests, 40, '#8B5CF6', '#A78BFA')}
+
+    <div class="stit" style="margin-top:24px">🧑‍🤝‍🧑 隊伍成員</div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--bd)">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--c2);display:flex;align-items:center;justify-content:center;font-size:18px">${CHARS.find(c=>c.id===S.charId)?.emo||'🐰'}</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--t)">我 (${S.name})</div><div style="font-size:11px;color:var(--tm)">貢獻 ${S.actDone*150} 步 / ${S.water} 杯 / ${userSquat} 深蹲 / ${userPlank} 平板撐</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--c2);display:flex;align-items:center;justify-content:center;font-size:18px">🌸</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--t)">小花花</div><div style="font-size:11px;color:var(--tm)">活躍度極高</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderTeamQuest(id, title, cur, goal, unit, pct, claimed, reward, col1, col2) {
+  const canClaim = cur >= goal && !claimed;
+  return `
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:15px;font-weight:800;color:${col1}">${title}</div>
+      <div style="font-size:12px;color:var(--tm);font-weight:700">目標 ${goal.toLocaleString()} ${unit}</div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+      <div style="font-size:22px;font-weight:900;font-family:'Outfit';color:var(--t)">${cur.toLocaleString()}</div>
+      <div style="font-size:12px;color:var(--tm)">${unit}</div>
+    </div>
+    <div class="barw" style="height:8px"><div class="barf" style="width:${pct}%;background:linear-gradient(90deg,${col1},${col2})"></div></div>
+    
+    ${canClaim ? 
+      `<button class="btn btn-s btn-full btn-sm" style="margin-top:16px;animation:pulse 1s infinite;box-shadow:0 4px 12px ${col1}40" onclick="claimTeam('${id}', ${reward})">🎁 達標！領取 ${reward} G幣</button>` : 
+      claimed ? 
+      `<div style="text-align:center;margin-top:12px;font-size:13px;color:${col1};font-weight:800">✅ 今日獎勵已領取</div>` :
+      `<div style="text-align:center;margin-top:12px;font-size:12px;color:var(--tm)">進度 ${pct}%，大家一起加油！</div>`
+    }
+  </div>`;
+}
+
+window.claimTeam = function(type, reward) {
+  if(type==='steps') S.teamClaimedSteps = true;
+  if(type==='water') S.teamClaimedWater = true;
+  if(type==='quests') S.teamClaimedQuests = true;
+  if(type==='squats') S.teamClaimedSquats = true;
+  if(type==='planks') S.teamClaimedPlanks = true;
+  S.gcoin += reward; 
+  saveS();
+  toast(`成功領取團隊獎勵 ${reward} G幣！`,'🎁');
+  go('team');
+}
+
+window.openRank = function(){
+  const mockRanks = [
+    {name:'艾瑞克', exp:1420, emo:'🦁', lv:8},
+    {name:'小米', exp:1150, emo:'🐱', lv:7},
+    {name:S.name, exp:S.exp, emo:CHARS.find(c=>c.id===S.charId)?.emo||'🐰', lv:S.lv, isMe:true},
+    {name:'阿傑', exp:780, emo:'🦊', lv:5},
+    {name:'小綠', exp:520, emo:'🐼', lv:4},
+    {name:'豆豆', exp:310, emo:'🐨', lv:3},
+  ];
+  mockRanks.sort((a,b)=>b.exp - a.exp);
+
+  const container = document.getElementById('rank-list-content');
+  container.innerHTML = mockRanks.map((r, idx)=>{
+    const rankNo = idx + 1;
+    const topCls = rankNo===1?'top1':rankNo===2?'top2':rankNo===3?'top3':'';
+    return `
+      <div class="rank-item" style="${r.isMe?'border-color:var(--p);background:var(--p-xl)':''}">
+        <div class="rank-num ${topCls}">${rankNo===1?'🥇':rankNo===2?'🥈':rankNo===3?'🥉':rankNo}</div>
+        <div style="font-size:28px">${r.emo}</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:800;color:var(--t)">${r.name} ${r.isMe?'(我)':''}</div>
+          <div style="font-size:11px;color:var(--tm)">Lv.${r.lv} 冒險者</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:15px;font-weight:900;color:var(--s);font-family:'Outfit'">${r.exp}</div>
+          <div style="font-size:10px;color:var(--tm)">EXP</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('rank-modal').classList.add('open');
+}
+
+window.closeRank = function(){ document.getElementById('rank-modal').classList.remove('open'); }
+
+function pgProfile(){
+  const lv=lvInfo(S.exp);
+  const ch=CHARS.find(c=>c.id===S.charId)||CHARS[0];
+  return`
+  <div class="pf-hero">
+    <div class="pf-av">${ch.emo}</div>
+    <div class="pf-nm">${S.name}</div>
+    <div class="pf-title" onclick="openMap()" title="點擊查看升級地圖">Lv.${lv.lv} ${lv.title} ➔</div>
+    ${(()=>{const em=ELITE.find(e=>e.id===S.eliteMedal);return em?`<div class="chip cs" style="margin-top:8px;font-size:12px;cursor:pointer" onclick="openDex('badge')">${em.emo} ${em.nm}</div>`:(S.lv>=5?`<button class="btn btn-s btn-sm" style="margin-top:8px" onclick="openDex('badge')">🎖️ 選擇你的菁英勳章</button>`:'')})()}
+    <div class="pf-stats">
+      <div class="pf-stat"><div class="psv">${S.done}</div><div class="psl">任務</div></div>
+      <div class="pf-stat"><div class="psv">${S.wcoin}</div><div class="psl">W幣</div></div>
+      <div class="pf-stat"><div class="psv">${S.streak}</div><div class="psl">連續</div></div>
+      <div class="pf-stat"><div class="psv">${S.unlockedChars.length}</div><div class="psl">夥伴</div></div>
+    </div>
+  </div>
+
+  <div style="padding:0 16px 16px">
+    
+    <div class="stit" style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
+      <span>🎒 我的道具背包</span>
+      <button class="btn btn-sm btn-gh" style="font-size:12px;padding:6px 12px" onclick="openBag()">查看全部</button>
+    </div>
+    <div class="card2" style="margin-bottom:24px; display:flex; gap:10px; overflow-x:auto;">
+      ${(!S.inventory || S.inventory.length === 0) ? '<div style="font-size:13px;color:var(--tm);padding:10px;text-align:center;width:100%;">背包空空的，去任務或商城獲得好物吧！</div>' : S.inventory.slice(-4).reverse().map(item => `<div style="text-align:center;min-width:64px;flex-shrink:0;"><div style="font-size:28px;background:var(--c2);border-radius:14px;padding:10px;margin-bottom:6px;">${item.icon}</div><div style="font-size:11px;font-weight:700;color:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:64px;">${item.name} x${item.qty||1}</div></div>`).join('')}
+    </div>
+
+    <div class="stit">📖 收藏圖鑑</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
+      <button class="btn btn-gh" style="padding:14px 6px;font-size:14px" onclick="openDex('pet')">🐾 寵物</button>
+      <button class="btn btn-gh" style="padding:14px 6px;font-size:14px" onclick="openDex('item')">🎒 道具</button>
+      <button class="btn btn-gh" style="padding:14px 6px;font-size:14px" onclick="openDex('badge')">🎖️ 勳章</button>
+    </div>
+
+    <div class="stit">📤 社群推廣</div>
+    <button class="btn btn-p btn-full btn-lg" style="margin-bottom:10px;background:linear-gradient(135deg,#EC4899,#8B5CF6)" onclick="openShare()">🌟 產生精美成就卡片</button>
+    <div style="font-size:11px;color:var(--tm);text-align:center;margin-bottom:20px;font-weight:600">首次分享卡片或連結，可獲得 50 W幣！</div>
+
+    <div class="stit">🎁 推薦碼</div>
+    <div class="card2" style="display:flex;gap:8px;margin-bottom:20px">
+      <input type="text" class="inp" id="ref-inp" placeholder="輸入 WELLTIVITY 領獎" style="padding:10px;font-size:14px" ${S.refUsed?'disabled':''}>
+      <button class="btn btn-s btn-sm" onclick="useReferral()" ${S.refUsed?'disabled':''}>領取</button>
+    </div>
+
+    <div class="stit">🐾 切換夥伴與天賦</div>
+    <div class="hscroll" style="margin-bottom:20px">
+      ${S.unlockedChars.map(id => {
+        const c = CHARS.find(x=>x.id===id);
+        const isActive = S.charId === id;
+        return `<div class="card2" style="min-width:110px;text-align:center;cursor:pointer;border-color:${isActive?'var(--s)':'var(--bd)'};background:${isActive?'#FFFBEB':'var(--c1)'}" onclick="S.charId=${id};saveS();go('profile')"><div style="font-size:28px">${c.emo}</div><div style="font-size:11px;margin-top:4px;font-weight:800;color:${isActive?'var(--s)':'var(--t)'}">${c.name}</div><div style="font-size:9px;color:var(--tm);margin-top:2px">${c.type}</div></div>`;
+      }).join('')}
+    </div>
+
+    <div class="divider"></div>
+    <button class="btn btn-gh btn-full" onclick="if(confirm('確定要重置所有遊戲進度嗎？'))resetAll()">🔄 重置遊戲進度</button>
+  </div>`;
+}
+
+window.openExpedition = function() {
+  renderExpeditionList();
+  document.getElementById('expedition-modal').classList.add('open');
+}
+
+window.closeExpedition = function() {
+  document.getElementById('expedition-modal').classList.remove('open');
+}
+
+const EXP_OPTIONS=[
+  {ms:15000,   title:'15秒極速測試', label:'⏱ 15秒測試', cls:'btn-gh'},
+  {ms:7200000, title:'2小時日常探險', label:'🌲 2小時探險', cls:'btn-ol'},
+  {ms:21600000,title:'6小時秘境',     label:'🏛 6小時秘境', cls:'btn-p'},
+];
+// 冷卻時間 = 尋寶時間的一半（測試模式 10 秒）
+function expCooldownFor(ms){ return ms<=60000 ? 10000 : Math.round(ms/2); }
+
+function renderExpeditionList() {
+  const container = document.getElementById('expedition-content');
+  if (!container) return;
+  const now = Date.now();
+  let html = '<div style="display:flex;flex-direction:column;gap:12px">';
+  html += '<div style="font-size:12px;color:var(--tm);background:var(--c2);border-radius:10px;padding:8px 12px">📌 一次只能派出 1 隻夥伴；尋寶回來後需要休息（冷卻時間為尋寶時間的一半）。</div>';
+
+  const exp = (S.expeditions || [])[0];
+  if (exp) {
+    const pet = CHARS.find(c => c.id === exp.petId) || CHARS[0];
+    const leftMs = exp.durationMs - (now - exp.startTime);
+    if (leftMs <= 0) {
+      html += `
+      <div class="card2" style="background:#FFFBEB;border:1px solid var(--s)">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:32px">${pet.emo}</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:800">${pet.name} 探險歸來！</div>
+            <div style="font-size:12px;color:var(--s);font-weight:700">帶回了豐富的寶藏！</div>
+          </div>
+          <button class="btn btn-s btn-sm" onclick="claimExpedition(0)">🎁 領取寶藏</button>
+        </div>
+      </div>`;
+    } else {
+      html += `
+      <div class="card2">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:32px">${pet.emo}</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:800">${pet.name} 正在${exp.title}中...</div>
+            <div style="font-size:12px;color:var(--tm)">剩餘時間：<b style="font-family:'Outfit'">${fmtHMS(leftMs/1000)}</b>${exp.boosted?' <span style="color:var(--p-d);font-weight:800">（已加速 1.5 倍 👟）</span>':''}</div>
+          </div>
+          ${exp.boosted ? '' : `<button class="btn btn-gh btn-sm" onclick="speedUpExpedition(0)">👟 加速</button>`}
+        </div>
+      </div>`;
+    }
+    html += '<div style="font-size:12px;color:var(--tm);text-align:center;padding:4px">目前已有夥伴在尋寶中，一次只能派出 1 隻夥伴喔！</div>';
+  } else if (S.expCD && S.expCD > now) {
+    html += `
+    <div class="card2" style="text-align:center;padding:20px">
+      <div style="font-size:36px;margin-bottom:6px">😴</div>
+      <div style="font-size:14px;font-weight:800;color:var(--t)">夥伴們剛探險回來，正在休息</div>
+      <div style="font-size:12px;color:var(--tm);margin-top:4px">下次可派遣：<b style="font-family:'Outfit';color:var(--p-d);font-size:16px">${fmtHMS((S.expCD-now)/1000)}</b></div>
+    </div>`;
+  } else {
+    const availablePets = S.unlockedChars.map(id => CHARS.find(c => c.id === id)).filter(p => p && p.id !== S.charId);
+    html += '<div style="font-size:14px;font-weight:800;color:var(--t);margin-top:4px">派遣夥伴出發</div>';
+    if (availablePets.length === 0) {
+      html += '<div style="font-size:12px;color:var(--tm);text-align:center;padding:16px">目前沒有可派遣的空閒夥伴！<br>去抽卡獲得更多夥伴，或更換主頁隊長吧！</div>';
+    } else {
+      availablePets.forEach(p => {
+        html += `
+        <div class="card2">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+            <div style="font-size:32px">${p.emo}</div>
+            <div>
+              <div style="font-size:14px;font-weight:800">${p.name}</div>
+              <div style="font-size:11px;color:var(--tm)">${p.skill}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px">
+            ${EXP_OPTIONS.map(o=>`<button class="btn ${o.cls} btn-sm" style="flex:1;font-size:11px" onclick="startExpedition(${p.id}, ${o.ms}, '${o.title}')">${o.label}</button>`).join('')}
+          </div>
+        </div>`;
+      });
+    }
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+window.startExpedition = function(petId, durationMs, title) {
+  if (!S.expeditions) S.expeditions = [];
+  if (S.expeditions.length > 0) { toast('一次只能派出 1 隻夥伴去尋寶！', '⚠️'); return; }
+  if (S.expCD && S.expCD > Date.now()) { toast(`夥伴還在休息，${fmtHMS((S.expCD-Date.now())/1000)} 後可再派遣`, '😴'); return; }
+  S.expeditions = [{ petId, startTime: Date.now(), durationMs, title, boosted: false }];
+  saveS();
+  toast(`派遣成功！夥伴出發進行【${title}】！`, '🗺️');
+  renderExpeditionList();
+}
+
+window.claimExpedition = function(idx) {
+  const exp = S.expeditions[idx];
+  if (!exp) return;
+  if (exp.durationMs - (Date.now() - exp.startTime) > 0) { toast('夥伴還沒回來喔！', '⏳'); return; }
+  S.expeditions.splice(idx, 1);
+  S.expCD = Date.now() + expCooldownFor(exp.origMs || exp.durationMs);
+  S.expDone = (S.expDone || 0) + 1;
+
+  const gGain = Math.floor(Math.random() * 50) + 30;
+  const foodGain = Math.floor(Math.random() * 3) + 2;
+  S.gcoin += gGain;
+  S.food = (S.food || 0) + foodGain;
+
+  if (Math.random() > 0.4) {
+    addItemToBag('repair_pen', 1);
+    toast(`尋寶成功！獲得 ${gGain} G幣、${foodGain} 罐頭 與 1 支補簽修復筆！✏️`, '🎉');
+  } else {
+    toast(`尋寶成功！獲得 ${gGain} G幣 與 ${foodGain} 罐頭！🥫`, '🎉');
+  }
+  chkBadges();
+  saveS();
+  fireConfetti();
+  renderExpeditionList();
+  if (curPage === 'home') go('home');
+}
+
+// 加速鞋：剩餘時間 ÷ 1.5（每趟限用一次）
+function boostExpedition(idx){
+  const exp = (S.expeditions || [])[idx];
+  if (!exp) { toast('目前沒有正在進行中的尋寶任務！', '⚠️'); return false; }
+  const elapsed = Date.now() - exp.startTime;
+  const left = exp.durationMs - elapsed;
+  if (left <= 0) { toast('夥伴已經回來了，快去領取寶藏！', '🎁'); return false; }
+  if (exp.boosted) { toast('這趟尋寶已經加速過了！', '👟'); return false; }
+  const item = S.inventory ? S.inventory.find(i => i.id === 'expedition_boots') : null;
+  if (!item || item.qty <= 0) { toast('你沒有尋寶加速鞋！可從驚喜禮盒抽中。', '👟'); return false; }
+  item.qty -= 1;
+  if (item.qty <= 0) S.inventory = S.inventory.filter(i => i.id !== 'expedition_boots');
+  exp.origMs = exp.origMs || exp.durationMs;
+  exp.durationMs = elapsed + Math.round(left / 1.5);
+  exp.boosted = true;
+  saveS();
+  toast(`穿上加速鞋！尋寶速度變為 1.5 倍，剩餘 ${fmtHMS((exp.durationMs - elapsed)/1000)} 👟`, '⚡');
+  return true;
+}
+
+window.speedUpExpedition = function(idx) {
+  boostExpedition(idx);
+  renderExpeditionList();
+}
+
+// 尋寶視窗開著時，每秒更新倒數
+setInterval(() => {
+  const m = document.getElementById('expedition-modal');
+  if (m && m.classList.contains('open')) renderExpeditionList();
+}, 1000);
+
+let giftAvailable = false;
+window.openQuestGiftBox = function() {
+  if (!giftAvailable) { toast('這次任務的禮物盒已經開過囉！', '🎁'); return; }
+  giftAvailable = false;
+  const gb = document.getElementById('co-gift-btn');
+  if (gb) { gb.disabled = true; gb.textContent = '✅ 禮物盒已開啟'; }
+  const drops = [
+    { title: '獲得寵物罐頭 x2！', desc: '好吃的罐頭可以維持寵物飽食度', icon: '🥫', action: () => { S.food = (S.food||0)+2; } },
+    { title: '獲得補簽修復筆 x1！', desc: '可修復中斷的連續簽到紀錄', icon: '✏️', action: () => { addItemToBag('repair_pen', 1); } },
+    { title: '獲得雙倍經驗卡 x1！', desc: '使用後接下來3次任務經驗翻倍', icon: '⚡', action: () => { addItemToBag('double_exp', 1); } },
+    { title: '獲得 50 G幣！', desc: '拿去商城兌換精彩好禮吧', icon: '🪙', action: () => { S.gcoin += 50; } },
+    { title: '獲得尋寶加速鞋 x1！', desc: '可讓進行中的尋寶速度變為 1.5 倍', icon: '👟', action: () => { addItemToBag('expedition_boots', 1); } }
+  ];
+
+  const reward = drops[Math.floor(Math.random() * drops.length)];
+  reward.action();
+  saveS();
+
+  document.getElementById('gift-icon').textContent = reward.icon;
+  document.getElementById('gift-title').textContent = reward.title;
+  document.getElementById('gift-desc').textContent = reward.desc;
+  document.getElementById('gift-modal').classList.add('open');
+  fireConfetti();
+}
+
+window.closeGiftModal = function() {
+  document.getElementById('gift-modal').classList.remove('open');
+}
+
+window.openBag = function() {
+  const list = document.getElementById('bag-list-content');
+  if(!S.inventory || S.inventory.length === 0){
+    list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--tm)"><div style="font-size:48px;margin-bottom:12px">🪹</div><div style="font-weight:700;font-size:18px;color:var(--t)">背包空空的</div><div style="font-size:13px;margin-top:6px">去完成任務拆禮盒或商城兌換吧！</div><button class="btn btn-p btn-sm" style="margin-top:20px" onclick="closeBag();go('quests')">去完成任務</button></div>`;
+  } else {
+    list.innerHTML = S.inventory.map((item, idx) => `
+      <div class="store-item">
+        <div style="font-size:32px;background:var(--c2);padding:10px;border-radius:14px">${item.icon}</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:800;color:var(--t)">${item.name} <span style="color:var(--p-d)">x${item.qty||1}</span></div>
+          <div style="font-size:12px;color:var(--tm);margin-top:2px">${item.desc}</div>
+        </div>
+        <button class="btn btn-p btn-sm" onclick="useBagItem(${idx})">使用</button>
+      </div>
+    `).join('');
+  }
+  document.getElementById('bag-modal').classList.add('open');
+}
+
+window.closeBag = function() { document.getElementById('bag-modal').classList.remove('open'); }
+
+window.useBagItem = function(idx) {
+  const item = S.inventory[idx];
+  if (!item) return;
+
+  if (item.id === 'repair_pen') {
+    if (!S.brokenChkStreak || S.brokenChkStreak <= 0) {
+      toast('連續簽到沒有中斷，不需要使用修復筆！', '✏️');
+      return;
+    }
+    closeBag();
+    useRepairPen();
+    return;
+  }
+  if (item.id === 'double_exp') {
+    S.doubleExpBuff = (S.doubleExpBuff || 0) + 3;
+    item.qty -= 1;
+    toast('啟動雙倍經驗！接下來 3 次任務獲得 200% EXP ⚡', '🔥');
+  } else if (item.id === 'pet_feast') {
+    S.satiety = 100;
+    item.qty -= 1;
+    toast('寵物享用了豪華大餐！飽食度恢復至 100% 🍱✨', '💖');
+  } else if (item.id === 'expedition_boots') {
+    boostExpedition(0);
+    openBag();
+    return;
+  } else {
+    toast(`使用了【${item.name}】！`, '✨');
+    item.qty -= 1;
+  }
+
+  if (item.qty <= 0) {
+    S.inventory.splice(idx, 1);
+  }
+
+  saveS();
+  openBag();
+  if(curPage === 'profile' || curPage === 'home') go(curPage);
+}
+
+// Dex System Logic (圖鑑系統)
+window.openDex = function(type) {
+  const ttl = document.getElementById('dex-modal-ttl');
+  const content = document.getElementById('dex-content');
+  let html = '<div class="dex-grid">';
+
+  if (type === 'pet') {
+    ttl.textContent = '🐾 寵物圖鑑';
+    CHARS.forEach(c => {
+      const unlocked = S.unlockedChars.includes(c.id);
+      if (unlocked) {
+        html += `<div class="dex-item" onclick="showDexDetail('pet', ${c.id})"><div class="dex-emo">${c.emo}</div><div class="dex-nm">${c.name}</div></div>`;
+      } else {
+        html += `<div class="dex-item locked" onclick="showDexDetail('pet_locked', ${c.id})"><div class="dex-emo">❓</div><div class="dex-nm">未知夥伴</div></div>`;
+      }
+    });
+  } else if (type === 'badge') {
+    ttl.textContent = '🎖️ 勳章圖鑑';
+    const got = BDEFS.filter(b => S.badges.includes(b.id)).length;
+    html = `<div style="font-size:14px;font-weight:800;color:var(--t);margin-bottom:4px">🎖️ 菁英勳章 <span style="font-size:12px;color:var(--tm);font-weight:600">Lv.5 時可自選 1 枚</span></div>`;
+    if (S.lv >= 5 && !S.eliteMedal) html += `<div style="font-size:12px;color:#D97706;font-weight:700;background:#FFFBEB;border-radius:10px;padding:8px 12px;margin:6px 0 10px">✨ 你已達到 Lv.5！點選一枚菁英勳章作為你的專屬勳章</div>`;
+    html += '<div class="dex-grid" style="margin:8px 0 20px">';
+    ELITE.forEach(e => {
+      const mine = S.eliteMedal === e.id;
+      const pickable = S.lv >= 5 && !S.eliteMedal;
+      const locked = !mine && !pickable;
+      html += `<div class="dex-item${locked?' locked':''}" style="${mine?'background:#FFFBEB;box-shadow:0 0 0 2px var(--s)':pickable?'box-shadow:0 0 0 2px var(--p-l)':''}" onclick="showDexDetail('elite','${e.id}')"><div class="dex-emo">${e.emo}</div><div class="dex-nm">${e.nm}</div>${mine?'<div style="font-size:10px;color:#D97706;font-weight:800;margin-top:2px">已擁有</div>':''}</div>`;
+    });
+    html += '</div>';
+    html += `<div style="font-size:14px;font-weight:800;color:var(--t);margin-bottom:8px">🏅 成就勳章 <span style="font-size:12px;color:var(--tm);font-weight:600">${got} / ${BDEFS.length}</span></div><div class="dex-grid">`;
+    BDEFS.forEach(b => {
+      const un = S.badges.includes(b.id);
+      html += `<div class="dex-item${un?'':' locked'}" onclick="showDexDetail('badge','${b.id}')"><div class="dex-emo">${b.emo}</div><div class="dex-nm">${un?b.nm:'未解鎖'}</div></div>`;
+    });
+  } else if (type === 'item') {
+    ttl.textContent = '🎒 道具圖鑑';
+    Object.keys(ITEM_DEFS).forEach(k => {
+      const item = ITEM_DEFS[k];
+      html += `<div class="dex-item" onclick="showDexDetail('item', '${k}')"><div class="dex-emo">${item.icon}</div><div class="dex-nm">${item.name}</div></div>`;
+    });
+  }
+
+  html += '</div>';
+  content.innerHTML = html;
+  document.getElementById('dex-modal').classList.add('open');
+};
+
+window.closeDex = function() { document.getElementById('dex-modal').classList.remove('open'); };
+
+window.showDexDetail = function(type, id) {
+  const content = document.getElementById('dex-detail-content');
+  let html = '';
+
+  if (type === 'pet') {
+    const c = CHARS.find(x => x.id === id);
+    html = `
+      <div style="font-size:72px; margin-bottom:12px; filter:drop-shadow(0 10px 20px ${c.col}50);">${c.emo}</div>
+      <div style="font-size:22px; font-weight:900; color:var(--t); margin-bottom:4px;">${c.name}</div>
+      <div style="margin-bottom:16px;"><span class="chip cp">${c.type}</span> <span class="chip cs">${c.rarity || 'N'} 等級</span></div>
+      <div style="background:var(--p-xl); border:1px solid rgba(139,92,246,0.2); border-radius:12px; padding:16px; text-align:left;">
+        <div style="font-size:12px; color:var(--p-d); font-weight:800; margin-bottom:6px;">⚡ 專屬天賦技能</div>
+        <div style="font-size:14px; color:var(--t); font-weight:700; line-height:1.5;">${c.skill}</div>
+      </div>
+    `;
+  } else if (type === 'pet_locked') {
+    html = `
+      <div style="font-size:72px; margin-bottom:12px; filter:grayscale(1) brightness(0) opacity(0.3);">❓</div>
+      <div style="font-size:22px; font-weight:900; color:var(--t); margin-bottom:8px;">未知夥伴</div>
+      <div style="font-size:14px; color:var(--tm); margin-bottom:24px;">你還沒有遇見這位神秘的夥伴哦！</div>
+      <button class="btn btn-s btn-full" onclick="closeDexDetail(); closeDex(); go('shop');">前往商城抽盲盒</button>
+    `;
+  } else if (type === 'badge') {
+    const b = BDEFS.find(x => x.id === id);
+    const un = S.badges.includes(id);
+    html = `
+      <div style="font-size:72px; margin-bottom:12px; ${un?'':'filter:grayscale(1) opacity(0.4);'}">${b.emo}</div>
+      <div style="font-size:22px; font-weight:900; color:var(--t); margin-bottom:8px;">${b.nm}</div>
+      <div style="margin-bottom:16px;"><span class="chip ${un?'cg':'cr'}">${un?'✅ 已解鎖':'🔒 尚未解鎖'}</span></div>
+      <div style="background:var(--p-xl); border:1px solid rgba(139,92,246,0.2); border-radius:12px; padding:16px; text-align:left;">
+        <div style="font-size:12px; color:var(--p-d); font-weight:800; margin-bottom:6px;">🎯 解鎖條件</div>
+        <div style="font-size:14px; color:var(--t); font-weight:700;">${b.desc}</div>
+      </div>`;
+  } else if (type === 'elite') {
+    const e = ELITE.find(x => x.id === id);
+    const mine = S.eliteMedal === id;
+    const pickable = S.lv >= 5 && !S.eliteMedal;
+    html = `
+      <div style="font-size:72px; margin-bottom:12px; ${mine||pickable?'':'filter:grayscale(1) opacity(0.4);'}">${e.emo}</div>
+      <div style="font-size:22px; font-weight:900; color:var(--t); margin-bottom:8px;">${e.nm}</div>
+      <div style="margin-bottom:16px;"><span class="chip cs">菁英勳章</span></div>
+      <div style="background:#FFFBEB; border:1px solid rgba(251,191,36,0.3); border-radius:12px; padding:16px; text-align:left; margin-bottom:16px">
+        <div style="font-size:14px; color:var(--t); font-weight:700; line-height:1.5;">${e.desc}</div>
+      </div>
+      ${mine ? '<div style="font-size:14px;font-weight:800;color:#D97706">🎖️ 這是你的專屬勳章</div>'
+        : pickable ? `<button class="btn btn-s btn-full" onclick="chooseElite('${id}')">選擇這枚勳章</button><div style="font-size:11px;color:var(--tm);margin-top:8px">五枚只能選一枚，選定後無法更改</div>`
+        : S.eliteMedal ? '<div style="font-size:13px;color:var(--tm)">你已經選擇了其他菁英勳章</div>'
+        : '<div style="font-size:13px;color:var(--tm)">達到 Lv.5 即可從五枚中自選一枚</div>'}`;
+  } else if (type === 'item') {
+    const item = ITEM_DEFS[id];
+    html = `
+      <div style="font-size:72px; margin-bottom:12px; background:var(--c2); display:inline-block; padding:16px; border-radius:24px;">${item.icon}</div>
+      <div style="font-size:22px; font-weight:900; color:var(--t); margin-bottom:12px;">${item.name}</div>
+      <div style="background:#FFFBEB; border:1px solid rgba(251,191,36,0.3); border-radius:12px; padding:16px; text-align:left;">
+        <div style="font-size:12px; color:#D97706; font-weight:800; margin-bottom:6px;">📌 道具效果說明</div>
+        <div style="font-size:14px; color:var(--t); font-weight:700; line-height:1.5;">${item.desc}</div>
+      </div>
+      <div style="font-size:12px; color:var(--tm); margin-top:16px;">獲得方式：完成微運動開驚喜禮盒，或透過寵物尋寶隨機獲得。</div>
+    `;
+  }
+
+  content.innerHTML = html;
+  document.getElementById('dex-detail-modal').classList.add('open');
+};
+
+window.closeDexDetail = function() { document.getElementById('dex-detail-modal').classList.remove('open'); };
+
+window.chooseElite = function(id) {
+  if (S.lv < 5 || S.eliteMedal) return;
+  const e = ELITE.find(x => x.id === id); if (!e) return;
+  if (!confirm(`確定選擇【${e.nm}】嗎？選定後無法更改。`)) return;
+  S.eliteMedal = id; saveS();
+  closeDexDetail(); openDex('badge');
+  toast(`獲得專屬勳章：${e.emo} ${e.nm}！`, '🎖️');
+  fireConfetti();
+  if (curPage === 'profile') go('profile');
+};
+
+window.openMap = function(){
+  const container = document.getElementById('map-list-content');
+  let html = '<div class="map-timeline">';
+  
+  LEVELS.forEach((l) => {
+    const isReached = S.lv >= l.lv;
+    const isCurrent = S.lv === l.lv;
+    const isClaimed = S.claimedLvs.includes(l.lv);
+    let statusCls = isCurrent ? 'current reached' : (isReached ? 'reached' : '');
+    
+    let expText = l.exp + ' EXP';
+    if (isCurrent) {
+      const info = lvInfo(S.exp);
+      expText = `進度: ${info.inLv} / ${info.need}`;
+    } else if (isReached) {
+      expText = '已達成';
+    }
+
+    html += `
+    <div class="map-node ${statusCls}">
+      <div class="map-dot"></div>
+      <div class="map-lv">Lv.${l.lv} ${l.title} <span class="map-exp">${expText}</span></div>
+      <div class="map-box">
+        <div style="font-size:12px;color:var(--tm);margin-bottom:6px;font-weight:700">達成獎勵</div>
+        <div class="map-reward">
+          <div style="flex:1;display:flex;flex-wrap:wrap;gap:6px;">
+            ${l.rwG ? `<span class="chip cs" style="margin:0;font-size:10px;">🪙 ${l.rwG} G幣</span>` : ''}
+            ${l.rwW ? `<span class="chip cp" style="margin:0;font-size:10px;">💰 ${l.rwW} W幣</span>` : ''}
+            ${l.desc ? `<span class="chip cg" style="margin:0;font-size:10px;background:#F3F4F6;color:var(--t);border:1px solid var(--c3)">${l.desc}</span>` : ''}
+            ${(!l.rwG && !l.rwW && !l.desc) ? `<span style="font-size:12px;color:var(--td)">無額外獎勵</span>` : ''}
+          </div>
+          ${isReached && !isClaimed && l.lv > 1 ? `<button class="btn btn-p btn-sm" style="padding:4px 10px;font-size:11px;" onclick="claimMapReward(${l.lv})">領取</button>` : ''}
+          ${isClaimed && l.lv > 1 ? `<span style="font-size:11px;color:var(--tm);font-weight:800;background:var(--c2);padding:4px 8px;border-radius:8px">已領取</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  });
+  
+  html += '</div>';
+  container.innerHTML = html;
+  document.getElementById('map-modal').classList.add('open');
+  
+  setTimeout(() => {
+    const currNode = document.querySelector('.map-node.current');
+    if(currNode) currNode.scrollIntoView({behavior: "smooth", block: "center"});
+  }, 150);
+}
+
+window.closeMap = function(){ document.getElementById('map-modal').classList.remove('open'); }
+
+window.claimMapReward = function(lvNum){
+  if(S.lv < lvNum) return;
+  if(S.claimedLvs.includes(lvNum)) return;
+  
+  const l = LEVELS.find(x => x.lv === lvNum);
+  if(!l) return;
+
+  if(l.rwG) S.gcoin += l.rwG;
+  if(l.rwW) S.wcoin += l.rwW;
+  S.claimedLvs.push(lvNum);
+  saveS();
+  
+  let msg = `領取 Lv.${lvNum} 獎勵成功！`;
+  if(l.rwG) msg += ` +${l.rwG} G幣`;
+  if(l.rwW) msg += ` +${l.rwW} W幣`;
+  toast(msg, '🎁');
+  
+  openMap(); 
+  if(curPage === 'home' || curPage === 'profile') go(curPage);
+  if(lvNum === 5 && !S.eliteMedal){
+    setTimeout(()=>{ closeMap(); openDex('badge'); toast('選擇一枚你的專屬菁英勳章吧！','🎖️'); }, 900);
+  }
+}
+
+window.useReferral = function(){
+  const val = document.getElementById('ref-inp').value.toUpperCase().trim();
+  if(S.refUsed){ toast('已經使用過推薦碼了！','⚠️'); return; }
+  const VALID_REF_CODES = ['WELLTIVITY'];
+  if(VALID_REF_CODES.includes(val)){
+    S.refUsed = true; S.wcoin += 50; saveS();
+    toast('成功兌換！獲得 50 W幣 💰','🎉'); go('profile');
+  } else {
+    toast('無效的推薦碼','❌');
+  }
+}
+
+function showLU(lv,title){
+  document.getElementById('lu-lv').textContent=lv;
+  document.getElementById('lu-ttl-txt').textContent=title;
+  document.getElementById('lu-ov').classList.add('show'); fireConfetti();
+}
+window.closeLU = function(){document.getElementById('lu-ov').classList.remove('show'); openMap();} 
+
+function showCO(q, res){
+  document.getElementById('co-emo').textContent=q.emo;
+  document.getElementById('co-exp').textContent='+'+res.exp+' EXP';
+  
+  let coinText = '+'+res.gcoin+' G幣';
+  if (res.satietyBonus > 0) coinText += ` (飽腹加成+${res.satietyBonus})`;
+  
+  document.getElementById('co-coin').textContent=coinText;
+  document.getElementById('co-sub').textContent='做得好！繼續保持！💪';
+  giftAvailable = true;
+  const gb = document.getElementById('co-gift-btn');
+  if (gb) { gb.disabled = false; gb.textContent = '🎁 開啟任務驚喜禮物盒！'; }
+  document.getElementById('co-ov').classList.add('show');
+}
+
+window.closeCO = function(){
+  document.getElementById('co-ov').classList.remove('show');
+  
+  const q = QUESTS.find(x => x.id === curQid);
+  
+  if(q && q.vCat && !S.isVIP) {
+     const recVids = VIDEOS.filter(v => v.cat === q.vCat && !S.unlockedVids.includes(v.id));
+     if(recVids.length > 0) {
+        const recVid = recVids[Math.floor(Math.random()*recVids.length)];
+        document.getElementById('vid-rec-content').innerHTML = renderVidCard(recVid);
+        
+        const titles = {
+          'boxing': '🥊 喜歡剛剛的拳擊節奏嗎？',
+          'hiit': '💦 飆汗的感覺很棒吧！',
+          'strength': '🏋️ 你的肌力正在成長！',
+          'stretch': '🧘 身體是不是放鬆多了？'
+        };
+        const descEl = document.getElementById('vid-rec-desc');
+        if (descEl) descEl.textContent = (titles[q.vCat] || '剛剛的微運動做得很棒！') + ' 試試 Welltivity 的專業課程，帶你進階訓練！';
+        
+        document.getElementById('vid-rec-modal').classList.add('open');
+        return; 
+     }
+  }
+  
+  S.qsSinceLastRec = (S.qsSinceLastRec || 0) + 1;
+  saveS();
+
+  if(S.qsSinceLastRec >= 2 && !S.isVIP) {
+    S.qsSinceLastRec = 0; saveS();
+    let recVids = VIDEOS.filter(v => !S.unlockedVids.includes(v.id));
+    let recVid = recVids.length > 0 ? recVids[0] : VIDEOS[0];
+    document.getElementById('vid-rec-content').innerHTML = renderVidCard(recVid);
+    const descEl = document.getElementById('vid-rec-desc');
+    if (descEl) descEl.textContent = '剛剛的微運動做得很棒！想要更進一步嗎？';
+    document.getElementById('vid-rec-modal').classList.add('open');
+  } else {
+    go('home');
+  }
+}
+
+window.openShare = function(){
+  genCard();
+  document.getElementById('share-tip').style.display = S.shared ? 'none' : 'block';
+  document.getElementById('share-modal').classList.add('open');
+}
+window.closeShare = function(){document.getElementById('share-modal').classList.remove('open')}
+
+function checkShareReward(){
+  if(!S.shared){
+    S.shared = true; S.wcoin += 50; chkBadges(); saveS();
+    setTimeout(() => toast('首次分享獎勵：獲得 50 W幣！💰', '🎉'), 1000);
+  } else {
+    toast('分享成功！', '✅');
+  }
+}
+
+window.doShare = function(type){
+  if(type==='dl'){
+    const cv=document.getElementById('share-cv');
+    const a=document.createElement('a'); a.download='micromove-achievement.png';
+    a.href=cv.toDataURL('image/png'); a.click();
+    checkShareReward();
+  } else if(type==='link'){
+    const lnk=`https://micromove.app/join?ref=${encodeURIComponent(S.name)}`;
+    if(navigator.clipboard) navigator.clipboard.writeText(lnk).then(()=>checkShareReward());
+    else checkShareReward();
+  } else {
+    checkShareReward();
+  }
+}
+
+function genCard(){
+  const cv=document.getElementById('share-cv'); const ctx=cv.getContext('2d');
+  const W=400,H=420;cv.width=W;cv.height=H;
+  const ch=CHARS.find(c=>c.id===S.charId)||CHARS[0]; const lv=lvInfo(S.exp);
+  
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#FFFFFF'); bg.addColorStop(1,'#F3F4F6');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  
+  ctx.save();ctx.globalAlpha=.4;
+  const rg=ctx.createRadialGradient(W/2,50,0,W/2,50,200);
+  rg.addColorStop(0,'#EDE9FE');rg.addColorStop(1,'transparent');
+  ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);ctx.restore();
+
+  ctx.fillStyle='#D1D5DB';
+  ctx.beginPath();ctx.arc(30,30,4,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(W-30,30,4,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(30,H-30,4,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(W-30,H-30,4,0,Math.PI*2);ctx.fill();
+
+  ctx.beginPath();ctx.moveTo(12+24,12);ctx.lineTo(12+W-24-24,12);
+  ctx.quadraticCurveTo(12+W-24,12,12+W-24,12+24);ctx.lineTo(12+W-24,12+H-24-24);
+  ctx.quadraticCurveTo(12+W-24,12+H-24,12+W-24-24,12+H-24);ctx.lineTo(12+24,12+H-24);
+  ctx.quadraticCurveTo(12,12+H-24,12,12+H-24-24);ctx.lineTo(12,12+24);
+  ctx.quadraticCurveTo(12,12,12+24,12);ctx.closePath();
+  ctx.strokeStyle='rgba(0,0,0,0.05)';ctx.lineWidth=2;ctx.stroke();
+  
+  ctx.font='700 16px Outfit,sans-serif';ctx.fillStyle='#9CA3AF';ctx.textAlign='center';
+  ctx.fillText('MicroMove',W/2,40);
+  
+  ctx.font='72px serif';ctx.fillText(ch.emo,W/2,140);
+  ctx.font='900 26px "Noto Sans TC",sans-serif';ctx.fillStyle='#1F2937';ctx.fillText(S.name,W/2,180);
+  ctx.font='700 14px "Noto Sans TC",sans-serif';ctx.fillStyle='#8B5CF6';ctx.fillText(`Lv.${lv.lv} ${lv.title}`,W/2,204);
+  
+  ctx.strokeStyle='rgba(0,0,0,0.05)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(60,224);ctx.lineTo(W-60,224);ctx.stroke();
+
+  const sw=(W-80)/3;
+  [{i:'⚡',v:S.exp,l:'EXP'},{i:'🔥',v:S.streak,l:'連續天數'},{i:'💰',v:S.wcoin,l:'W幣'}].forEach((st,i)=>{
+    const x=40+sw*i+sw/2;
+    ctx.font='22px serif';ctx.fillText(st.i,x,264);
+    ctx.font='900 22px Outfit';ctx.fillStyle='#F59E0B';ctx.fillText(st.v,x,292);
+    ctx.font='600 12px "Noto Sans TC"';ctx.fillStyle='#6B7280';ctx.fillText(st.l,x,310);
+  });
+
+  ctx.font='700 12px "Noto Sans TC",sans-serif';ctx.fillStyle='#9CA3AF';
+  ctx.fillText('每天 1 分鐘，開始你的運動冒險 🏃',W/2,H-20);
+}
+
+function fireConfetti(){
+  const cv=document.getElementById('conf-cv'); const ctx=cv.getContext('2d');
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  const cols=['#8B5CF6','#FBBF24','#34D399','#F87171','#F9A8D4','#93C5FD'];
+  const parts=Array.from({length:100},()=>({
+    x:Math.random()*cv.width, y:-10, w:Math.random()*8+4, h:Math.random()*5+3,
+    col:cols[Math.floor(Math.random()*cols.length)], vy:Math.random()*4+2, vx:(Math.random()-.5)*4,
+    rot:Math.random()*360, rv:(Math.random()-.5)*8,
+  }));
+  let frame=0;
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height); let alive=false;
+    parts.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy; p.vy+=.1; p.rot+=p.rv;
+      if(p.y<cv.height+20){
+        alive=true; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+        ctx.fillStyle=p.col; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+      }
+    });
+    if(alive&&frame<200){frame++;requestAnimationFrame(draw)} else ctx.clearRect(0,0,cv.width,cv.height);
+  }
+  draw();
+}
+
+window.resetAll = function(){localStorage.removeItem('mm_s');location.reload()}
+
+function init(){
+  loadS(); dailyReset();
+  
+  const safeAddL = (id, fn) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', function(e){ if(e.target===this) fn(); });
+  };
+
+  safeAddL('share-modal', closeShare);
+  safeAddL('rank-modal', closeRank);
+  safeAddL('map-modal', closeMap);
+  safeAddL('bag-modal', closeBag);
+  safeAddL('vid-rec-modal', () => closeVidRec(true));
+  safeAddL('vip-modal', closeVIP);
+  safeAddL('expedition-modal', closeExpedition);
+  safeAddL('gift-modal', closeGiftModal);
+  safeAddL('dex-modal', closeDex);
+  safeAddL('dex-detail-modal', closeDexDetail);
+  
+  if(S.onboarded){ document.getElementById('bnav').style.display='flex'; go('home'); }
+  else { renderSplash(); }
+}
+
+init();
+</script>
+</body>
+</html>
