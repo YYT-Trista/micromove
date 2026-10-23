@@ -374,6 +374,35 @@ img{display:block;max-width:100%}
 .help-dots{display:flex;justify-content:center;gap:6px;margin:16px 0}
 .help-dot{width:8px;height:8px;border-radius:100px;background:var(--c3);transition:all .25s}
 .help-dot.on{width:22px;background:var(--p)}
+
+/* AI 全程識別（模擬） */
+.ai-live{margin:0 20px 16px}
+.ai-cam{
+  position:relative;height:170px;border-radius:20px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 40%,#374151 0%,#111827 75%);
+  display:flex;align-items:center;justify-content:center;
+}
+.ai-cam .cam-corner{width:20px;height:20px;border-width:3px;border-color:rgba(255,255,255,.5)}
+.ai-box{
+  position:relative;width:110px;height:130px;border-radius:14px;
+  border:2.5px dashed rgba(255,255,255,.25);
+  display:flex;align-items:center;justify-content:center;font-size:60px;
+  transition:border-color .3s, box-shadow .3s;
+}
+.ai-live.tracking .ai-box{border:2.5px solid #34D399;box-shadow:0 0 18px rgba(52,211,153,.45)}
+.ai-live.tracking .ai-box span{animation:bounceSolo 1.2s ease-in-out infinite}
+.ai-live.lost .ai-box{border:2.5px solid #F87171;box-shadow:0 0 18px rgba(248,113,113,.5)}
+.ai-live.lost .ai-box span{opacity:.25}
+.ai-scan{position:absolute;left:0;right:0;height:3px;background:var(--p-l);box-shadow:0 0 14px var(--p-l);display:none;z-index:2}
+.ai-live.tracking .ai-scan{display:block;animation:scanLine 1.6s ease-in-out infinite alternate}
+.ai-tag{position:absolute;top:10px;font-size:11px;font-weight:800;color:#fff;background:rgba(0,0,0,.45);padding:4px 10px;border-radius:100px;z-index:3}
+.ai-tag.l{left:12px}.ai-tag.r{right:12px;font-family:'Outfit','Noto Sans TC',sans-serif}
+.ai-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#9CA3AF;margin-right:5px;vertical-align:middle}
+.ai-live.tracking .ai-dot{background:#34D399;animation:pulse 1s infinite}
+.ai-live.lost .ai-dot{background:#F87171}
+.ai-status{margin-top:10px;text-align:center;font-size:13px;font-weight:800;padding:10px 12px;border-radius:12px;background:var(--c2);color:var(--tm);transition:all .3s}
+.ai-live.tracking .ai-status{background:#D1FAE5;color:#059669}
+.ai-live.lost .ai-status{background:#FEE2E2;color:#DC2626}
 </style>
 </head>
 <body>
@@ -396,7 +425,7 @@ img{display:block;max-width:100%}
     <div id="cam-scan-txt" style="position:absolute;bottom:30px;font-size:15px;font-weight:800;color:var(--p-l);background:rgba(0,0,0,0.6);padding:6px 16px;border-radius:100px;display:none;z-index:20;">⏳ AI 視覺掃描中...</div>
   </div>
   
-  <div class="cam-btn" id="cam-btn" onclick="takePicture()">📷</div>
+  <div class="cam-btn" id="cam-btn" style="display:none">📷</div>
 </div>
 
 <!-- GACHA OVERLAY -->
@@ -924,66 +953,51 @@ function toggleFav(qid, e){
   if(curPage==='quests') go('quests');
 }
 
+// ===== 喝水 AI 即時識別（模擬）=====
+// 打開後自動開始識別，不需按快門；依序偵測水杯 → 喝水動作 → 完成
 let camType = '';
-let camQuestRes = null;
+let camTimers = [];
 
-window.openCamera = function(type, res) {
+function clearCamTimers(){ camTimers.forEach(t => clearTimeout(t)); camTimers = []; }
+
+window.openCamera = function(type) {
   camType = type;
-  camQuestRes = res;
+  clearCamTimers();
   const ov = document.getElementById('camera-ov');
   const ttl = document.getElementById('cam-ttl');
   const desc = document.getElementById('cam-desc');
   const icon = document.getElementById('cam-icon');
-  
-  document.getElementById('cam-frame').classList.remove('scanning');
-  document.getElementById('cam-scan-txt').style.display = 'none';
-  document.getElementById('cam-btn').style.display = 'flex';
+  const frame = document.getElementById('cam-frame');
+  const scanTxt = document.getElementById('cam-scan-txt');
 
-  if (type === 'water') {
-    ttl.textContent = '📸 喝水驗證';
-    desc.textContent = '請拍下你喝水的杯子或水壺';
-    icon.textContent = '💧';
-  } else if (type === 'quest') {
-    ttl.textContent = '📸 動作驗證';
-    desc.textContent = '請拍下你完成運動的畫面或器材';
-    icon.textContent = '🏃';
-  }
+  document.getElementById('cam-btn').style.display = 'none';
+  ttl.textContent = '💧 喝水 AI 即時識別';
+  desc.textContent = '請拿起杯子或水壺，對著鏡頭喝一口水';
+  icon.textContent = '💧';
+  icon.style.opacity = '0.3';
+  frame.classList.add('scanning');
+  scanTxt.style.display = 'block';
+  scanTxt.textContent = '⏳ AI 即時識別中...';
   ov.classList.add('show');
+
+  const stages = [
+    [1200, () => { scanTxt.textContent = '✅ 偵測到水杯'; icon.textContent = '🥤'; icon.style.opacity = '0.8'; desc.textContent = '很好！現在喝一口水'; }],
+    [2600, () => { scanTxt.textContent = '✅ 偵測到喝水動作'; icon.textContent = '😋'; desc.textContent = '識別完成，記錄中...'; }],
+    [3500, () => {
+      frame.classList.remove('scanning');
+      ov.classList.remove('show');
+      if (camType === 'water') actualDrinkWater();
+    }],
+  ];
+  stages.forEach(([ms, fn]) => camTimers.push(setTimeout(fn, ms)));
 }
 
 window.closeCamera = function() {
+  clearCamTimers();
+  document.getElementById('cam-frame').classList.remove('scanning');
   document.getElementById('camera-ov').classList.remove('show');
-  if(camType === 'quest') {
-    toast('已取消驗證，未獲得任務獎勵', '⚠️');
-    go('home');
-  }
-}
-
-window.takePicture = function() {
-  const frame = document.getElementById('cam-frame');
-  const btn = document.getElementById('cam-btn');
-  const scanTxt = document.getElementById('cam-scan-txt');
-  
-  btn.style.display = 'none';
-  frame.classList.add('scanning');
-  scanTxt.style.display = 'block';
-
-  // Mock AI delay
-  setTimeout(() => {
-    document.getElementById('camera-ov').classList.remove('show');
-    if (camType === 'water') {
-      actualDrinkWater();
-    } else if (camType === 'quest') {
-      const res = completeQ(curQid);
-      if (res) {
-        toast('AI 驗證成功！姿勢非常標準 🌟', '✅');
-        showCO(QUESTS.find(x => x.id === curQid), res);
-        fireConfetti();
-      } else {
-        go('home');
-      }
-    }
-  }, 2200);
+  if (camType === 'water') toast('已取消喝水識別，本次未記錄', '⚠️');
+  camType = '';
 }
 
 // Global loop to update CD timers on UI without reloading
@@ -1083,7 +1097,7 @@ window.actualDrinkWater = function() {
   S.waterCD = Date.now() + 15 * 60 * 1000; // 15 mins cooldown
   saveS();
   chkBadges();
-  toast('AI 驗證成功！咕嚕咕嚕... 💧', '🥛');
+  toast('AI 識別成功！咕嚕咕嚕... 💧', '🥛');
   go('home');
 }
 
@@ -1217,7 +1231,7 @@ const HELP = {
     { ico: '📅', t: '每日簽到 & 喝水打卡', items: [
       '每天按一次「馬上簽到」，7 天一輪，依序拿 1～6 G幣，第 7 天拿 10 G幣',
       '簽到中斷的當天，可以用「✏️ 補簽」救回之前的連續天數（需要補簽修復筆）',
-      '喝水按「＋」後拍照驗證，每杯要間隔 15 分鐘，目標一天 8 杯' ] },
+      '喝水按「＋」後，AI 會即時識別你的喝水動作，每杯要間隔 15 分鐘，目標一天 8 杯' ] },
     { ico: '🐰', t: '照顧你的夥伴', items: [
       '按「餵食 🥫」用 1 個罐頭，飽食度 +30',
       '飽食度 ≥ 70 時，做任務額外多拿 15% G幣',
@@ -1250,12 +1264,13 @@ const HELP = {
       '按「▶️ 開始任務」開始倒數計時',
       '需要休息可以按「⏸ 暫停」，再按「繼續任務」接著做',
       '一定要等計時結束，不能提早完成；中途離開的話計時會重來' ] },
-    { ico: '📸', t: '拍照驗證', items: [
-      '時間到會自動打開相機',
-      '把運動畫面或器材放進框內，按下快門',
-      'AI 掃描約 2 秒後就能領取獎勵',
-      '按左上角 ✕ 取消的話，不會拿到獎勵' ] },
+    { ico: '🤖', t: 'AI 全程識別', items: [
+      '🚶 起身任務：按下開始後，AI 會全程識別你的動作',
+      '綠框＝偵測中，計時正常進行；紅框＝沒偵測到動作，計時會暫停，回到畫面後自動繼續',
+      '畫面右上角顯示即時動作準確度，下方會給你姿勢提示',
+      '🪑 辦公桌任務不需驗證，計時結束就自動完成' ] },
     { ico: '🎉', t: '領取獎勵', items: [
+      '計時結束自動結算，完成畫面會顯示 AI 平均動作準確度',
       '完成畫面可以按「🎁 開啟任務驚喜禮物盒」（每次任務限開 1 次）',
       '可能抽到罐頭、補簽修復筆、雙倍經驗卡、加速鞋、四葉草、豪華大餐或 G幣',
       '按「繼續探索」後，可能會推薦相關的專業影音課程' ] },
@@ -1552,6 +1567,20 @@ function pgQA(qid){
     </div>
     ${isCombo ? `<div style="text-align:center;font-size:12px;color:var(--s);font-weight:700;margin-bottom:16px;animation:pulse 1s infinite">🔥 連擊加成：結算額外獲得 G幣 加成！</div>` : '<div style="margin-bottom:16px"></div>'}
 
+    ${done ? '' : q.type === 'active' ? `
+    <div class="ai-live" id="ai-live">
+      <div class="ai-cam">
+        <div class="cam-corner tl"></div><div class="cam-corner tr"></div>
+        <div class="cam-corner bl"></div><div class="cam-corner br"></div>
+        <div class="ai-scan"></div>
+        <div class="ai-tag l"><span class="ai-dot"></span><span id="ai-tag-txt">AI 待命</span></div>
+        <div class="ai-tag r" id="ai-acc">準確度 --%</div>
+        <div class="ai-box"><span>${q.emo}</span></div>
+      </div>
+      <div class="ai-status" id="ai-status">🤖 按下開始後，AI 會全程識別你的動作</div>
+    </div>` : `
+    <div style="margin:0 20px 16px;text-align:center;font-size:12px;font-weight:700;color:#2563EB;background:#DBEAFE;border-radius:12px;padding:10px">🪑 辦公桌任務：不需驗證，計時結束就自動完成</div>`}
+
     <div style="padding:0 20px;margin-bottom:24px" id="t-ctrl">
       ${done?`
       <div style="text-align:center;padding:20px;background:var(--c1);border:1px solid rgba(52,211,153,.3);border-radius:18px;box-shadow:0 4px 12px rgba(52,211,153,.1)">
@@ -1575,8 +1604,59 @@ function initTimer(qid){
   const q=QUESTS.find(x=>x.id===qid);
   if(!q)return;
   timerTotal=q.dur;timerSec=q.dur;
+  aiReset();
   updTimer();
 }
+
+// ===== AI 全程識別（模擬）=====
+// 起身任務：開始後 AI 全程識別，偵測不到動作時暫停計時；辦公桌任務不驗證
+const AI_TIPS = {
+  strength: ['膝蓋角度很好 👍','背部保持挺直','核心收緊，做得好！','節奏穩定，繼續保持'],
+  hiit:     ['節奏很棒！🔥','動作幅度可以再大一點','記得保持呼吸','心率上升中，加油！'],
+  boxing:   ['出拳很有力 🥊','記得收拳護住臉頰','保持呼吸，不要憋氣','左右交替很流暢'],
+  stretch:  ['伸展到位 🧘','動作放慢，感受拉伸','保持呼吸平穩','姿勢很標準'],
+  _default: ['步伐穩定 👣','膝蓋再抬高一點','保持節奏','手臂自然擺動'],
+};
+let aiSt = null;
+function aiReset(){ aiSt = { lostLeft:0, lostCount:0, accSum:0, accN:0, tipIdx:0, tick:0 }; }
+function aiIsActive(){ const q=QUESTS.find(x=>x.id===curQid); return !!(q && q.type==='active'); }
+
+function aiSetState(state, statusTxt){
+  const box=document.getElementById('ai-live'); if(!box) return;
+  box.classList.remove('tracking','lost');
+  if(state) box.classList.add(state);
+  const tag=document.getElementById('ai-tag-txt');
+  if(tag) tag.textContent = state==='tracking' ? 'AI 識別中' : state==='lost' ? '未偵測到動作' : 'AI 待命';
+  const st=document.getElementById('ai-status');
+  if(st && statusTxt) st.textContent = statusTxt;
+}
+
+// 每秒呼叫一次；回傳 true 代表本秒動作有效、計時繼續
+function aiTick(){
+  const q=QUESTS.find(x=>x.id===curQid);
+  if(aiSt.lostLeft>0){
+    aiSt.lostLeft--;
+    if(aiSt.lostLeft===0) aiSetState('tracking','✅ 重新偵測到你的動作，繼續計時！');
+    return false;
+  }
+  // 模擬：偶爾短暫偵測不到動作（每次任務最多一次，不會出現在開頭與結尾）
+  if(aiSt.lostCount<1 && timerSec<timerTotal-8 && timerSec>8 && Math.random()<0.03){
+    aiSt.lostLeft=3; aiSt.lostCount++;
+    aiSetState('lost','⚠️ 沒有偵測到動作，計時暫停中…請回到畫面中');
+    return false;
+  }
+  const acc = Math.round(85 + Math.random()*14);
+  aiSt.accSum += acc; aiSt.accN++; aiSt.tick++;
+  const accEl=document.getElementById('ai-acc'); if(accEl) accEl.textContent=`準確度 ${acc}%`;
+  if(aiSt.tick===1 || aiSt.tick%4===0){
+    const tips = AI_TIPS[q && q.vCat] || AI_TIPS._default;
+    aiSetState('tracking', '🤖 ' + tips[aiSt.tipIdx++ % tips.length]);
+  } else {
+    aiSetState('tracking');
+  }
+  return true;
+}
+function aiAvgAcc(){ return aiSt && aiSt.accN ? Math.round(aiSt.accSum/aiSt.accN) : 95; }
 
 window.startT = function(){
   if(timerOn)return;
@@ -1585,8 +1665,11 @@ window.startT = function(){
   document.getElementById('t-pause').style.display='flex';
   const cheatMsg = document.getElementById('t-cheat-msg');
   if(cheatMsg) cheatMsg.style.display='block';
+  const useAI = aiIsActive();
+  if(useAI) aiSetState('tracking','🤖 AI 開始全程識別，請保持在畫面中');
   
   timerIv=setInterval(()=>{
+    if(useAI && !aiTick()) return; // 偵測不到動作 → 本秒不計時
     timerSec--;updTimer();
     if(timerSec<=0){
       clearInterval(timerIv);timerIv=null;timerOn=false;
@@ -1604,6 +1687,8 @@ window.pauseT = function(){
   if(ts){ts.style.display='flex';ts.innerHTML='▶️ 繼續任務'}
   if(tp)tp.style.display='none';
   if(msg)msg.style.display='none';
+  if(aiSt){ aiSt.lostLeft=0; }
+  aiSetState(null,'⏸ 已暫停，AI 識別暫停中');
 }
 
 function updTimer(){
@@ -1628,7 +1713,16 @@ function updTimer(){
 
 function autoFinish(){
   if(S.todayDone.includes(curQid)) { go('home'); return; }
-  openCamera('quest', null);
+  const q = QUESTS.find(x => x.id === curQid);
+  const isActive = q && q.type === 'active';
+  const acc = isActive ? aiAvgAcc() : null;
+  if (isActive) aiSetState('tracking', `✅ AI 全程識別完成！平均準確度 ${acc}%`);
+  const res = completeQ(curQid);
+  if (!res) { go('home'); return; }
+  res.aiAcc = acc;
+  toast(isActive ? `AI 全程識別完成！動作準確度 ${acc}% 🌟` : '辦公桌任務完成！放鬆一下吧 🌿', '✅');
+  showCO(q, res);
+  fireConfetti();
 }
 
 function renderVidCard(v) {
@@ -2589,6 +2683,7 @@ function showCO(q, res){
   document.getElementById('co-coin').textContent=coinText;
   let sub = '做得好！繼續保持！💪';
   const extras = [];
+  if (res.aiAcc) extras.push(`🤖 AI 動作準確度 ${res.aiAcc}%`);
   if (res.petExpBonus > 0) extras.push(`夥伴天賦 +${res.petExpBonus} EXP`);
   if (res.wBonus > 0) extras.push(`🦄 掉落 ${res.wBonus} W幣`);
   if (res.dropItem && ITEM_DEFS[res.dropItem]) extras.push(`🦄 掉落 ${ITEM_DEFS[res.dropItem].icon} ${ITEM_DEFS[res.dropItem].name}`);
