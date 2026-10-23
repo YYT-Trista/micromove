@@ -356,6 +356,24 @@ img{display:block;max-width:100%}
 }
 #toast.show{transform:translateX(-50%) translateY(0)}
 #conf-cv{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:500}
+
+/* 使用說明 (Help / Tutorial) */
+.help-fab{
+  position:fixed;bottom:96px;right:max(16px, calc(50% - 215px + 16px));
+  width:44px;height:44px;border-radius:50%;
+  background:var(--c1);border:1.5px solid rgba(139,92,246,.35);color:var(--p-d);
+  font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--sh-p);z-index:150;transition:transform .2s;
+}
+.help-fab:active{transform:scale(.9)}
+.help-ico{font-size:56px;text-align:center;margin-bottom:8px;animation:pop .4s}
+.help-ttl{font-size:19px;font-weight:900;color:var(--t);text-align:center;margin-bottom:14px}
+.help-list{list-style:none;display:flex;flex-direction:column;gap:8px;min-height:180px}
+.help-list li{background:var(--c2);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.5;color:var(--t);font-weight:600;display:flex;gap:8px}
+.help-list li::before{content:'✓';color:var(--p);font-weight:900;flex-shrink:0}
+.help-dots{display:flex;justify-content:center;gap:6px;margin:16px 0}
+.help-dot{width:8px;height:8px;border-radius:100px;background:var(--c3);transition:all .25s}
+.help-dot.on{width:22px;background:var(--p)}
 </style>
 </head>
 <body>
@@ -542,6 +560,22 @@ img{display:block;max-width:100%}
   </div>
 </div>
 
+<!-- HELP / TUTORIAL MODAL (使用說明) -->
+<div class="modal-bg" id="help-modal" style="z-index:260;">
+  <div class="modal-box" style="padding-bottom:28px">
+    <div class="modal-head" style="margin-bottom:12px">
+      <div class="modal-ttl" id="help-head">📘 使用說明</div>
+      <button class="btn btn-gh btn-ico" onclick="closeHelp()">✕</button>
+    </div>
+    <div id="help-body"></div>
+    <div class="help-dots" id="help-dots"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-gh" style="flex:1" id="help-prev" onclick="helpStep(-1)">← 上一步</button>
+      <button class="btn btn-p" style="flex:2" id="help-next" onclick="helpStep(1)">下一步 →</button>
+    </div>
+  </div>
+</div>
+
 <div id="app"></div>
 
 <nav id="bnav" style="display:none">
@@ -570,7 +604,7 @@ const ITEM_DEFS = {
   'double_exp': { name: '雙倍經驗卡', icon: '⚡', desc: '啟動後，接下來 3 次運動任務結算時，將獲得 200% EXP 經驗值暴擊！', usable: true },
   'pet_feast': { name: '寵物豪華大餐', icon: '🍱', desc: '頂級美食，使用後直接將目前寵物飽食度補滿 100%，並獲得極佳心情！', usable: true },
   'expedition_boots': { name: '尋寶加速鞋', icon: '👟', desc: '具有魔法的鞋子，使用後讓正在進行中的尋寶速度變為 1.5 倍（每趟尋寶限用一次）！', usable: true },
-  'clover': { name: '幸運四葉草', icon: '🍀', desc: '神秘的植物，據說帶在身上可以大幅提升下次任務拆禮物盒獲得稀有道具的機率！', usable: true }
+  'clover': { name: '幸運四葉草', icon: '🍀', desc: '神秘的植物！使用後，下一次完成任務開啟的驚喜禮物盒必定獲得稀有獎勵。', usable: true }
 };
 
 const MOODS={
@@ -683,7 +717,8 @@ const DS={
   unlockedVids: [], isVIP: false, qsSinceLastRec: 0,
   food: 3, satiety: 80, expeditions: [], doubleExpBuff: 0,
   myCode: null, friends: [], pokes: {}, pokeCount: 0, pokeInbox: [],
-  expCD: 0, expDone: 0, eliteMedal: null
+  expCD: 0, expDone: 0, eliteMedal: null,
+  helpSeen: {}, cloverBuff: false
 };
 
 let S={};
@@ -709,6 +744,8 @@ function loadS(){
     if(S.expCD === undefined) S.expCD = 0;
     if(S.expDone === undefined) S.expDone = 0;
     if(S.eliteMedal === undefined) S.eliteMedal = null;
+    if(!S.helpSeen || typeof S.helpSeen !== 'object') S.helpSeen = {};
+    if(S.cloverBuff === undefined) S.cloverBuff = false;
     if(S.v!==DS.v){ S.v=DS.v; saveS(); }
   }catch(e){S={...DS}; S.myCode = genFriendCode();}
 }
@@ -746,8 +783,9 @@ function dailyReset(){
 
   if(S.lastDate===today)return;
   
+  // 昨天有完成任務 → 連續天數 +1；昨天（或更久）沒完成任何任務 → 中斷歸零
   if(S.lastDate===yest&&S.todayDone.length>0){S.streak+=1}
-  else if(S.lastDate&&S.lastDate!==yest){S.streak=0}
+  else if(S.lastDate){S.streak=0}
   
   S.todayDone=[]; S.lastDate=today;
   S.water=0; S.waterCD=0;
@@ -797,6 +835,7 @@ function addExp(amt){
   if(after.lv>before.lv){
     setTimeout(()=>showLU(after.lv,after.title),1800);
   }
+  return totalAmt;
 }
 
 function completeQ(qid){
@@ -824,12 +863,29 @@ function completeQ(qid){
   S.gcoin += totalG;
 
   S.food = (S.food || 0) + 1;
-  
-  addExp(q.exp); chkBadges(); saveS();
-  return { exp: q.exp, gcoin: totalG, bonus: bonusG, petBonus, satietyBonus };
+
+  // 寵物 EXP 天賦：龍兒（起身任務雙倍 EXP）、筋肉貓（EXP +15）
+  let baseExp = q.exp;
+  let petExpBonus = 0;
+  if (pet && pet.bonus === 'active_exp' && q.type === 'active') petExpBonus += q.exp;
+  if (pet && pet.bonus === 'flat_exp') petExpBonus += 15;
+
+  // 彩虹獨角獸天賦：隨機掉落 W幣 與高階道具
+  let wBonus = 0, dropItem = null;
+  if (pet && pet.bonus === 'drop_wcoin') {
+    if (Math.random() < 0.3) { wBonus = Math.floor(Math.random() * 3) + 1; S.wcoin += wBonus; }
+    if (Math.random() < 0.15) {
+      const pool = ['repair_pen', 'double_exp', 'expedition_boots', 'clover'];
+      dropItem = pool[Math.floor(Math.random() * pool.length)];
+      addItemToBag(dropItem, 1);
+    }
+  }
+
+  const gainedExp = addExp(baseExp + petExpBonus); chkBadges(); saveS();
+  return { exp: gainedExp, gcoin: totalG, bonus: bonusG, petBonus, satietyBonus, petExpBonus, wBonus, dropItem };
 }
 
-function addItemToBag(itemId, qty = 1) {
+function addItemToBag(itemId, qty = 1, extra = null) {
   if (!S.inventory) S.inventory = [];
   const def = ITEM_DEFS[itemId];
   const existing = S.inventory.find(i => i.id === itemId);
@@ -837,6 +893,8 @@ function addItemToBag(itemId, qty = 1) {
     existing.qty = (existing.qty || 1) + qty;
   } else if (def) {
     S.inventory.push({ id: itemId, name: def.name, icon: def.icon, desc: def.desc, qty: qty });
+  } else if (extra) {
+    S.inventory.push({ id: itemId, name: extra.name || itemId, icon: extra.icon || '🎁', desc: extra.desc || '神秘道具', qty: qty });
   } else {
     S.inventory.push({ id: itemId, name: itemId, icon: '🎁', desc: '神秘道具', qty: qty });
   }
@@ -1139,12 +1197,180 @@ function go(page,data){
 
   if(page==='qa'){
     curQid=data;
-    app.innerHTML=`<div class="page active">${pgQA(data)}</div>`;
+    app.innerHTML=`<div class="page active">${pgQA(data)}</div>${helpFabHTML('qa')}`;
     initTimer(data);
   }else if(renders[page]){
-    app.innerHTML=`<div class="page active">${renders[page]()}</div>`;
+    app.innerHTML=`<div class="page active">${renders[page]()}</div>${helpFabHTML(page)}`;
   }
   window.scrollTo(0,0);
+  autoShowHelp(page);
+}
+
+// ===== 使用說明 / 新手教學 =====
+// 每頁第一次進入時自動顯示，之後可點右下角 ❓ 重新開啟
+const HELP = {
+  home: { name: '首頁', slides: [
+    { ico: '👋', t: '歡迎來到首頁', items: [
+      '這裡是你每天的冒險據點，可以看到等級、貨幣與今日進度',
+      '點右上角「⚔️ Lv.」徽章，可以打開升級地圖',
+      '🪙 G幣：做任務賺取；💰 W幣：可兌換 VIP 與實體商品；🥫 罐頭：用來餵寵物' ] },
+    { ico: '📅', t: '每日簽到 & 喝水打卡', items: [
+      '每天按一次「馬上簽到」，7 天一輪，依序拿 1～6 G幣，第 7 天拿 10 G幣',
+      '簽到中斷的當天，可以用「✏️ 補簽」救回之前的連續天數（需要補簽修復筆）',
+      '喝水按「＋」後拍照驗證，每杯要間隔 15 分鐘，目標一天 8 杯' ] },
+    { ico: '🐰', t: '照顧你的夥伴', items: [
+      '按「餵食 🥫」用 1 個罐頭，飽食度 +30',
+      '飽食度 ≥ 70 時，做任務額外多拿 15% G幣',
+      '飽食度每天會下降 25，記得常回來餵',
+      '每隻夥伴都有專屬天賦，可以在「我的」頁面切換' ] },
+    { ico: '🗺️', t: '尋寶 & 今日推薦', items: [
+      '「派遣其他夥伴去尋寶」可以讓沒出戰的夥伴帶回 G幣、罐頭與道具',
+      '點「⚡ 今日推薦」卡片，可以直接開始一個任務',
+      '隨時點右下角的 ❓ 就能再看一次這頁的說明' ] },
+  ]},
+  quests: { name: '任務', slides: [
+    { ico: '⚡', t: '挑選任務', items: [
+      '上方分頁可篩選：全部／🌟 收藏／🪑 辦公桌／🚶 起身',
+      '🪑 辦公桌任務：坐著就能做，約 1～2 分鐘',
+      '🚶 起身任務：EXP 比較高，需要起身活動',
+      '今天完成的任務會變成灰色，明天才能再做' ] },
+    { ico: '🌟', t: '收藏常用任務', items: [
+      '點任務卡右上角的 ★ 就能收藏，再點一次取消',
+      '收藏的任務會排在最前面',
+      '在「🌟 收藏」分頁可以快速找到' ] },
+    { ico: '🎁', t: '完成任務的獎勵', items: [
+      '每個任務都能拿到 EXP + G幣 + 1 個罐頭',
+      '連續 3 天以上：G幣 +20%（火狐俠 +30%）',
+      '飽食度 ≥ 70：G幣 +15%；出戰夥伴的天賦也會有額外加成',
+      '完成後還能開一次驚喜禮物盒' ] },
+  ]},
+  qa: { name: '任務執行', slides: [
+    { ico: '▶️', t: '開始任務', items: [
+      '先看下方的「📝 動作步驟」',
+      '按「▶️ 開始任務」開始倒數計時',
+      '需要休息可以按「⏸ 暫停」，再按「繼續任務」接著做',
+      '一定要等計時結束，不能提早完成；中途離開的話計時會重來' ] },
+    { ico: '📸', t: '拍照驗證', items: [
+      '時間到會自動打開相機',
+      '把運動畫面或器材放進框內，按下快門',
+      'AI 掃描約 2 秒後就能領取獎勵',
+      '按左上角 ✕ 取消的話，不會拿到獎勵' ] },
+    { ico: '🎉', t: '領取獎勵', items: [
+      '完成畫面可以按「🎁 開啟任務驚喜禮物盒」（每次任務限開 1 次）',
+      '可能抽到罐頭、補簽修復筆、雙倍經驗卡、加速鞋、四葉草、豪華大餐或 G幣',
+      '按「繼續探索」後，可能會推薦相關的專業影音課程' ] },
+  ]},
+  team: { name: '社交', slides: [
+    { ico: '🤝', t: '建立隊伍', items: [
+      '還沒有隊伍時，按「➕ 建立體驗隊伍」',
+      '「🔍 加入公開隊伍」功能建置中，敬請期待',
+      '加入隊伍可以解鎖「隊伍夥伴」勳章' ] },
+    { ico: '🎯', t: '每日團隊任務', items: [
+      '共 5 項：步數、喝水、深蹲、平板撐、任務數',
+      '你完成的任務和喝水都會算進團隊進度',
+      '達標後按「🎁 達標！領取」，每項每天限領一次',
+      '右上角「🏆 排行榜」可以看本週 EXP 排名' ] },
+    { ico: '🫂', t: '好友 & 戳一下', items: [
+      '按「📋 複製」把你的好友代碼分享給朋友',
+      '輸入好友代碼後按「加好友」（可以先用下方的示範代碼試試）',
+      '按「👉 戳戳他」提醒好友運動，每人每天一次',
+      '好友回戳你時，首頁會出現通知' ] },
+  ]},
+  shop: { name: '商城', slides: [
+    { ico: '🔄', t: '貨幣兌換', items: [
+      '100 G幣 可以兌換 1 W幣',
+      'G幣：做任務、簽到、團隊任務、尋寶都能拿到',
+      'W幣：用來購買 VIP 與兌換實體商品' ] },
+    { ico: '🎬', t: '影音課程 & VIP', items: [
+      '每部課程可用 200～300 G幣 解鎖',
+      '同一類型只能用 G幣 解鎖 1 部，第 2 部起需要升級 VIP',
+      'VIP 花費 100 W幣，全站影片一次解鎖' ] },
+    { ico: '🎁', t: '盲盒 & 實體商品', items: [
+      '盲盒 50 G幣，隨機獲得一隻還沒擁有的夥伴',
+      '抽到的新夥伴會自動設為出戰夥伴',
+      '實體商品用 W幣 兌換，兌換後會放進背包' ] },
+  ]},
+  profile: { name: '我的', slides: [
+    { ico: '👤', t: '個人資訊 & 等級', items: [
+      '點等級稱號可以打開升級地圖',
+      '升級後要到地圖裡按「領取」才會拿到獎勵',
+      '達到 Lv.5 可以自選 1 枚菁英勳章（選定後無法更改）' ] },
+    { ico: '🎒', t: '背包 & 圖鑑', items: [
+      '按「查看全部」打開背包，按「使用」使用道具',
+      '⚡ 雙倍經驗卡：接下來 3 個任務 EXP ×2',
+      '✏️ 補簽修復筆：簽到中斷的當天可以使用',
+      '👟 加速鞋：尋寶中使用，剩餘時間加快 1.5 倍',
+      '🍀 四葉草：下一次任務禮物盒必出稀有獎勵',
+      '📖 圖鑑可以查看寵物、道具、勳章的詳細說明' ] },
+    { ico: '📤', t: '分享 & 推薦碼', items: [
+      '按「產生精美成就卡片」可以存圖或分享，第一次分享得 50 W幣',
+      '輸入推薦碼 WELLTIVITY 可得 50 W幣（限用一次）' ] },
+    { ico: '🐾', t: '切換夥伴 & 其他設定', items: [
+      '點夥伴卡就能切換出戰夥伴與天賦',
+      '沒出戰的夥伴可以派去尋寶',
+      '「📘 重新顯示新手教學」可以再看一次各頁的自動教學',
+      '「🔄 重置遊戲進度」會清除所有資料，請小心使用' ] },
+  ]},
+};
+
+let helpPage = null, helpIdx = 0;
+
+function helpFabHTML(page){
+  if(!HELP[page]) return '';
+  return `<button class="help-fab" onclick="openHelp('${page}')" title="使用說明" aria-label="使用說明">?</button>`;
+}
+
+function anyOverlayOpen(){
+  return !!document.querySelector('.modal-bg.open, .fullscreen-ov.show, #camera-ov.show');
+}
+
+function autoShowHelp(page){
+  if(!HELP[page] || (S.helpSeen && S.helpSeen[page])) return;
+  setTimeout(()=>{
+    // 頁面已切換或有其他視窗開著時先不顯示，下次進入此頁再顯示
+    if(curPage !== page || anyOverlayOpen()) return;
+    S.helpSeen[page] = true; saveS();
+    openHelp(page);
+  }, 450);
+}
+
+window.openHelp = function(page){
+  if(!HELP[page]) return;
+  helpPage = page; helpIdx = 0;
+  renderHelp();
+  document.getElementById('help-modal').classList.add('open');
+}
+
+window.closeHelp = function(){
+  document.getElementById('help-modal').classList.remove('open');
+  if(helpPage && S.helpSeen && !S.helpSeen[helpPage]){ S.helpSeen[helpPage] = true; saveS(); }
+}
+
+window.helpStep = function(dir){
+  const n = HELP[helpPage].slides.length;
+  const next = helpIdx + dir;
+  if(next >= n){ closeHelp(); return; }
+  helpIdx = Math.max(0, next);
+  renderHelp();
+}
+
+function renderHelp(){
+  const h = HELP[helpPage]; const sl = h.slides[helpIdx]; const n = h.slides.length;
+  document.getElementById('help-head').textContent = `📘 使用說明・${h.name}`;
+  document.getElementById('help-body').innerHTML = `
+    <div class="help-ico">${sl.ico}</div>
+    <div class="help-ttl">${sl.t}</div>
+    <ul class="help-list">${sl.items.map(i=>`<li>${i}</li>`).join('')}</ul>`;
+  document.getElementById('help-dots').innerHTML = h.slides.map((_,i)=>`<div class="help-dot${i===helpIdx?' on':''}"></div>`).join('');
+  const prev = document.getElementById('help-prev');
+  prev.style.visibility = helpIdx === 0 ? 'hidden' : 'visible';
+  document.getElementById('help-next').textContent = helpIdx === n-1 ? '我知道了 👍' : '下一步 →';
+}
+
+window.resetHelp = function(){
+  S.helpSeen = {}; saveS();
+  toast('已重新開啟新手教學，進入各頁面時會自動顯示', '📘');
+  go('profile');
 }
 
 function renderSplash(){
@@ -1539,7 +1765,7 @@ window.exchangeW = function(){
 window.buyItem = function(cost, name, icon){
   if(S.wcoin>=cost){ 
     S.wcoin-=cost; 
-    addItemToBag(name, 1);
+    addItemToBag('goods_' + name, 1, { name, icon, desc: '實體健康商品兌換券，請至合作門市出示兌換。' });
     toast(`成功兌換 ${name}！已放入背包。`,'🎒'); 
     go('shop'); 
   }
@@ -1683,7 +1909,7 @@ function renderPokeBanner(){
 
 function pgTeamMain(){
   if(!S.hasTeam){
-    return`<div class="ph"><div class="ph1">👥 隊伍</div></div><div style="padding:0 16px 16px;text-align:center"><div style="font-size:64px;margin-bottom:16px;animation:bounceSolo 2s infinite">🤝</div><div style="font-size:20px;font-weight:900;margin-bottom:8px;color:var(--t)">加入隊伍，一起更強！</div><div style="display:flex;flex-direction:column;gap:10px;margin-top:20px"><button class="btn btn-p btn-full btn-lg" onclick="toast('加入隊伍功能建置中...','🔍')">🔍 加入公開隊伍</button><button class="btn btn-ol btn-full" onclick="S.hasTeam=true;S.teamName='MicroMove 先鋒隊';saveS();go('team')">➕ 建立體驗隊伍</button></div></div>`;
+    return`<div class="ph"><div class="ph1">👥 隊伍</div></div><div style="padding:0 16px 16px;text-align:center"><div style="font-size:64px;margin-bottom:16px;animation:bounceSolo 2s infinite">🤝</div><div style="font-size:20px;font-weight:900;margin-bottom:8px;color:var(--t)">加入隊伍，一起更強！</div><div style="display:flex;flex-direction:column;gap:10px;margin-top:20px"><button class="btn btn-p btn-full btn-lg" onclick="toast('加入隊伍功能建置中...','🔍')">🔍 加入公開隊伍</button><button class="btn btn-ol btn-full" onclick="createTeam()">➕ 建立體驗隊伍</button></div></div>`;
   }
 
   const curSteps = (S.teamSteps || 0) + S.actDone * 150; 
@@ -1731,6 +1957,13 @@ function pgTeamMain(){
   </div>`;
 }
 
+window.createTeam = function(){
+  S.hasTeam = true; S.teamName = 'MicroMove 先鋒隊';
+  chkBadges(); saveS();
+  toast('成功建立隊伍！', '🤝');
+  go('team');
+}
+
 function renderTeamQuest(id, title, cur, goal, unit, pct, claimed, reward, col1, col2) {
   const canClaim = cur >= goal && !claimed;
   return `
@@ -1770,7 +2003,7 @@ window.openRank = function(){
   const mockRanks = [
     {name:'艾瑞克', exp:1420, emo:'🦁', lv:8},
     {name:'小米', exp:1150, emo:'🐱', lv:7},
-    {name:S.name, exp:S.exp, emo:CHARS.find(c=>c.id===S.charId)?.emo||'🐰', lv:S.lv, isMe:true},
+    {name:S.name, exp:S.wexp||0, emo:CHARS.find(c=>c.id===S.charId)?.emo||'🐰', lv:S.lv, isMe:true},
     {name:'阿傑', exp:780, emo:'🦊', lv:5},
     {name:'小綠', exp:520, emo:'🐼', lv:4},
     {name:'豆豆', exp:310, emo:'🐨', lv:3},
@@ -1856,6 +2089,7 @@ function pgProfile(){
     </div>
 
     <div class="divider"></div>
+    <button class="btn btn-gh btn-full" style="margin-bottom:10px" onclick="resetHelp()">📘 重新顯示新手教學</button>
     <button class="btn btn-gh btn-full" onclick="if(confirm('確定要重置所有遊戲進度嗎？'))resetAll()">🔄 重置遊戲進度</button>
   </div>`;
 }
@@ -2026,10 +2260,23 @@ window.openQuestGiftBox = function() {
     { title: '獲得補簽修復筆 x1！', desc: '可修復中斷的連續簽到紀錄', icon: '✏️', action: () => { addItemToBag('repair_pen', 1); } },
     { title: '獲得雙倍經驗卡 x1！', desc: '使用後接下來3次任務經驗翻倍', icon: '⚡', action: () => { addItemToBag('double_exp', 1); } },
     { title: '獲得 50 G幣！', desc: '拿去商城兌換精彩好禮吧', icon: '🪙', action: () => { S.gcoin += 50; } },
-    { title: '獲得尋寶加速鞋 x1！', desc: '可讓進行中的尋寶速度變為 1.5 倍', icon: '👟', action: () => { addItemToBag('expedition_boots', 1); } }
+    { title: '獲得尋寶加速鞋 x1！', desc: '可讓進行中的尋寶速度變為 1.5 倍', icon: '👟', action: () => { addItemToBag('expedition_boots', 1); } },
+    { title: '獲得幸運四葉草 x1！', desc: '使用後，下一次任務禮物盒必出稀有獎勵', icon: '🍀', action: () => { addItemToBag('clover', 1); } },
+    { title: '獲得寵物豪華大餐 x1！', desc: '使用後寵物飽食度直接補滿 100%', icon: '🍱', action: () => { addItemToBag('pet_feast', 1); } }
   ];
 
-  const reward = drops[Math.floor(Math.random() * drops.length)];
+  // 幸運四葉草生效：本次必出稀有獎勵
+  const rareDrops = [
+    { title: '🍀 幸運！雙倍經驗卡 x2！', desc: '四葉草發揮作用，獲得 2 張雙倍經驗卡', icon: '⚡', action: () => { addItemToBag('double_exp', 2); } },
+    { title: '🍀 幸運！寵物豪華大餐 x1！', desc: '四葉草發揮作用，寵物可以飽餐一頓', icon: '🍱', action: () => { addItemToBag('pet_feast', 1); } },
+    { title: '🍀 幸運！尋寶加速鞋 x2！', desc: '四葉草發揮作用，獲得 2 雙加速鞋', icon: '👟', action: () => { addItemToBag('expedition_boots', 2); } },
+    { title: '🍀 幸運！獲得 150 G幣！', desc: '四葉草發揮作用，G幣大豐收', icon: '🪙', action: () => { S.gcoin += 150; } }
+  ];
+  const useClover = !!S.cloverBuff;
+  if (useClover) S.cloverBuff = false;
+  const pool = useClover ? rareDrops : drops;
+
+  const reward = pool[Math.floor(Math.random() * pool.length)];
   reward.action();
   saveS();
 
@@ -2090,6 +2337,14 @@ window.useBagItem = function(idx) {
     boostExpedition(0);
     openBag();
     return;
+  } else if (item.id === 'clover') {
+    if (S.cloverBuff) { toast('四葉草效果已經在生效中，完成任務開禮物盒吧！', '🍀'); return; }
+    S.cloverBuff = true;
+    item.qty -= 1;
+    toast('幸運四葉草生效！下一次任務禮物盒必出稀有獎勵 🍀', '✨');
+  } else if (item.id && item.id.startsWith('goods_')) {
+    toast(`已使用【${item.name}】兌換券，請至合作門市出示兌換！`, '🛒');
+    item.qty -= 1;
   } else {
     toast(`使用了【${item.name}】！`, '✨');
     item.qty -= 1;
@@ -2332,7 +2587,13 @@ function showCO(q, res){
   if (res.satietyBonus > 0) coinText += ` (飽腹加成+${res.satietyBonus})`;
   
   document.getElementById('co-coin').textContent=coinText;
-  document.getElementById('co-sub').textContent='做得好！繼續保持！💪';
+  let sub = '做得好！繼續保持！💪';
+  const extras = [];
+  if (res.petExpBonus > 0) extras.push(`夥伴天賦 +${res.petExpBonus} EXP`);
+  if (res.wBonus > 0) extras.push(`🦄 掉落 ${res.wBonus} W幣`);
+  if (res.dropItem && ITEM_DEFS[res.dropItem]) extras.push(`🦄 掉落 ${ITEM_DEFS[res.dropItem].icon} ${ITEM_DEFS[res.dropItem].name}`);
+  if (extras.length) sub = extras.join('、') + '！';
+  document.getElementById('co-sub').textContent=sub;
   giftAvailable = true;
   const gb = document.getElementById('co-gift-btn');
   if (gb) { gb.disabled = false; gb.textContent = '🎁 開啟任務驚喜禮物盒！'; }
@@ -2504,6 +2765,7 @@ function init(){
   safeAddL('gift-modal', closeGiftModal);
   safeAddL('dex-modal', closeDex);
   safeAddL('dex-detail-modal', closeDexDetail);
+  safeAddL('help-modal', closeHelp);
   
   if(S.onboarded){ document.getElementById('bnav').style.display='flex'; go('home'); }
   else { renderSplash(); }
