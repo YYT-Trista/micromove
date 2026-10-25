@@ -403,6 +403,42 @@ img{display:block;max-width:100%}
 .ai-status{margin-top:10px;text-align:center;font-size:13px;font-weight:800;padding:10px 12px;border-radius:12px;background:var(--c2);color:var(--tm);transition:all .3s}
 .ai-live.tracking .ai-status{background:#D1FAE5;color:#059669}
 .ai-live.lost .ai-status{background:#FEE2E2;color:#DC2626}
+
+/* 喬山健康科技 O2O 器材 QR Code 打卡 */
+.qr-widget{
+  margin:0 16px 16px;padding:16px;
+  background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(139,92,246,.08));
+  border:1.5px solid rgba(16,185,129,.35);border-radius:20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  box-shadow:0 4px 16px rgba(16,185,129,.08);
+}
+.qr-viewfinder{
+  position:relative;height:150px;border-radius:18px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 45%,#1F2937 0%,#0F172A 80%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  margin-bottom:14px;color:#fff;
+}
+.qr-viewfinder .cam-corner{width:22px;height:22px;border-width:3px;border-color:#34D399}
+.qr-viewfinder::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:#34D399;box-shadow:0 0 14px #34D399;display:none;z-index:2;
+}
+.qr-viewfinder.scanning::after{display:block;animation:scanLine 1.2s ease-in-out infinite alternate}
+.qr-loc-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px}
+.qr-loc-tabs::-webkit-scrollbar{display:none}
+.qr-loc-tab{
+  padding:8px 12px;border-radius:12px;font-size:12px;font-weight:800;
+  background:var(--c2);color:var(--tm);border:1.5px solid transparent;
+  white-space:nowrap;cursor:pointer;transition:all .2s;
+}
+.qr-loc-tab.on{background:#ECFDF5;color:#059669;border-color:#34D399}
+.qr-eq-card{
+  background:var(--c1);border:1px solid var(--bd);border-radius:16px;padding:12px 14px;
+  display:flex;align-items:center;gap:12px;margin-bottom:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,.02);
+}
+.qr-eq-card.done{background:var(--c2);opacity:.78}
+.qcard.qr::before{background:linear-gradient(180deg,#34D399,#059669)}
 </style>
 </head>
 <body>
@@ -605,6 +641,17 @@ img{display:block;max-width:100%}
   </div>
 </div>
 
+<!-- QR CODE SCANNER MODAL (喬山器材專屬 QR Code 掃描) -->
+<div class="modal-bg" id="qr-modal" style="z-index:240;">
+  <div class="modal-box" style="max-height:88vh;overflow-y:auto;padding-bottom:28px">
+    <div class="modal-head" style="margin-bottom:10px">
+      <div class="modal-ttl">📷 喬山器材 QR Code 打卡</div>
+      <button class="btn btn-gh btn-ico" onclick="closeQRScanner()">✕</button>
+    </div>
+    <div id="qr-modal-body"></div>
+  </div>
+</div>
+
 <div id="app"></div>
 
 <nav id="bnav" style="display:none">
@@ -710,7 +757,31 @@ const BDEFS=[
   {id:'allpets',nm:'收藏家',emo:'🏆',desc:'收集全部夥伴',chk:s=>CHARS.every(c=>s.unlockedChars.includes(c.id))},
   {id:'share',nm:'社群新星',emo:'📣',desc:'首次分享成就卡',chk:s=>s.shared},
   {id:'q50',nm:'微動百戰',emo:'💯',desc:'累積完成 50 個任務',chk:s=>s.done>=50},
+  {id:'qr_b1',nm:'喬山探險家・初級',emo:'🥉',desc:'累積掃描喬山器材 QR Code 3 次',chk:s=>(s.qrTotalCount||0)>=3},
+  {id:'qr_b2',nm:'喬山探險家・中級',emo:'🥈',desc:'累積掃描喬山器材 QR Code 10 次',chk:s=>(s.qrTotalCount||0)>=10},
+  {id:'qr_b3',nm:'喬山探險家・高級',emo:'🥇',desc:'累積掃描喬山器材 QR Code 25 次',chk:s=>(s.qrTotalCount||0)>=25},
 ];
+
+// ===== 喬山健康科技 O2O 場館 × 器材 QR Code 資料庫 =====
+// 規則：每個「地點 × 器材類別」對應唯一 QR Code（同場館 10 台跑步機共用同一組 QR Code，不同場館則不同）
+// 每個器材 QR Code 每天限掃 1 次，獲得固定 10 G幣 + 10 EXP，隔日 00:00 重置
+const QR_VENUES = [
+  { id: 'wg_xinyi', name: 'World Gym 台北信義店', brand: 'Matrix 商用旗艦系列', tag: '合作健身房', addr: '台北市信義區松壽路' },
+  { id: 'ff_zhongshan', name: '健身工廠 台北中山店', brand: 'Matrix 商用重訓系列', tag: '合作健身房', addr: '台北市中山區南京東路' },
+  { id: 'jht_flagship', name: '喬山健康科技 台北旗艦門市', brand: 'Johnson / Horizon 體驗館', tag: '直營門市', addr: '台北市大安區忠孝東路' },
+];
+
+const QR_EQUIPMENTS = [
+  { id: 'treadmill', name: '跑步機', emo: '🏃', model: 'Performance / T70 系列', desc: '同場館所有跑步機共用此專屬 QR Code' },
+  { id: 'bike', name: '飛輪健身車', emo: '🚴', model: 'CXM / GR7 商用飛輪', desc: '同場館所有飛輪車共用此專屬 QR Code' },
+  { id: 'elliptical', name: '橢圓交叉訓練機', emo: '⛷️', model: 'Ascent Trainer 懸吊橢圓機', desc: '同場館所有橢圓機共用此專屬 QR Code' },
+  { id: 'rower', name: '划船訓練機', emo: '🚣', model: 'Matrix 磁控划船機', desc: '同場館所有划船機共用此專屬 QR Code' },
+  { id: 'strength', name: '重訓肌力訓練站', emo: '🏋️', model: 'Ultra 系列綜合肌力訓練機', desc: '同場館同款重訓站共用此專屬 QR Code' },
+];
+
+function makeQRCodeStr(venueId, eqId){
+  return `JHT-${venueId.toUpperCase()}-${eqId.toUpperCase()}`;
+}
 
 // Lv5 自選菁英勳章（五選一）
 const ELITE=[
@@ -747,7 +818,8 @@ const DS={
   food: 3, satiety: 80, expeditions: [], doubleExpBuff: 0,
   myCode: null, friends: [], pokes: {}, pokeCount: 0, pokeInbox: [],
   expCD: 0, expDone: 0, eliteMedal: null,
-  helpSeen: {}, cloverBuff: false
+  helpSeen: {}, cloverBuff: false,
+  qrScans: {}, qrTotalCount: 0, qrSelVenue: 'wg_xinyi'
 };
 
 let S={};
@@ -775,6 +847,9 @@ function loadS(){
     if(S.eliteMedal === undefined) S.eliteMedal = null;
     if(!S.helpSeen || typeof S.helpSeen !== 'object') S.helpSeen = {};
     if(S.cloverBuff === undefined) S.cloverBuff = false;
+    if(!S.qrScans || typeof S.qrScans !== 'object') S.qrScans = {};
+    if(S.qrTotalCount === undefined) S.qrTotalCount = 0;
+    if(!S.qrSelVenue) S.qrSelVenue = 'wg_xinyi';
     if(S.v!==DS.v){ S.v=DS.v; saveS(); }
   }catch(e){S={...DS}; S.myCode = genFriendCode();}
 }
@@ -1002,21 +1077,190 @@ window.closeCamera = function() {
 
 // Global loop to update CD timers on UI without reloading
 setInterval(() => {
-  if (curPage !== 'home') return;
-  const btnCD = document.getElementById('btn-water-cd');
-  if (btnCD && S.waterCD) {
-    const now = Date.now();
-    if (now >= S.waterCD) {
-      S.waterCD = 0; saveS();
-      go('home'); // Refresh to show ready button
-    } else {
-      const left = Math.ceil((S.waterCD - now) / 1000);
-      const m = Math.floor(left / 60);
-      const s = left % 60;
-      btnCD.textContent = `${m}:${s<10?'0':''}${s}`;
+  if (curPage === 'home') {
+    const btnCD = document.getElementById('btn-water-cd');
+    if (btnCD && S.waterCD) {
+      const now = Date.now();
+      if (now >= S.waterCD) {
+        S.waterCD = 0; saveS();
+        go('home'); // Refresh to show ready button
+      } else {
+        const left = Math.ceil((S.waterCD - now) / 1000);
+        const m = Math.floor(left / 60);
+        const s = left % 60;
+        btnCD.textContent = `${m}:${s<10?'0':''}${s}`;
+      }
     }
   }
+  // 更新喬山器材 QR Code 每日冷卻倒數（距離午夜 00:00 重置時間）
+  const cdEls = document.querySelectorAll('.qr-cd-timer');
+  if (cdEls.length > 0) {
+    const leftSec = qrSecUntilMidnight();
+    const txt = fmtHMS(leftSec);
+    cdEls.forEach(el => { el.textContent = txt; });
+  }
 }, 1000);
+
+// ===== 喬山健康科技 O2O 器材 QR Code 掃描邏輯 =====
+let qrScanTimer = null;
+let qrScanning = false;
+
+function qrSecUntilMidnight(){
+  const now = new Date();
+  const mid = new Date(now);
+  mid.setHours(24, 0, 0, 0);
+  return Math.max(1, Math.floor((mid - now) / 1000));
+}
+
+function isQRScannedToday(venueId, eqId){
+  const code = makeQRCodeStr(venueId, eqId);
+  return S.qrScans && S.qrScans[code] === new Date().toDateString();
+}
+
+function getTodayQRCount(){
+  const today = new Date().toDateString();
+  if (!S.qrScans) return 0;
+  return Object.values(S.qrScans).filter(d => d === today).length;
+}
+
+function getQRBadgeTierInfo(){
+  const cnt = S.qrTotalCount || 0;
+  if (cnt >= 25) return { cur: '🥇 高級探險家', next: '已達最高階級', pct: 100, cnt };
+  if (cnt >= 10) return { cur: '🥈 中級探險家', next: `距離🥇高級還差 ${25 - cnt} 次 (${cnt}/25)`, pct: Math.round(cnt / 25 * 100), cnt };
+  if (cnt >= 3)  return { cur: '🥉 初級探險家', next: `距離🥈中級還差 ${10 - cnt} 次 (${cnt}/10)`, pct: Math.round(cnt / 10 * 100), cnt };
+  return { cur: '🌱 尚未獲得勳章', next: `距離🥉初級還差 ${3 - cnt} 次 (${cnt}/3)`, pct: Math.round(cnt / 3 * 100), cnt };
+}
+
+window.openQRScanner = function(venueId){
+  if (venueId) S.qrSelVenue = venueId;
+  if (!S.qrSelVenue) S.qrSelVenue = QR_VENUES[0].id;
+  qrScanning = false;
+  if (qrScanTimer) { clearTimeout(qrScanTimer); qrScanTimer = null; }
+  renderQRScannerModal();
+  document.getElementById('qr-modal').classList.add('open');
+};
+
+window.closeQRScanner = function(){
+  if (qrScanTimer) { clearTimeout(qrScanTimer); qrScanTimer = null; }
+  qrScanning = false;
+  document.getElementById('qr-modal').classList.remove('open');
+};
+
+window.selectQRVenue = function(venueId, inTab = false){
+  S.qrSelVenue = venueId; saveS();
+  if (inTab && curPage === 'quests') {
+    document.getElementById('qlist').innerHTML = qListHTML('qr');
+  }
+  const m = document.getElementById('qr-modal');
+  if (m && m.classList.contains('open')) renderQRScannerModal();
+};
+
+function renderQRScannerModal(scanningLabel = ''){
+  const body = document.getElementById('qr-modal-body');
+  if (!body) return;
+  const curV = QR_VENUES.find(v => v.id === S.qrSelVenue) || QR_VENUES[0];
+  const tier = getQRBadgeTierInfo();
+  const cdTxt = fmtHMS(qrSecUntilMidnight());
+
+  const tabsHtml = QR_VENUES.map(v => `
+    <button class="qr-loc-tab ${v.id === curV.id ? 'on' : ''}" onclick="selectQRVenue('${v.id}')">📍 ${v.name}</button>
+  `).join('');
+
+  const eqsHtml = QR_EQUIPMENTS.map(eq => {
+    const code = makeQRCodeStr(curV.id, eq.id);
+    const done = isQRScannedToday(curV.id, eq.id);
+    return `
+    <div class="qr-eq-card ${done ? 'done' : ''}">
+      <div style="font-size:30px;flex-shrink:0">${eq.emo}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:800;color:var(--t)">${eq.name} <span style="font-size:11px;color:var(--tm);font-weight:600">(${eq.model})</span></div>
+        <div style="font-size:10px;color:#059669;font-family:'Outfit',monospace;font-weight:700;margin-top:2px">QR: ${code}</div>
+        <div style="font-size:11px;color:var(--tm);margin-top:2px">${eq.desc}</div>
+      </div>
+      ${done ? `
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:11px;font-weight:800;color:var(--tm)">⏳ 冷卻中</div>
+          <div style="font-size:12px;font-weight:900;font-family:'Outfit';color:#D97706" class="qr-cd-timer">${cdTxt}</div>
+          <div style="font-size:9px;color:var(--td)">明日 00:00 重置</div>
+        </div>
+      ` : `
+        <button class="btn btn-g btn-sm" style="padding:8px 12px;font-size:12px;flex-shrink:0" ${qrScanning ? 'disabled' : ''} onclick="scanEquipmentQR('${curV.id}','${eq.id}')">📷 掃描打卡</button>
+      `}
+    </div>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="qr-viewfinder ${qrScanning ? 'scanning' : ''}" id="qr-vf">
+      <div class="cam-corner tl"></div><div class="cam-corner tr"></div>
+      <div class="cam-corner bl"></div><div class="cam-corner br"></div>
+      <div style="font-size:44px;margin-bottom:6px">${qrScanning ? '🔍' : '🏋️'}</div>
+      <div style="font-size:14px;font-weight:800" id="qr-vf-txt">${scanningLabel || '將鏡頭對準喬山器材上的專屬 QR Code'}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:4px">每次掃描獲得 <b style="color:#FBBF24">+10 G幣</b> ＆ <b style="color:#A78BFA">+10 EXP</b></div>
+    </div>
+
+    <div style="background:var(--c2);border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:11.5px;color:var(--t);line-height:1.5">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:4px">
+        <span>🏅 探險進度：${tier.cur}（累積 ${tier.cnt} 次）</span>
+        <span style="color:var(--p-d);font-size:11px">${tier.next}</span>
+      </div>
+      <div style="color:var(--tm)">💡 <b>同場館同款器材共用 QR Code</b>（例：同店 10 台跑步機皆為同一組，每日限領 1 次；換到不同場館或不同器材即可再次掃描！）</div>
+    </div>
+
+    <div style="font-size:12px;font-weight:800;color:var(--t);margin-bottom:6px">1️⃣ 選擇所在合作場館／門市（示範切換）</div>
+    <div class="qr-loc-tabs">${tabsHtml}</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:800;color:var(--t)">2️⃣ 點擊器材模擬掃描專屬 QR Code</div>
+      <span class="chip cg" style="font-size:10px">${curV.brand}</span>
+    </div>
+    <div>${eqsHtml}</div>
+  `;
+}
+
+window.scanEquipmentQR = function(venueId, eqId){
+  if (qrScanning) return;
+  const venue = QR_VENUES.find(v => v.id === venueId);
+  const eq = QR_EQUIPMENTS.find(e => e.id === eqId);
+  if (!venue || !eq) return;
+
+  const code = makeQRCodeStr(venueId, eqId);
+  if (isQRScannedToday(venueId, eqId)) {
+    toast(`【${venue.name}・${eq.name}】今日已掃描過，冷卻剩餘 ${fmtHMS(qrSecUntilMidnight())}！`, '⏳');
+    return;
+  }
+
+  S.qrSelVenue = venueId;
+  // 若還沒打開掃描器 Modal（例如從任務頁直接點），先開啟或直接在背景完成，這裡統一打開掃描動畫讓體驗完整
+  const m = document.getElementById('qr-modal');
+  const modalWasOpen = m && m.classList.contains('open');
+  if (!modalWasOpen) m.classList.add('open');
+
+  qrScanning = true;
+  renderQRScannerModal(`正在掃描 ${code} ...`);
+
+  qrScanTimer = setTimeout(() => {
+    qrScanning = false;
+    qrScanTimer = null;
+    const today = new Date().toDateString();
+    if (!S.qrScans) S.qrScans = {};
+    S.qrScans[code] = today;
+    S.qrTotalCount = (S.qrTotalCount || 0) + 1;
+    S.gcoin += 10;
+    addExp(10);
+    chkBadges();
+    saveS();
+
+    toast(`掃描成功！【${venue.name}・${eq.name}】+10 G幣、+10 EXP 🎉`, '🏋️');
+    fireConfetti();
+    renderQRScannerModal(`✅ 掃描成功！已獲得 +10 G幣、+10 EXP`);
+    if (curPage === 'home') go('home');
+    else if (curPage === 'quests') {
+      const activeTab = document.querySelector('#ftabs .ftab.on');
+      const isQrTab = activeTab && activeTab.getAttribute('data-f') === 'qr';
+      if (isQrTab) document.getElementById('qlist').innerHTML = qListHTML('qr');
+    }
+  }, 900);
+};
 
 function petHTML(){
   const ch=CHARS.find(c=>c.id===S.charId)||CHARS[0];
@@ -1228,10 +1472,11 @@ const HELP = {
       '這裡是你每天的冒險據點，可以看到等級、貨幣與今日進度',
       '點右上角「⚔️ Lv.」徽章，可以打開升級地圖',
       '🪙 G幣：做任務賺取；💰 W幣：可兌換 VIP 與實體商品；🥫 罐頭：用來餵寵物' ] },
-    { ico: '📅', t: '每日簽到 & 喝水打卡', items: [
+    { ico: '📅', t: '每日簽到、喝水 & 喬山器材掃描', items: [
       '每天按一次「馬上簽到」，7 天一輪，依序拿 1～6 G幣，第 7 天拿 10 G幣',
       '簽到中斷的當天，可以用「✏️ 補簽」救回之前的連續天數（需要補簽修復筆）',
-      '喝水按「＋」後，AI 會即時識別你的喝水動作，每杯要間隔 15 分鐘，目標一天 8 杯' ] },
+      '喝水按「＋」後，AI 會即時識別你的喝水動作，每杯要間隔 15 分鐘，目標一天 8 杯',
+      '🏋️ 到合作健身房或喬山門市運動時，點「喬山器材 QR Code 打卡」掃描器材專屬 QR Code 可領 10 G幣 + 10 EXP' ] },
     { ico: '🐰', t: '照顧你的夥伴', items: [
       '按「餵食 🥫」用 1 個罐頭，飽食度 +30',
       '飽食度 ≥ 70 時，做任務額外多拿 15% G幣',
@@ -1244,10 +1489,15 @@ const HELP = {
   ]},
   quests: { name: '任務', slides: [
     { ico: '⚡', t: '挑選任務', items: [
-      '上方分頁可篩選：全部／🌟 收藏／🪑 辦公桌／🚶 起身',
+      '上方分頁可篩選：全部／🌟 收藏／🪑 辦公桌／🚶 起身／🏋️ 喬山器材',
       '🪑 辦公桌任務：坐著就能做，約 1～2 分鐘',
       '🚶 起身任務：EXP 比較高，需要起身活動',
       '今天完成的任務會變成灰色，明天才能再做' ] },
+    { ico: '🏋️', t: '喬山器材 QR Code 打卡', items: [
+      '切換到「🏋️ 喬山器材」分頁，可查看各合作場館（World Gym、健身工廠、喬山旗艦門市）的器材清單',
+      '同場館同款器材共用同一個 QR Code（例：同店 10 台跑步機共用同一組），每個器材每天限掃 1 次，隔日 00:00 重置並顯示冷卻倒數',
+      '換到另一間場館或不同器材，就能掃描不同的 QR Code 再領 10 G幣 + 10 EXP！',
+      '累積掃描 3／10／25 次可依序解鎖初級🥉、中級🥈、高級🥇「喬山探險家」勳章' ] },
     { ico: '🌟', t: '收藏常用任務', items: [
       '點任務卡右上角的 ★ 就能收藏，再點一次取消',
       '收藏的任務會排在最前面',
@@ -1458,6 +1708,17 @@ function pgHome(){
     ${getWaterBtnHtml()}
   </div>
 
+  <div class="qr-widget">
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <span style="font-size:14px;font-weight:900;color:#059669">🏋️ 喬山器材 QR 掃描打卡</span>
+        <span class="chip cg" style="font-size:10px;padding:2px 8px">今日已掃 ${getTodayQRCount()} 台</span>
+      </div>
+      <div style="font-size:12px;color:var(--tm);line-height:1.4">到合作健身房／喬山門市掃描器材專屬 QR Code，每台每日領 <b style="color:#D97706">+10 G幣</b> ＆ <b style="color:var(--p-d)">+10 EXP</b>！</div>
+    </div>
+    <button class="btn btn-g btn-sm" style="padding:10px 14px;font-size:13px;border-radius:14px;flex-shrink:0" onclick="openQRScanner()">📷 掃描</button>
+  </div>
+
   <div class="pet-sec">${petHTML()}</div>
 
   <div class="daily-c" onclick="go('qa','${daily.id}')">
@@ -1475,20 +1736,75 @@ function pgQuests(){
   return`
   <div class="ph">
     <div class="ph1">⚡ 任務清單</div>
-    <div style="font-size:13px;color:var(--tm);font-weight:600">${S.todayDone.length} 已完成</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn btn-g btn-sm" style="padding:6px 12px;font-size:12px" onclick="openQRScanner()">📷 掃器材 QR</button>
+      <div style="font-size:13px;color:var(--tm);font-weight:600">${S.todayDone.length} 已完成</div>
+    </div>
   </div>
   <div style="padding:0 16px 16px">
     <div class="ftabs" id="ftabs">
-      <button class="ftab on" onclick="fltr('all',this)">全部</button>
-      <button class="ftab" onclick="fltr('fav',this)">🌟 收藏</button>
-      <button class="ftab" onclick="fltr('desk',this)">🪑 辦公桌</button>
-      <button class="ftab" onclick="fltr('active',this)">🚶 起身</button>
+      <button class="ftab on" data-f="all" onclick="fltr('all',this)">全部</button>
+      <button class="ftab" data-f="fav" onclick="fltr('fav',this)">🌟 收藏</button>
+      <button class="ftab" data-f="desk" onclick="fltr('desk',this)">🪑 辦公桌</button>
+      <button class="ftab" data-f="active" onclick="fltr('active',this)">🚶 起身</button>
+      <button class="ftab" data-f="qr" onclick="fltr('qr',this)">🏋️ 喬山器材</button>
     </div>
     <div id="qlist">${qListHTML('all')}</div>
   </div>`;
 }
 
+function renderQREquipmentTabHTML(){
+  const curV = QR_VENUES.find(v => v.id === S.qrSelVenue) || QR_VENUES[0];
+  const tier = getQRBadgeTierInfo();
+  const cdTxt = fmtHMS(qrSecUntilMidnight());
+
+  const venueTabs = QR_VENUES.map(v => `
+    <button class="qr-loc-tab ${v.id === curV.id ? 'on' : ''}" onclick="selectQRVenue('${v.id}', true)">📍 ${v.name}</button>
+  `).join('');
+
+  const cards = QR_EQUIPMENTS.map(eq => {
+    const code = makeQRCodeStr(curV.id, eq.id);
+    const done = isQRScannedToday(curV.id, eq.id);
+    return `
+    <div class="qcard qr${done ? ' done' : ''}" onclick="${done ? `toast('此場館的【${eq.name}】今日已掃描過，請等待冷卻重置或至其他場館掃描！','⏳')` : `scanEquipmentQR('${curV.id}','${eq.id}')`}">
+      <div style="font-size:36px;flex-shrink:0">${eq.emo}</div>
+      <div style="flex:1;min-width:0">
+        <div class="qnm">${eq.name}${done ? ' ✓' : ''} <span style="font-size:11px;color:var(--tm);font-weight:600">(${eq.model})</span></div>
+        <div class="qdesc" style="margin-bottom:4px">${curV.name}・${eq.desc}</div>
+        <div style="font-size:10px;color:#059669;font-family:'Outfit',monospace;font-weight:700;margin-bottom:8px">專屬 QR Code：${code}</div>
+        <div class="qmeta">
+          <span class="chip cp">⚡ +10 EXP</span>
+          <span class="chip cs">🪙 +10 G幣</span>
+          ${done
+            ? `<span class="chip cr">⏳ 冷卻倒數 <b class="qr-cd-timer" style="font-family:'Outfit';margin-left:3px">${cdTxt}</b></span>`
+            : `<span class="chip cg">📷 點擊掃描打卡</span>`}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+    <div class="card2" style="margin-bottom:12px;background:linear-gradient(135deg,#ECFDF5,#F5F3FF);border:1px solid rgba(16,185,129,.25)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:14px;font-weight:900;color:#059669">🏋️ 喬山健康科技 O2O 器材打卡專區</div>
+        <button class="btn btn-g btn-sm" style="padding:5px 10px;font-size:11px" onclick="openQRScanner('${curV.id}')">📷 開啟掃描器</button>
+      </div>
+      <div style="font-size:11.5px;color:var(--t);line-height:1.5;margin-bottom:8px">
+        同場館同款器材（如 10 台跑步機）皆貼有<b>同一組專屬 QR Code</b>，每個器材每日限掃 1 次（隔日 00:00 重置）；換到不同場館或不同器材即可掃描領獎！
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:800;color:var(--p-d);background:rgba(255,255,255,.7);padding:6px 10px;border-radius:10px">
+        <span>${tier.cur}（累積 ${tier.cnt} 次）</span>
+        <span>${tier.next}</span>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:800;color:var(--t);margin-bottom:6px">📍 切換所在場館／門市查看器材冷卻狀態：</div>
+    <div class="qr-loc-tabs">${venueTabs}</div>
+    ${cards}
+  `;
+}
+
 function qListHTML(f){
+  if(f==='qr') return renderQREquipmentTabHTML();
   let qs=[...QUESTS];
   if(f==='desk') qs=qs.filter(q=>q.type==='desk');
   else if(f==='active') qs=qs.filter(q=>q.type==='active');
@@ -2861,6 +3177,7 @@ function init(){
   safeAddL('dex-modal', closeDex);
   safeAddL('dex-detail-modal', closeDexDetail);
   safeAddL('help-modal', closeHelp);
+  safeAddL('qr-modal', closeQRScanner);
   
   if(S.onboarded){ document.getElementById('bnav').style.display='flex'; go('home'); }
   else { renderSplash(); }
