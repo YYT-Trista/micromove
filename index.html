@@ -3,11 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MicroMove — 微運動冒險 (AI驗證版)</title>
+<title>MicroMove</title>
 <meta name="description" content="透過遊戲化微運動降低運動門檻，每天1-5分鐘，輕鬆建立健康習慣！">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js" defer></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:16px;-webkit-text-size-adjust:100%}
@@ -375,36 +377,92 @@ img{display:block;max-width:100%}
 .help-dot{width:8px;height:8px;border-radius:100px;background:var(--c3);transition:all .25s}
 .help-dot.on{width:22px;background:var(--p)}
 
-/* AI 全程識別（模擬） */
-.ai-live{margin:0 20px 16px}
+/* 任務全螢幕運動畫面 (#qa-fs-ov)：點擊「開始任務」後呈現全螢幕 */
+.qa-prep-card{
+  margin:0 16px 16px;padding:20px 18px;
+  background:var(--c1);border:1.5px solid var(--bd);border-radius:22px;
+  box-shadow:var(--sh);text-align:center;
+}
+.qa-fs-ov{
+  position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:430px;z-index:260;
+  background:#0F172A;color:#fff;
+  display:none;flex-direction:column;overflow:hidden;
+}
+.qa-fs-ov.open{display:flex;animation:fadeIn .25s ease}
+.qa-fs-desk{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+  padding:48px 24px 32px;
+  background:radial-gradient(ellipse at 50% 30%,#312E81 0%,#0F172A 80%);
+}
+.ai-live{flex:1;display:flex;flex-direction:column;position:relative;width:100%;height:100%}
 .ai-cam{
-  position:relative;height:170px;border-radius:20px;overflow:hidden;
-  background:radial-gradient(ellipse at 50% 40%,#374151 0%,#111827 75%);
+  position:relative;flex:1;width:100%;height:100%;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 38%,#374151 0%,#0F172A 80%);
   display:flex;align-items:center;justify-content:center;
 }
-.ai-cam .cam-corner{width:20px;height:20px;border-width:3px;border-color:rgba(255,255,255,.5)}
-.ai-box{
-  position:relative;width:110px;height:130px;border-radius:14px;
-  border:2.5px dashed rgba(255,255,255,.25);
-  display:flex;align-items:center;justify-content:center;font-size:60px;
-  transition:border-color .3s, box-shadow .3s;
-}
-.ai-live.tracking .ai-box{border:2.5px solid #34D399;box-shadow:0 0 18px rgba(52,211,153,.45)}
-.ai-live.tracking .ai-box span{animation:bounceSolo 1.2s ease-in-out infinite}
-.ai-live.lost .ai-box{border:2.5px solid #F87171;box-shadow:0 0 18px rgba(248,113,113,.5)}
-.ai-live.lost .ai-box span{opacity:.25}
-.ai-scan{position:absolute;left:0;right:0;height:3px;background:var(--p-l);box-shadow:0 0 14px var(--p-l);display:none;z-index:2}
-.ai-live.tracking .ai-scan{display:block;animation:scanLine 1.6s ease-in-out infinite alternate}
-.ai-tag{position:absolute;top:10px;font-size:11px;font-weight:800;color:#fff;background:rgba(0,0,0,.45);padding:4px 10px;border-radius:100px;z-index:3}
-.ai-tag.l{left:12px}.ai-tag.r{right:12px;font-family:'Outfit','Noto Sans TC',sans-serif}
+#ai-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);z-index:1}
+#ai-pose-cv{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+.ai-cam .cam-corner{width:24px;height:24px;border-width:3.5px;border-color:rgba(255,255,255,.65);z-index:4}
+.ai-scan{position:absolute;left:0;right:0;height:3px;background:var(--p-l);box-shadow:0 0 14px var(--p-l);display:none;z-index:3}
+.ai-live.tracking .ai-scan{display:block;animation:scanLine 1.8s ease-in-out infinite alternate}
+.ai-tag{position:absolute;top:16px;font-size:11px;font-weight:800;color:#fff;background:rgba(15,23,42,.72);backdrop-filter:blur(6px);padding:5px 12px;border-radius:100px;z-index:6;border:1px solid rgba(255,255,255,.16)}
+.ai-tag.l{left:14px}.ai-tag.r{right:14px;font-family:'Outfit','Noto Sans TC',sans-serif}
 .ai-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#9CA3AF;margin-right:5px;vertical-align:middle}
 .ai-live.tracking .ai-dot{background:#34D399;animation:pulse 1s infinite}
 .ai-live.lost .ai-dot{background:#F87171}
-.ai-status{margin-top:10px;text-align:center;font-size:13px;font-weight:800;padding:10px 12px;border-radius:12px;background:var(--c2);color:var(--tm);transition:all .3s}
-.ai-live.tracking .ai-status{background:#D1FAE5;color:#059669}
-.ai-live.lost .ai-status{background:#FEE2E2;color:#DC2626}
 
-/* 喬山健康科技 O2O 器材 QR Code 打卡 */
+/* 全螢幕運動畫面內的 HUD：左上記次環、右上倒數、底部幅度條與暫停鈕 */
+.ai-hud-ring{
+  position:absolute;top:50px;left:14px;z-index:6;
+  width:94px;height:94px;border-radius:22px;
+  background:rgba(15,23,42,.72);backdrop-filter:blur(8px);
+  border:1.5px solid rgba(255,255,255,.18);
+  display:flex;align-items:center;justify-content:center;
+}
+.ai-hud-ring svg{transform:rotate(-90deg)}
+.ai-hud-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:4px}
+.ai-rep-num{font-family:'Outfit',sans-serif;font-size:21px;font-weight:900;color:#FBBF24;line-height:1.05}
+.ai-rep-unit{font-size:9.5px;font-weight:800;color:rgba(255,255,255,.85);margin-top:2px;max-width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.ai-hud-timer{
+  position:absolute;top:50px;right:14px;z-index:6;
+  background:rgba(15,23,42,.72);backdrop-filter:blur(8px);
+  border:1.5px solid rgba(255,255,255,.18);border-radius:16px;
+  padding:7px 12px;color:#fff;text-align:right;min-width:96px;
+}
+.ai-hud-timer .t-lbl{font-size:9.5px;font-weight:700;color:rgba(255,255,255,.72)}
+.ai-hud-timer .t-val{font-family:'Outfit',sans-serif;font-size:19px;font-weight:900;color:#fff;line-height:1.15}
+
+.ai-cam-Ctrl{
+  position:absolute;top:110px;right:14px;z-index:6;display:flex;flex-direction:column;gap:6px;align-items:flex-end;
+}
+.ai-mini-btn{
+  background:rgba(15,23,42,.75);backdrop-filter:blur(6px);color:#fff;
+  border:1px solid rgba(255,255,255,.28);border-radius:10px;
+  padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;
+}
+.ai-mini-btn:active{transform:scale(.95)}
+
+.ai-bottom-dock{
+  position:absolute;left:12px;right:12px;bottom:16px;z-index:6;
+  background:rgba(15,23,42,.82);backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.16);border-radius:20px;
+  padding:12px 14px;color:#fff;
+}
+.ai-gauge-top{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;font-weight:800;margin-bottom:6px;color:#F9FAFB}
+.ai-gauge-bar{position:relative;height:11px;background:rgba(255,255,255,.18);border-radius:100px;overflow:hidden}
+.ai-gauge-fill{height:100%;width:0%;border-radius:100px;background:linear-gradient(90deg,#60A5FA,#34D399);transition:width .12s linear}
+.ai-gauge-fill.pass{background:linear-gradient(90deg,#10B981,#FBBF24)}
+.ai-gauge-line{
+  position:absolute;top:0;bottom:0;left:70%;width:3px;background:#EF4444;z-index:2;
+  box-shadow:0 0 6px rgba(239,68,68,.95);
+}
+.ai-status{margin-top:8px;text-align:center;font-size:12px;font-weight:800;padding:7px 10px;border-radius:10px;background:rgba(255,255,255,.1);color:#E5E7EB;transition:all .25s}
+.ai-live.tracking .ai-status{background:rgba(16,185,129,.25);color:#A7F3D0}
+.ai-live.lost .ai-status{background:rgba(239,68,68,.3);color:#FECACA}
+
+/* 喬山健康科技 O2O 器材 QR Code 打卡（加大取景窗） */
 .qr-widget{
   margin:0 16px 16px;padding:16px;
   background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(139,92,246,.08));
@@ -413,12 +471,19 @@ img{display:block;max-width:100%}
   box-shadow:0 4px 16px rgba(16,185,129,.08);
 }
 .qr-viewfinder{
-  position:relative;height:150px;border-radius:18px;overflow:hidden;
-  background:radial-gradient(ellipse at 50% 45%,#1F2937 0%,#0F172A 80%);
+  position:relative;height:280px;border-radius:22px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 45%,#1F2937 0%,#0F172A 82%);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  margin-bottom:14px;color:#fff;
+  margin-bottom:14px;color:#fff;border:2px solid rgba(52,211,153,.35);
+  box-shadow:inset 0 0 40px rgba(0,0,0,.6);
 }
-.qr-viewfinder .cam-corner{width:22px;height:22px;border-width:3px;border-color:#34D399}
+.qr-target-box{
+  position:relative;width:176px;height:176px;border-radius:20px;
+  border:2px dashed rgba(52,211,153,.65);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(16,185,129,.06);margin-bottom:10px;
+}
+.qr-target-box .cam-corner{width:26px;height:26px;border-width:4px;border-color:#34D399}
 .qr-viewfinder::after{
   content:'';position:absolute;top:0;left:0;right:0;height:3px;
   background:#34D399;box-shadow:0 0 14px #34D399;display:none;z-index:2;
@@ -455,10 +520,12 @@ img{display:block;max-width:100%}
   </div>
   
   <div class="cam-frame" id="cam-frame">
-    <div class="cam-corner tl"></div><div class="cam-corner tr"></div>
-    <div class="cam-corner bl"></div><div class="cam-corner br"></div>
-    <div style="font-size:80px;opacity:0.3" id="cam-icon">💧</div>
-    <div id="cam-scan-txt" style="position:absolute;bottom:30px;font-size:15px;font-weight:800;color:var(--p-l);background:rgba(0,0,0,0.6);padding:6px 16px;border-radius:100px;display:none;z-index:20;">⏳ AI 視覺掃描中...</div>
+    <video id="water-video" autoplay playsinline muted style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:none;z-index:1"></video>
+    <div class="cam-corner tl" style="z-index:5"></div><div class="cam-corner tr" style="z-index:5"></div>
+    <div class="cam-corner bl" style="z-index:5"></div><div class="cam-corner br" style="z-index:5"></div>
+    <div style="font-size:80px;opacity:0.3;position:relative;z-index:3" id="cam-icon">💧</div>
+    <div id="cam-mode-tag" style="position:absolute;top:14px;left:14px;font-size:11px;font-weight:800;color:#fff;background:rgba(0,0,0,0.55);padding:4px 10px;border-radius:100px;z-index:6">📷 鏡頭啟動中...</div>
+    <div id="cam-scan-txt" style="position:absolute;bottom:30px;font-size:15px;font-weight:800;color:var(--p-l);background:rgba(0,0,0,0.65);padding:6px 16px;border-radius:100px;display:none;z-index:20;">⏳ AI 視覺掃描中...</div>
   </div>
   
   <div class="cam-btn" id="cam-btn" style="display:none">📷</div>
@@ -532,12 +599,12 @@ img{display:block;max-width:100%}
 </div>
 
 <!-- GIFT BOX POPUP MODAL -->
-<div class="modal-bg" id="gift-modal">
+<div class="modal-bg" id="gift-modal" style="z-index:950">
   <div class="modal-box" style="text-align:center;padding-bottom:32px">
     <div style="font-size:64px;margin-bottom:12px;animation:pop 0.5s cubic-bezier(.34,1.56,.64,1)" id="gift-icon">🎁</div>
     <div style="font-size:20px;font-weight:900;color:var(--t);margin-bottom:6px" id="gift-title">獲得獎勵！</div>
     <div style="font-size:14px;color:var(--tm);font-weight:600;margin-bottom:20px" id="gift-desc">拆開禮盒獲得珍貴道具</div>
-    <button class="btn btn-p btn-full btn-lg" onclick="closeGiftModal()">收下好禮 🌟</button>
+    <button class="btn btn-p btn-full btn-lg" onclick="closeGiftModal()">收下好禮並繼續探索 🚀</button>
   </div>
 </div>
 
@@ -724,22 +791,50 @@ function lvInfo(totalExp){
 }
 
 const QUESTS=[
-  {id:'q1',type:'desk',name:'頸部伸展',emo:'🧘',desc:'緩解頸部僵硬，改善血液循環',dur:60,exp:15,vCat:'stretch',steps:['坐直，雙腳平放地面','頭慢慢向右傾，停留 15 秒','回正，再向左傾 15 秒','頭緩緩向前低，感受後頸伸展','重複 2 次，放鬆頸部']},
-  {id:'q2',type:'desk',name:'深呼吸練習',emo:'🌬️',desc:'舒緩壓力，提升專注力與氧氣攝入',dur:120,exp:20,steps:['坐直靠背，雙手放膝上','鼻子吸氣 4 秒，感受腹部脹起','屏住呼吸 4 秒','嘴巴緩緩吐氣 6 秒','重複 6 次完整呼吸循環']},
-  {id:'q3',type:'desk',name:'手腕活化',emo:'✋',desc:'預防滑鼠手，放鬆前臂肌肉',dur:60,exp:12,vCat:'stretch',steps:['雙手向前伸直平放','手腕順時針慢轉 10 圈','逆時針再轉 10 圈','雙手握拳後用力張開，重複 8 次','雙手十指交扣往外推伸，停 15 秒']},
-  {id:'q4',type:'desk',name:'肩膀放鬆',emo:'💆',desc:'消除肩頸緊繃，釋放壓力',dur:60,exp:15,vCat:'stretch',steps:['坐直，雙手自然下垂','雙肩同時向上聳起，靠近耳朵','停留 3 秒後瞬間放鬆落下','向後畫圈轉動肩膀 5 次','向前畫圈轉動肩膀 5 次']},
-  {id:'q5',type:'desk',name:'護眼遠眺',emo:'👀',desc:'緩解眼睛疲勞，預防近視',dur:60,exp:10,steps:['暫停手邊工作，離開螢幕','找一個距離至少 6 公尺遠的目標','專注盯著目標看 20 秒','快速眨眼 10 次','閉上眼睛休息 10 秒']},
+  {id:'q1',type:'desk',name:'頸部伸展',emo:'🧘',desc:'緩解頸部僵硬，改善血液循環',dur:60,exp:15,vCat:'stretch',
+    ai:{mode:'rep',target:6,unit:'次左右傾頭',linePct:48,lineLbl:'🎯 傾頭幅度標準線（頭部需偏離中線過線）',guide:'請將臉部對準中線，再向左右傾頭超過虛線'},
+    steps:['坐直，雙腳平放地面','頭慢慢向右傾，停留 15 秒','回正，再向左傾 15 秒','頭緩緩向前低，感受後頸伸展','重複完成 6 次左右傾頭伸展']},
+  {id:'q2',type:'desk',name:'深呼吸練習',emo:'🌬️',desc:'舒緩壓力，提升專注力與氧氣攝入',dur:120,exp:20,
+    ai:{mode:'rep',target:6,unit:'次深呼吸',linePct:42,lineLbl:'🎯 吸氣胸肩擴張標準線（吸氣挺胸過線）',guide:'吸氣時挺胸雙肩微抬高過綠線，吐氣時放鬆下沉'},
+    steps:['坐直靠背，雙手放膝上','鼻子吸氣 4 秒，感受胸腹擴張','屏住呼吸 4 秒','嘴巴緩緩吐氣 6 秒','重複 6 次完整深呼吸循環']},
+  {id:'q3',type:'desk',name:'手腕活化',emo:'✋',desc:'預防滑鼠手，放鬆前臂肌肉',dur:60,exp:12,vCat:'stretch',
+    ai:{mode:'rep',target:10,unit:'次舉手轉腕',linePct:55,lineLbl:'🎯 手腕抬高標準線（將雙手舉至高於此線活動）',guide:'請將雙手舉高超過畫面綠線，轉動手腕與開合手指'},
+    steps:['雙手向前伸直舉至鏡頭標準線以上','手腕順時針慢轉 10 圈','逆時針再轉 10 圈','雙手握拳後用力張開，重複 10 次','雙手十指交扣往外推伸']},
+  {id:'q4',type:'desk',name:'肩膀放鬆',emo:'💆',desc:'消除肩頸緊繃，釋放壓力',dur:60,exp:15,vCat:'stretch',
+    ai:{mode:'rep',target:10,unit:'次聳肩放鬆',linePct:40,lineLbl:'🎯 聳肩高度標準線（雙肩向上聳起觸及此線）',guide:'雙肩同時向上聳起超過綠線，再放鬆落下計 1 次'},
+    steps:['坐直，雙手自然下垂','雙肩同時向上聳起，靠近耳朵過標準線','停留 3 秒後瞬間放鬆落下','向後畫圈轉動肩膀 5 次','向前畫圈轉動肩膀 5 次，共 10 次']},
+  {id:'q5',type:'desk',name:'護眼遠眺',emo:'👀',desc:'緩解眼睛疲勞，預防近視',dur:60,exp:10,
+    ai:{mode:'rep',target:6,unit:'次轉頭遠眺',linePct:50,lineLbl:'🎯 視線遠眺擺動線（轉頭望向遠方過線）',guide:'視線離開螢幕，轉頭望向左右遠方目標超過標準線'},
+    steps:['暫停手邊工作，視線離開螢幕','轉頭找距離至少 6 公尺遠的目標','專注遠眺目標，再轉向另一側','快速眨眼放鬆眼部肌肉','完成 6 次遠眺與轉動放鬆']},
   
-  {id:'q7',type:'active',name:'深蹲挑戰',emo:'🏋️',desc:'強化下半身肌群，提升整體代謝',dur:120,exp:40,vCat:'strength',steps:['雙腳與肩同寬站立，腳尖微外八','背打直，視線朝前','慢慢蹲下直到大腿平行地面','起身時收緊臀部，完全站直','完成 20 下標準深蹲']},
-  {id:'q8',type:'active',name:'原地踏步',emo:'🚶',desc:'喚醒全身循環，輕鬆有氧熱身',dur:180,exp:30,steps:['站立，雙手自然放鬆','開始原地抬腿踏步','膝蓋盡量抬高至腰部位置','保持穩定呼吸與節奏','持續踏步 3 分鐘不中斷']},
-  {id:'q9',type:'active',name:'開合跳',emo:'🏃',desc:'快速提升心率，全身燃脂',dur:60,exp:35,vCat:'hiit',steps:['站直，雙腳併攏，雙手自然下垂','跳起時雙腳向外張開，雙手舉過頭頂擊掌','再次跳起，回到起始姿勢','保持輕快的節奏','完成 30 下開合跳']},
-  {id:'q10',type:'active',name:'靠牆半蹲',emo:'🪑',desc:'強化大腿股四頭肌，保護膝關節',dur:60,exp:40,vCat:'strength',steps:['背部平貼牆壁站立','雙腳向前走約一步距離','慢慢下蹲，直到大腿與地面平行','膝蓋不超過腳尖，背部緊貼牆面','保持這個姿勢撐住 60 秒']},
-  {id:'q12',type:'active',name:'平板撐核心',emo:'🔥',desc:'終極核心訓練，全身發力抗阻',dur:60,exp:50,vCat:'strength',steps:['俯臥，前臂撐地（肘在肩正下方）','腳尖點地，抬起全身','從頭到腳維持完美一直線','腹部核心收緊，不要塌腰','保持姿勢撐住 60 秒！加油！']},
+  {id:'q7',type:'active',name:'深蹲挑戰',emo:'🏋️',desc:'強化下半身肌群，提升整體代謝',dur:120,exp:40,vCat:'strength',
+    ai:{mode:'rep',target:20,unit:'下標準深蹲',lineLbl:'🤖 AI 膝髖關節角度與下蹲位移辨識',guide:'自然往下蹲低再站直即可計 1 下（自動依您的身高比例判讀，不限站立遠近）'},
+    steps:['雙腳與肩同寬站立，腳尖微外八','背打直，視線朝前','自然往下蹲低，AI 會自動追蹤髖部與膝蓋彎曲幅度','起身時收緊臀部，站直即可計 1 下','完成 20 下深蹲即可過關']},
+  {id:'q8',type:'active',name:'原地踏步',emo:'🚶',desc:'喚醒全身循環，輕鬆有氧熱身',dur:180,exp:30,
+    ai:{mode:'rep',target:40,unit:'步原地踏步',lineLbl:'🤖 AI 左右雙腿交替律動辨識',guide:'自然原地左右交替踏步即可，AI 自動偵測膝踝交替抬起與身體律動計步'},
+    steps:['站立，雙手自然放鬆擺動','開始自然原地左右交替踏步','無須刻意高抬，自然踏步節奏即可被 AI 識別','保持穩定呼吸與節奏','累積完成 40 步踏步即可過關']},
+  {id:'q9',type:'active',name:'開合跳',emo:'🏃',desc:'快速提升心率，全身燃脂',dur:60,exp:35,vCat:'hiit',
+    ai:{mode:'rep',target:30,unit:'下開合跳',lineLbl:'🤖 AI 雙手抬高與肩部開合辨識',guide:'雙手向上揮動高過肩膀再放下即計 1 下'},
+    steps:['站直，雙腳併攏，雙手自然下垂','跳起（或墊步）時雙手向上張開高過肩膀','回到起始姿勢即完成 1 下','保持輕快的節奏','完成 30 下開合跳']},
+  {id:'q10',type:'active',name:'靠牆半蹲',emo:'🪑',desc:'強化大腿股四頭肌，保護膝關節',dur:60,exp:40,vCat:'strength',
+    ai:{mode:'hold',target:60,unit:'秒半蹲維持',lineLbl:'🤖 AI 身體穩定度與半蹲姿態追蹤',guide:'保持在鏡頭內維持穩定半蹲姿勢，AI 即持續倒數計時'},
+    steps:['背部平貼牆壁站立','雙腳向前走約一步距離','下蹲維持穩定姿勢','膝蓋不超過腳尖，背部緊貼牆面','維持姿勢累積滿 60 秒']},
+  {id:'q12',type:'active',name:'平板撐核心',emo:'🔥',desc:'終極核心訓練，全身發力抗阻',dur:60,exp:50,vCat:'strength',
+    ai:{mode:'hold',target:60,unit:'秒平板支撐',lineLbl:'🤖 AI 核心支撐穩定度追蹤',guide:'於鏡頭前維持穩定支撐姿勢，AI 即持續倒數計時'},
+    steps:['俯臥，前臂撐地（肘在肩正下方）','腳尖點地，抬起身體呈一直線','從頭到腳維持穩定','腹部核心收緊，不要塌腰','維持標準姿勢累積 60 秒！']},
   
-  {id:'q13',type:'active',name:'基礎直拳連擊',emo:'🥊',desc:'釋放壓力，體驗基礎拳擊節奏',dur:60,exp:45,vCat:'boxing',steps:['雙腳微彎，雙手護住臉頰','左手向前快速擊出並收回','右手向前擊出，身體微轉','保持呼吸，不要憋氣','持續左右交替出拳 60 秒']},
-  {id:'q14',type:'active',name:'爆發高抬腿',emo:'💦',desc:'快速提升心率，HIIT前置訓練',dur:60,exp:50,vCat:'hiit',steps:['站直，雙手放在腰際','右膝快速抬高碰觸右手','左膝快速抬高碰觸左手','像跑步一樣加快節奏','全力以赴維持 60 秒']},
-  {id:'q15',type:'active',name:'毛巾肌力抗阻',emo:'🏋️',desc:'利用毛巾進行全身肌力喚醒',dur:90,exp:45,vCat:'strength',steps:['拿一條毛巾，雙手拉直','雙手高舉過頭，用力向外扯','保持向外拉力，慢慢將毛巾降至胸前','再慢慢推回頭頂','重複動作，感受背部與手臂發力']},
-  {id:'q16',type:'active',name:'全身深層拉伸',emo:'🧘‍♀️',desc:'運動後必備，恢復肌肉彈性',dur:120,exp:35,vCat:'stretch',steps:['雙腳打開與肩同寬','雙手十指交扣，掌心向上推','身體向右側彎，停留 15 秒','身體向左側彎，停留 15 秒','雙手在背後交扣，挺胸停留 30 秒']}
+  {id:'q13',type:'active',name:'基礎直拳連擊',emo:'🥊',desc:'釋放壓力，體驗基礎拳擊節奏',dur:60,exp:45,vCat:'boxing',
+    ai:{mode:'rep',target:30,unit:'拳直拳連擊',lineLbl:'🤖 AI 雙拳出擊速度與手肘延伸辨識',guide:'左右手交替向前或向側出拳收回，每次出拳即計 1 拳'},
+    steps:['雙腳微彎，雙手提至胸前護住臉頰','左手向前快速擊出並收回','右手向前快速擊出，身體微轉','保持呼吸，左右交替出拳','累積完成 30 拳直拳']},
+  {id:'q14',type:'active',name:'爆發高抬腿',emo:'💦',desc:'快速提升心率，HIIT前置訓練',dur:60,exp:50,vCat:'hiit',
+    ai:{mode:'rep',target:35,unit:'次高抬腿',lineLbl:'🤖 AI 左右膝蓋交替抬升辨識',guide:'左右腳快速交替抬腿或跑步律動，每步計 1 次'},
+    steps:['站直，雙手放在腰際或自然擺臂','右腿快速向上抬起','左腿快速向上抬起','像原地慢跑一樣保持節奏','完成 35 次高抬腿']},
+  {id:'q15',type:'active',name:'毛巾肌力抗阻',emo:'🏋️',desc:'利用毛巾進行全身肌力喚醒',dur:90,exp:45,vCat:'strength',
+    ai:{mode:'rep',target:15,unit:'次高舉下拉',lineLbl:'🤖 AI 雙手上舉與下拉相對位移辨識',guide:'雙手向上高舉高過肩膀，再下拉回胸前即計 1 次'},
+    steps:['拿一條毛巾，雙手拉直','雙手向上高舉過頭','保持向外拉力，慢慢將毛巾降至胸前','再推回頭頂上方','重複完成 15 次高舉下拉']},
+  {id:'q16',type:'active',name:'全身深層拉伸',emo:'🧘‍♀️',desc:'運動後必備，恢復肌肉彈性',dur:120,exp:35,vCat:'stretch',
+    ai:{mode:'rep',target:8,unit:'次側彎伸展',lineLbl:'🤖 AI 雙手上推與軀幹側彎辨識',guide:'雙手上推並向左右側彎伸展，回正即計 1 次'},
+    steps:['雙腳打開與肩同寬','雙手十指交扣，掌心向上推高','身體向右側彎，停留感受拉伸','身體向左側彎，停留感受拉伸','完成 8 次完整上推側彎拉伸']}
 ];
 
 const BDEFS=[
@@ -1028,37 +1123,65 @@ function toggleFav(qid, e){
   if(curPage==='quests') go('quests');
 }
 
-// ===== 喝水 AI 即時識別（模擬）=====
-// 打開後自動開始識別，不需按快門；依序偵測水杯 → 喝水動作 → 完成
+// ===== 喝水 AI 即時識別（支援開啟真實鏡頭 + 自動備援模擬）=====
 let camType = '';
 let camTimers = [];
+let waterCamStream = null;
 
 function clearCamTimers(){ camTimers.forEach(t => clearTimeout(t)); camTimers = []; }
+function stopWaterCamStream(){
+  if (waterCamStream) {
+    try { waterCamStream.getTracks().forEach(t => t.stop()); } catch(e){}
+    waterCamStream = null;
+  }
+  const v = document.getElementById('water-video');
+  if (v) { v.srcObject = null; v.style.display = 'none'; }
+}
 
-window.openCamera = function(type) {
+window.openCamera = async function(type) {
   camType = type;
   clearCamTimers();
+  stopWaterCamStream();
   const ov = document.getElementById('camera-ov');
   const ttl = document.getElementById('cam-ttl');
   const desc = document.getElementById('cam-desc');
   const icon = document.getElementById('cam-icon');
   const frame = document.getElementById('cam-frame');
   const scanTxt = document.getElementById('cam-scan-txt');
+  const modeTag = document.getElementById('cam-mode-tag');
+  const videoEl = document.getElementById('water-video');
 
   document.getElementById('cam-btn').style.display = 'none';
   ttl.textContent = '💧 喝水 AI 即時識別';
   desc.textContent = '請拿起杯子或水壺，對著鏡頭喝一口水';
   icon.textContent = '💧';
-  icon.style.opacity = '0.3';
+  icon.style.opacity = '0.35';
   frame.classList.add('scanning');
   scanTxt.style.display = 'block';
   scanTxt.textContent = '⏳ AI 即時識別中...';
+  if (modeTag) modeTag.textContent = '📷 正在啟動鏡頭...';
   ov.classList.add('show');
+
+  // 嘗試開啟真實前鏡頭；若無權限或無鏡頭則自動切換為模擬展示模式
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 640 } }, audio: false });
+      if (camType !== 'water') { stream.getTracks().forEach(t => t.stop()); return; }
+      waterCamStream = stream;
+      if (videoEl) { videoEl.srcObject = stream; videoEl.style.display = 'block'; }
+      if (modeTag) modeTag.textContent = '📷 真實鏡頭 AI 識別中';
+    } catch (err) {
+      if (modeTag) modeTag.textContent = '🤖 模擬展示模式（未偵測到相機權限）';
+    }
+  } else {
+    if (modeTag) modeTag.textContent = '🤖 模擬展示模式';
+  }
 
   const stages = [
     [1200, () => { scanTxt.textContent = '✅ 偵測到水杯'; icon.textContent = '🥤'; icon.style.opacity = '0.8'; desc.textContent = '很好！現在喝一口水'; }],
     [2600, () => { scanTxt.textContent = '✅ 偵測到喝水動作'; icon.textContent = '😋'; desc.textContent = '識別完成，記錄中...'; }],
     [3500, () => {
+      stopWaterCamStream();
       frame.classList.remove('scanning');
       ov.classList.remove('show');
       if (camType === 'water') actualDrinkWater();
@@ -1069,6 +1192,7 @@ window.openCamera = function(type) {
 
 window.closeCamera = function() {
   clearCamTimers();
+  stopWaterCamStream();
   document.getElementById('cam-frame').classList.remove('scanning');
   document.getElementById('camera-ov').classList.remove('show');
   if (camType === 'water') toast('已取消喝水識別，本次未記錄', '⚠️');
@@ -1191,11 +1315,16 @@ function renderQRScannerModal(scanningLabel = ''){
 
   body.innerHTML = `
     <div class="qr-viewfinder ${qrScanning ? 'scanning' : ''}" id="qr-vf">
-      <div class="cam-corner tl"></div><div class="cam-corner tr"></div>
-      <div class="cam-corner bl"></div><div class="cam-corner br"></div>
-      <div style="font-size:44px;margin-bottom:6px">${qrScanning ? '🔍' : '🏋️'}</div>
-      <div style="font-size:14px;font-weight:800" id="qr-vf-txt">${scanningLabel || '將鏡頭對準喬山器材上的專屬 QR Code'}</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:4px">每次掃描獲得 <b style="color:#FBBF24">+10 G幣</b> ＆ <b style="color:#A78BFA">+10 EXP</b></div>
+      <div style="position:absolute;top:12px;left:12px;font-size:11px;font-weight:800;background:rgba(0,0,0,.5);padding:4px 10px;border-radius:100px;color:#34D399">📍 ${curV.name}</div>
+      <div style="position:absolute;top:12px;right:12px;font-size:11px;font-weight:800;background:rgba(0,0,0,.5);padding:4px 10px;border-radius:100px;color:#FBBF24">+10 G幣 / +10 EXP</div>
+      <div class="qr-target-box">
+        <div class="cam-corner tl"></div><div class="cam-corner tr"></div>
+        <div class="cam-corner bl"></div><div class="cam-corner br"></div>
+        <div style="font-size:56px;margin-bottom:6px">${qrScanning ? '🔍' : '🏋️'}</div>
+        <div style="font-size:11px;font-weight:800;color:#A7F3D0;letter-spacing:.5px">${qrScanning ? 'AI 條碼辨識中...' : 'QR CODE 對準框'}</div>
+      </div>
+      <div style="font-size:14px;font-weight:900;padding:0 16px;text-align:center" id="qr-vf-txt">${scanningLabel || '請將喬山器材上的專屬 QR Code 置於方框中央'}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.68);margin-top:4px">每個場館的每種器材每日可掃描領獎 1 次</div>
     </div>
 
     <div style="background:var(--c2);border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:11.5px;color:var(--t);line-height:1.5">
@@ -1443,6 +1572,7 @@ const NAV_IDS={home:'nb-home',quests:'nb-quests',team:'nb-team',shop:'nb-shop',p
 
 function go(page,data){
   if(timerIv){clearInterval(timerIv);timerIv=null;timerOn=false}
+  stopAICamera();
   Object.values(NAV_IDS).forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove('on');
   });
@@ -1509,18 +1639,16 @@ const HELP = {
       '完成後還能開一次驚喜禮物盒' ] },
   ]},
   qa: { name: '任務執行', slides: [
-    { ico: '▶️', t: '開始任務', items: [
-      '先看下方的「📝 動作步驟」',
-      '按「▶️ 開始任務」開始倒數計時',
-      '需要休息可以按「⏸ 暫停」，再按「繼續任務」接著做',
-      '一定要等計時結束，不能提早完成；中途離開的話計時會重來' ] },
-    { ico: '🤖', t: 'AI 全程識別', items: [
-      '🚶 起身任務：按下開始後，AI 會全程識別你的動作',
-      '綠框＝偵測中，計時正常進行；紅框＝沒偵測到動作，計時會暫停，回到畫面後自動繼續',
-      '畫面右上角顯示即時動作準確度，下方會給你姿勢提示',
-      '🪑 辦公桌任務不需驗證，計時結束就自動完成' ] },
+    { ico: '📝', t: '先看說明，再進入全螢幕運動', items: [
+      '進入任務頁後，可先閱讀外面的「📝 動作步驟說明」與任務目標',
+      '準備好後點擊「▶️ 開始任務」，畫面會自動切換為「全螢幕運動畫面」',
+      '運動途中若想暫停或重看步驟，隨時可點下方「⏸ 暫停 / 返回說明」退出全螢幕' ] },
+    { ico: '⏱', t: '辦公桌計時 vs 起身 AI 關節辨識', items: [
+      '🪑 辦公桌微運動：採「純計時模式」，不需開鏡頭，跟隨全螢幕倒數計時放鬆即可過關',
+      '🚶 起身與喬山器材運動：啟動「全螢幕 AI 骨架辨識」，依您的身體比例與關節角度自動計次，不受固定標準線高度限制',
+      '右上角可一鍵切換「⚡ 極速流暢 Lightning」與「🎯 高精準 Thunder」模型，或點「🤖 自動演示」體驗' ] },
     { ico: '🎉', t: '領取獎勵', items: [
-      '計時結束自動結算，完成畫面會顯示 AI 平均動作準確度',
+      '完成任務後會自動退出全螢幕並彈出獎勵結算畫面',
       '完成畫面可以按「🎁 開啟任務驚喜禮物盒」（每次任務限開 1 次）',
       '可能抽到罐頭、補簽修復筆、雙倍經驗卡、加速鞋、四葉草、豪華大餐或 G幣',
       '按「繼續探索」後，可能會推薦相關的專業影音課程' ] },
@@ -1846,71 +1974,150 @@ function fltr(f,el){
 
 function pgQA(qid){
   const q=QUESTS.find(x=>x.id===qid);if(!q)return'';
-  const C=2*Math.PI*96;
+  const useAI = q.type === 'active';
+  const C = 2 * Math.PI * (useAI ? 36 : 92);
   const isCombo = S.streak >= 3;
   const done=S.todayDone.includes(qid);
+  const ai = q.ai || {mode:'rep',target:10,unit:'次動作',lineLbl:'🤖 AI 關節角度與動作辨識',guide:'請面對鏡頭自然完成動作，AI 將自動追蹤全身關節計次'};
+  const isRep = useAI && ai.mode === 'rep';
+  const modelLabel = aiModelType === 'THUNDER' ? '🎯 高精準 Thunder' : '⚡ 極速流暢 Lightning';
   return`
   <div id="pg-qa">
-    <div class="qa-head">
+    <div class="qa-head" style="padding:44px 16px 10px">
       <button class="btn btn-gh btn-ico" onclick="go('quests')">←</button>
-      <div>
-        <div style="font-size:11px;color:var(--tm);font-weight:600">${q.type==='desk'?'🪑 辦公桌級':'🚶 起身級'}</div>
-        <div style="font-size:18px;font-weight:900;color:var(--t)">${q.name}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;color:var(--tm);font-weight:700">${useAI?'🚶 起身微運動（全螢幕 AI 骨架辨識）':'🪑 辦公桌微運動（純計時放鬆）'}</div>
+        <div style="font-size:18px;font-weight:900;color:var(--t);display:flex;align-items:center;gap:6px"><span>${q.emo}</span><span>${q.name}</span></div>
       </div>
+      <span class="chip ${useAI?(isRep?'cs':'cp'):'cg'}" style="font-size:11px">${useAI?`🎯 目標 ${ai.target} ${ai.unit}`:`⏱ 計時 ${fmtTimer(q.dur)}`}</span>
     </div>
 
-    <div style="text-align:center;padding:0 20px 8px">
-      <div style="font-size:52px;animation:bounceSolo 2s infinite;margin-bottom:6px">${q.emo}</div>
-      <div style="font-size:13px;color:var(--tm)">${q.desc}</div>
-    </div>
-
-    <div class="timer-wrap">
-      <svg class="timer-svg" width="220" height="220" viewBox="0 0 220 220">
-        <defs><linearGradient id="tg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#8B5CF6"/><stop offset="100%" stop-color="#FBBF24"/></linearGradient></defs>
-        <circle class="t-track" cx="110" cy="110" r="96"/>
-        <circle class="t-fill" id="t-ring" cx="110" cy="110" r="96" stroke="url(#tg)" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${C.toFixed(2)}"/>
-      </svg>
-      <div class="t-center">
-        <div class="t-time" id="t-disp">${fmtTimer(q.dur)}</div>
-        <div style="font-size:13px;color:var(--tm);margin-top:4px" id="t-pct">0% 完成</div>
-      </div>
-    </div>
-
-    <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+    <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:6px;padding:0 16px;margin-bottom:14px">
       <span class="chip cp">⚡ +${q.exp} EXP</span>
       <span class="chip cs">🪙 +${q.exp} G幣</span>
       <span class="chip cg">🥫 +1 罐頭</span>
+      ${isCombo ? `<span class="chip cs">🔥 連擊加成中</span>` : ''}
     </div>
-    ${isCombo ? `<div style="text-align:center;font-size:12px;color:var(--s);font-weight:700;margin-bottom:16px;animation:pulse 1s infinite">🔥 連擊加成：結算額外獲得 G幣 加成！</div>` : '<div style="margin-bottom:16px"></div>'}
 
-    ${done ? '' : q.type === 'active' ? `
-    <div class="ai-live" id="ai-live">
-      <div class="ai-cam">
-        <div class="cam-corner tl"></div><div class="cam-corner tr"></div>
-        <div class="cam-corner bl"></div><div class="cam-corner br"></div>
-        <div class="ai-scan"></div>
-        <div class="ai-tag l"><span class="ai-dot"></span><span id="ai-tag-txt">AI 待命</span></div>
-        <div class="ai-tag r" id="ai-acc">準確度 --%</div>
-        <div class="ai-box"><span>${q.emo}</span></div>
-      </div>
-      <div class="ai-status" id="ai-status">🤖 按下開始後，AI 會全程識別你的動作</div>
+    ${done ? `
+    <div style="margin:0 16px 20px;text-align:center;padding:28px 20px;background:var(--c1);border:1.5px solid rgba(52,211,153,.4);border-radius:22px;box-shadow:0 4px 16px rgba(52,211,153,.1)">
+      <div style="font-size:48px;margin-bottom:8px">✅</div>
+      <div style="font-size:19px;font-weight:900;color:var(--g)">今日已完成此任務！</div>
+      <div style="font-size:13px;color:var(--tm);margin-top:4px">明天繼續加油！💪</div>
     </div>` : `
-    <div style="margin:0 20px 16px;text-align:center;font-size:12px;font-weight:700;color:#2563EB;background:#DBEAFE;border-radius:12px;padding:10px">🪑 辦公桌任務：不需驗證，計時結束就自動完成</div>`}
-
-    <div style="padding:0 20px;margin-bottom:24px" id="t-ctrl">
-      ${done?`
-      <div style="text-align:center;padding:20px;background:var(--c1);border:1px solid rgba(52,211,153,.3);border-radius:18px;box-shadow:0 4px 12px rgba(52,211,153,.1)">
-        <div style="font-size:40px;margin-bottom:8px">✅</div>
-        <div style="font-size:18px;font-weight:900;color:var(--g)">今日已完成！</div>
-        <div style="font-size:13px;color:var(--tm);margin-top:4px">明天繼續加油！💪</div>
-      </div>`:`
-      <button class="btn btn-p btn-full btn-lg" id="t-start" onclick="startT()">▶️ 開始任務</button>
-      <button class="btn btn-gh btn-full" style="display:none;margin-top:10px" id="t-pause" onclick="pauseT()">⏸ 暫停</button>
-      <div id="t-cheat-msg" style="display:none;text-align:center;font-size:12px;color:var(--r);margin-top:12px;font-weight:700">請堅持到計時結束，無法提早完成喔！⏳</div>`}
+    <!-- 外部準備卡片：顯示目標說明與「開始任務」按鈕（點擊後才進入全螢幕運動畫面） -->
+    <div class="qa-prep-card" id="qa-prep-card">
+      <div style="font-size:44px;margin-bottom:6px">${q.emo}</div>
+      <div style="font-size:17px;font-weight:900;color:var(--t);margin-bottom:4px">${useAI ? `目標：完成 ${ai.target} ${ai.unit}` : `目標：跟隨引導放鬆 ${fmtTimer(q.dur)}`}</div>
+      <div style="font-size:12.5px;color:var(--tm);line-height:1.55;margin-bottom:14px">
+        ${useAI
+          ? `${ai.lineLbl}<br><span style="color:var(--p-d);font-weight:700">${ai.guide}</span>`
+          : `🪑 辦公桌舒緩任務採「純計時模式」，無須開啟鏡頭，點擊下方開始即可進入全螢幕倒數計時。`}
+      </div>
+      <button class="btn btn-p btn-full btn-lg" id="t-start" onclick="startT()">
+        ${useAI ? '▶️ 開始任務（進入全螢幕 AI 運動畫面）' : '▶️ 開始任務（進入全螢幕倒數計時）'}
+      </button>
     </div>
 
-    <div style="padding:0 20px 20px">
-      <div class="stit">📝 動作步驟</div>
+    <!-- 點擊「開始任務」後彈出的全螢幕運動畫面 (#qa-fs-ov) -->
+    <div class="qa-fs-ov" id="qa-fs-ov">
+      ${useAI ? `
+      <div class="ai-live" id="ai-live">
+        <div class="ai-cam" id="ai-cam-box">
+          <video id="ai-video" autoplay playsinline muted></video>
+          <canvas id="ai-pose-cv" width="430" height="760"></canvas>
+          <div class="cam-corner tl"></div><div class="cam-corner tr"></div>
+          <div class="cam-corner bl"></div><div class="cam-corner br"></div>
+          <div class="ai-scan"></div>
+
+          <!-- 頂部狀態與準確度 -->
+          <div class="ai-tag l"><span class="ai-dot"></span><span id="ai-tag-txt">📷 AI 骨架・識別中</span></div>
+          <div class="ai-tag r" id="ai-acc">準確度 --%</div>
+
+          <!-- 左上：進度環 + 動作計次器 -->
+          <div class="ai-hud-ring">
+            <svg width="84" height="84" viewBox="0 0 84 84">
+              <defs><linearGradient id="tg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#34D399"/><stop offset="100%" stop-color="#FBBF24"/></linearGradient></defs>
+              <circle cx="42" cy="42" r="36" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="6"/>
+              <circle id="t-ring" cx="42" cy="42" r="36" fill="none" stroke="url(#tg)" stroke-width="6" stroke-linecap="round" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${C.toFixed(2)}" style="transition:stroke-dashoffset .3s linear"/>
+            </svg>
+            <div class="ai-hud-center">
+              <div class="ai-rep-num" id="ai-rep-num">0/${ai.target}</div>
+              <div class="ai-rep-unit">${ai.unit}</div>
+            </div>
+          </div>
+
+          <!-- 右上：倒數計時器與進度 -->
+          <div class="ai-hud-timer">
+            <div class="t-lbl" id="t-pct">0% 達標</div>
+            <div class="t-val" id="t-disp">${fmtTimer(q.dur)}</div>
+          </div>
+
+          <!-- 右側輔助按鈕（模型切換 + 展示輔助） -->
+          <div class="ai-cam-Ctrl">
+            <button class="ai-mini-btn" id="ai-model-btn" onclick="switchAIModel()" title="切換 MoveNet Lightning(極速) / Thunder(高精準)">${modelLabel}</button>
+            ${isRep ? `<button class="ai-mini-btn" onclick="manualAddRep()" title="展示用：手動增加 1 下動作">➕ 動作+1</button>` : ''}
+            <button class="ai-mini-btn" id="ai-mode-btn" onclick="toggleAICamMode()">🤖 自動演示</button>
+          </div>
+
+          <!-- 底部精簡控制塢：動作完成度能量條 + AI 即時提示 + 暫停返回按鈕 -->
+          <div class="ai-bottom-dock" id="t-ctrl">
+            <div class="ai-gauge-top">
+              <span>⚡ 動作完成度（依身體比例與關節角度自動判讀）</span>
+              <span id="ai-amp-val" style="font-family:'Outfit';color:#FBBF24">0%</span>
+            </div>
+            <div class="ai-gauge-bar">
+              <div class="ai-gauge-fill" id="ai-gauge-fill"></div>
+            </div>
+            <div class="ai-status" id="ai-status">📷 請面對鏡頭自然做「${q.name}」，AI 自動追蹤關節計次</div>
+            <button class="btn btn-gh btn-full" style="margin-top:8px;padding:10px 18px;font-size:14px;border-radius:12px;background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.25)" id="t-pause" onclick="pauseT()">⏸ 暫停任務（返回查看說明）</button>
+            <div id="t-cheat-msg" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+      ` : `
+      <!-- 辦公桌微運動：全螢幕純計時畫面（不驗證鏡頭） -->
+      <div class="qa-fs-desk" id="qa-fs-desk">
+        <div style="width:100%;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:26px">${q.emo}</span>
+            <div>
+              <div style="font-size:11px;color:rgba(255,255,255,.7);font-weight:700">🪑 辦公桌純計時放鬆</div>
+              <div style="font-size:18px;font-weight:900;color:#fff">${q.name}</div>
+            </div>
+          </div>
+          <button class="btn btn-gh btn-sm" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.25)" onclick="pauseT()">✕ 返回說明</button>
+        </div>
+
+        <div style="position:relative;width:220px;height:220px;display:flex;align-items:center;justify-content:center;margin:10px 0">
+          <svg width="220" height="220" viewBox="0 0 220 220" style="transform:rotate(-90deg)">
+            <defs><linearGradient id="tg-desk" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#A78BFA"/><stop offset="100%" stop-color="#34D399"/></linearGradient></defs>
+            <circle cx="110" cy="110" r="92" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="12"/>
+            <circle id="t-ring" cx="110" cy="110" r="92" fill="none" stroke="url(#tg-desk)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${C.toFixed(2)}" style="transition:stroke-dashoffset .4s linear"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <div style="font-family:'Outfit',sans-serif;font-size:46px;font-weight:900;color:#fff;line-height:1" id="t-disp">${fmtTimer(q.dur)}</div>
+            <div style="font-size:13px;font-weight:800;color:#A7F3D0;margin-top:6px" id="t-pct">0% 完成</div>
+          </div>
+        </div>
+
+        <div style="width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:14px 16px;text-align:left">
+          <div style="font-size:12px;font-weight:800;color:#FBBF24;margin-bottom:6px">💡 動作要領提示</div>
+          <div style="font-size:13.5px;color:rgba(255,255,255,.92);line-height:1.6;font-weight:600">
+            ${q.steps.map((s,i)=>`<div>${i+1}. ${s}</div>`).join('')}
+          </div>
+        </div>
+
+        <div style="width:100%">
+          <button class="btn btn-gh btn-full" style="padding:13px 20px;font-size:15px;border-radius:14px;background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.28)" id="t-pause" onclick="pauseT()">⏸ 暫停計時（返回說明頁）</button>
+          <div id="t-cheat-msg" style="display:none"></div>
+        </div>
+      </div>
+      `}
+    </div>`}
+
+    <div style="padding:0 16px 20px">
+      <div class="stit">📝 動作步驟說明</div>
       ${q.steps.map((s,i)=>`<div class="step-c"><div class="step-n">${i+1}</div><div style="font-size:14px;color:var(--t)">${s}</div></div>`).join('')}
     </div>
   </div>`;
@@ -1920,50 +2127,674 @@ function initTimer(qid){
   const q=QUESTS.find(x=>x.id===qid);
   if(!q)return;
   timerTotal=q.dur;timerSec=q.dur;
-  aiReset();
+  if (q.type === 'active') aiReset(q);
+  else aiSt = null;
   updTimer();
+  if (q.type === 'active') drawPoseCanvas();
 }
 
-// ===== AI 全程識別（模擬）=====
-// 起身任務：開始後 AI 全程識別，偵測不到動作時暫停計時；辦公桌任務不驗證
+// ===== AI 真實鏡頭 + Google MoveNet (17 關鍵點) + 60FPS 平滑插值骨架 + 人體關節角度與相對比例辨識 =====
 const AI_TIPS = {
-  strength: ['膝蓋角度很好 👍','背部保持挺直','核心收緊，做得好！','節奏穩定，繼續保持'],
-  hiit:     ['節奏很棒！🔥','動作幅度可以再大一點','記得保持呼吸','心率上升中，加油！'],
+  strength: ['膝髖發力很穩定 👍','背部保持挺直','核心收緊，做得好！','節奏穩定，繼續保持'],
+  hiit:     ['節奏很棒！🔥','步伐很輕快，繼續保持！','記得保持呼吸','心率上升中，加油！'],
   boxing:   ['出拳很有力 🥊','記得收拳護住臉頰','保持呼吸，不要憋氣','左右交替很流暢'],
   stretch:  ['伸展到位 🧘','動作放慢，感受拉伸','保持呼吸平穩','姿勢很標準'],
-  _default: ['步伐穩定 👣','膝蓋再抬高一點','保持節奏','手臂自然擺動'],
+  _default: ['動作節奏很標準 👍','保持呼吸，繼續加油','AI 正在追蹤關節律動','做得很好，再接再厲！'],
 };
+
 let aiSt = null;
-function aiReset(){ aiSt = { lostLeft:0, lostCount:0, accSum:0, accN:0, tipIdx:0, tick:0 }; }
-function aiIsActive(){ const q=QUESTS.find(x=>x.id===curQid); return !!(q && q.type==='active'); }
+let aiCamStream = null;
+let aiPoseDetector = null;
+let aiDetectorLoading = false;
+let aiModelType = 'LIGHTNING'; // 'LIGHTNING' (極速 50+FPS) 或 'THUNDER' (高精準)
+let aiRafId = null;
+let aiInferRunning = false;
+let aiMotionCv = null;
+
+function aiReset(q){
+  const cfg = (q && q.ai) || {mode:'rep',target:10,unit:'次動作'};
+  aiSt = {
+    mode: cfg.mode, target: cfg.target, unit: cfg.unit,
+    reps: 0, phase: 'up', amp: 0, passLine: false,
+    useSim: false, camReady: false, camError: false,
+    lostLeft: 0, lostCount: 0, accSum: 0, accN: 0, tipIdx: 0, tick: 0,
+    simPhase: 0, lastRepAt: 0,
+    keypoints: null, smoothKps: null, prevKps: null,
+    prevFrame: null, motionEMA: 0, basePose: null, calibFrames: 0,
+    stepDir: 0, lastJointInfo: ''
+  };
+}
+
+function aiIsActive(){
+  const q = QUESTS.find(x=>x.id===curQid);
+  return !!(q && q.type === 'active');
+}
+
+function stopAICamera(){
+  if (aiRafId) { cancelAnimationFrame(aiRafId); aiRafId = null; }
+  aiInferRunning = false;
+  if (aiCamStream) {
+    try { aiCamStream.getTracks().forEach(t => t.stop()); } catch(e){}
+    aiCamStream = null;
+  }
+  const v = document.getElementById('ai-video');
+  if (v) v.srcObject = null;
+}
+
+async function startAICamera(){
+  if (!aiSt || !aiIsActive()) return;
+  const v = document.getElementById('ai-video');
+  const modeBtn = document.getElementById('ai-mode-btn');
+  if (aiSt.useSim) {
+    if (modeBtn) modeBtn.textContent = '📷 切換真實鏡頭';
+    aiSetState('tracking', '🤖 自動演示模式：AI 正自動演示骨架與關節計次');
+    return;
+  }
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'user',
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          frameRate: { ideal: 30, max: 60 }
+        },
+        audio: false
+      });
+      if (!timerOn || curPage !== 'qa') { stream.getTracks().forEach(t => t.stop()); return; }
+      aiCamStream = stream;
+      if (v) { v.srcObject = stream; await v.play().catch(()=>{}); }
+      aiSt.camReady = true;
+      aiSt.camError = false;
+      aiSt.prevFrame = null;
+      aiSt.basePose = null;
+      aiSt.calibFrames = 0;
+      if (modeBtn) modeBtn.textContent = '🤖 自動演示';
+      aiSetState('tracking', '📷 真實鏡頭已啟動！請自然開始動作，AI 自動追蹤關節');
+      ensurePoseDetector().then(() => {
+        if (timerOn && !aiSt.useSim) runPoseInferenceLoop();
+      });
+      return;
+    } catch (e) {
+      aiSt.camReady = false;
+      aiSt.camError = true;
+    }
+  } else {
+    aiSt.camReady = false;
+    aiSt.camError = true;
+  }
+  if (modeBtn) modeBtn.textContent = '🤖 開啟自動演示';
+  aiSetState('lost', '⚠️ 未偵測到相機權限，請允許相機或點右側「🤖 自動演示」/「➕ 動作+1」');
+}
+
+async function ensurePoseDetector(forceReload = false){
+  if (aiPoseDetector && !forceReload) return;
+  if (aiDetectorLoading) return;
+  if (!window.poseDetection || !window.tf) return;
+  aiDetectorLoading = true;
+  try {
+    await window.tf.ready();
+    if (window.tf.getBackend() !== 'webgl') {
+      await window.tf.setBackend('webgl').catch(()=>{});
+    }
+    if (aiPoseDetector && aiPoseDetector.dispose) {
+      try { aiPoseDetector.dispose(); } catch(e){}
+    }
+    const mType = aiModelType === 'THUNDER'
+      ? window.poseDetection.movenet.modelType.SINGLEPOSE_THUNDER
+      : window.poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING;
+    aiPoseDetector = await window.poseDetection.createDetector(
+      window.poseDetection.SupportedModels.MoveNet,
+      {
+        modelType: mType,
+        enableSmoothing: true, // 啟用 MoveNet 內建時序關鍵點濾波器
+        minPoseScore: 0.2
+      }
+    );
+  } catch (e) {
+    aiPoseDetector = null;
+  }
+  aiDetectorLoading = false;
+}
+
+window.switchAIModel = async function(){
+  aiModelType = aiModelType === 'LIGHTNING' ? 'THUNDER' : 'LIGHTNING';
+  const btn = document.getElementById('ai-model-btn');
+  if (btn) btn.textContent = '⏳ 載入模型中...';
+  await ensurePoseDetector(true);
+  if (btn) btn.textContent = aiModelType === 'THUNDER' ? '🎯 高精準 Thunder' : '⚡ 極速流暢 Lightning';
+  toast(aiModelType === 'THUNDER' ? '已切換為 MoveNet Thunder（高精準關節模型）🎯' : '已切換為 MoveNet Lightning（60FPS 極速流暢模型）⚡', '🤖');
+};
+
+window.toggleAICamMode = function(){
+  if (!aiSt) return;
+  aiSt.useSim = !aiSt.useSim;
+  aiSt.camError = false;
+  const modeBtn = document.getElementById('ai-mode-btn');
+  if (aiSt.useSim) {
+    stopAICamera();
+    if (modeBtn) modeBtn.textContent = '📷 切換真實鏡頭';
+    aiSetState('tracking', '🤖 已切換為自動演示模式（AI 自動示範動作與計次）');
+    if (timerOn) { aiTick(); startPoseLoop(); }
+  } else {
+    if (modeBtn) modeBtn.textContent = '🤖 自動演示';
+    startAICamera().then(() => { if (timerOn) startPoseLoop(); });
+  }
+};
+
+window.manualAddRep = function(){
+  const q = QUESTS.find(x => x.id === curQid);
+  if (!q || !aiSt) return;
+  if (!timerOn) startT();
+  if (aiSt.mode === 'rep') {
+    updateGaugeUI(88, true);
+    registerRep(q, 96);
+  }
+};
+
+function registerRep(q, accVal){
+  if (!aiSt || aiSt.mode !== 'rep') return;
+  const now = Date.now();
+  // 原地踏步、高抬腿、直拳、開合跳節奏較快，給予更靈敏的防連跳間隔 (280ms)
+  const minGap = (q && (q.id === 'q8' || q.id === 'q13' || q.id === 'q14' || q.id === 'q9')) ? 280 : 420;
+  if (now - aiSt.lastRepAt < minGap) return;
+  aiSt.lastRepAt = now;
+  aiSt.reps = Math.min(aiSt.target, aiSt.reps + 1);
+  const acc = accVal || Math.round(90 + Math.random()*9);
+  aiSt.accSum += acc; aiSt.accN++;
+  const accEl = document.getElementById('ai-acc');
+  if (accEl) accEl.textContent = `準確度 ${acc}%`;
+  const repEl = document.getElementById('ai-rep-num');
+  if (repEl) repEl.textContent = `${aiSt.reps}/${aiSt.target}`;
+  aiSetState('tracking', `✅ 動作到位！已完成 ${aiSt.reps} / ${aiSt.target} ${aiSt.unit}`);
+  updTimer();
+  if (aiSt.reps >= aiSt.target) {
+    if (timerIv) { clearInterval(timerIv); timerIv = null; }
+    timerOn = false;
+    stopAICamera();
+    setTimeout(() => autoFinish(), 250);
+  }
+}
+
+function updateGaugeUI(amp, pass){
+  if (!aiSt) return;
+  aiSt.amp = Math.max(0, Math.min(100, Math.round(amp)));
+  aiSt.passLine = !!pass;
+  const fill = document.getElementById('ai-gauge-fill');
+  const val = document.getElementById('ai-amp-val');
+  if (fill) {
+    fill.style.width = aiSt.amp + '%';
+    fill.classList.toggle('pass', !!pass);
+  }
+  if (val) {
+    val.textContent = aiSt.amp + '%' + (pass ? ' ✅到位' : '');
+    val.style.color = pass ? '#34D399' : '#FBBF24';
+  }
+}
+
+// 精準對應 object-fit: cover 與鏡像翻轉 (scaleX(-1)) 的座標轉換，消除骨架變形與偏移
+function mapVideoPointsToCanvas(rawKps, vw, vh, cw, ch){
+  const scale = Math.max(cw / vw, ch / vh);
+  const offsetX = (cw - vw * scale) / 2;
+  const offsetY = (ch - vh * scale) / 2;
+  return rawKps.map(k => ({
+    name: k.name,
+    score: k.score,
+    // 直接轉換為鏡像後的畫布座標
+    x: cw - (k.x * scale + offsetX),
+    y: k.y * scale + offsetY
+  }));
+}
+
+// 60FPS 速度自適應關鍵點平滑插值（One-Euro 風格 EMA），讓骨架絲滑貼合人體不抖動
+function updateSmoothKeypoints(){
+  if (!aiSt || !aiSt.keypoints) return;
+  if (!aiSt.smoothKps || aiSt.smoothKps.length !== aiSt.keypoints.length) {
+    aiSt.smoothKps = aiSt.keypoints.map(k => ({ ...k }));
+    return;
+  }
+  for (let i = 0; i < aiSt.keypoints.length; i++) {
+    const target = aiSt.keypoints[i];
+    const cur = aiSt.smoothKps[i];
+    if (target.score < 0.2) {
+      cur.score = target.score;
+      continue;
+    }
+    const dx = target.x - cur.x;
+    const dy = target.y - cur.y;
+    const dist = Math.hypot(dx, dy);
+    // 移動越快 alpha 越大（低延遲），靜止時 alpha 越小（抗抖動）
+    const alpha = Math.min(0.88, Math.max(0.28, 0.28 + dist * 0.018));
+    cur.x += dx * alpha;
+    cur.y += dy * alpha;
+    cur.score = cur.score * 0.3 + target.score * 0.7;
+  }
+}
+
+// 計算三點關節夾角 (度數 0~180)，例如 髖-膝-踝 夾角或 肩-肘-腕 夾角
+function calcJointAngle(a, b, c){
+  if (!a || !b || !c) return null;
+  const abx = a.x - b.x, aby = a.y - b.y;
+  const cbx = c.x - b.x, cby = c.y - b.y;
+  const dot = abx * cbx + aby * cby;
+  const mag = Math.hypot(abx, aby) * Math.hypot(cbx, cby);
+  if (mag < 1e-4) return null;
+  const cos = Math.max(-1, Math.min(1, dot / mag));
+  return Math.round((Math.acos(cos) * 180) / Math.PI);
+}
+
+// 計算真實視訊畫面像素變化量（防止完全靜止時誤判，並捕捉踏步/全身律動節奏）
+function analyzeVideoMotion(v, q){
+  if (!v || v.readyState < 2) return { motion: 0, cx: 0.5, cy: 0.5, amp: 8 };
+  if (!aiMotionCv) {
+    aiMotionCv = document.createElement('canvas');
+    aiMotionCv.width = 48;
+    aiMotionCv.height = 36;
+  }
+  const mctx = aiMotionCv.getContext('2d', { willReadFrequently: true });
+  const mw = 48, mh = 36;
+  mctx.drawImage(v, 0, 0, mw, mh);
+  const data = mctx.getImageData(0, 0, mw, mh).data;
+  const curr = new Uint8Array(mw * mh);
+  for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+    curr[p] = (data[i] * 77 + data[i+1] * 150 + data[i+2] * 29) >> 8;
+  }
+  if (!aiSt.prevFrame) {
+    aiSt.prevFrame = curr;
+    return { motion: 0, cx: 0.5, cy: 0.5, amp: 8 };
+  }
+  let diffCount = 0, sumX = 0, sumY = 0, weightSum = 0;
+  for (let y = 0; y < mh; y++) {
+    for (let x = 0; x < mw; x++) {
+      const idx = y * mw + x;
+      const d = Math.abs(curr[idx] - aiSt.prevFrame[idx]);
+      if (d > 16) {
+        diffCount++;
+        sumX += (x / mw) * d;
+        sumY += (y / mh) * d;
+        weightSum += d;
+      }
+      aiSt.prevFrame[idx] = Math.round(aiSt.prevFrame[idx] * 0.6 + curr[idx] * 0.4);
+    }
+  }
+  const motionPct = (diffCount / (mw * mh)) * 100;
+  aiSt.motionEMA = aiSt.motionEMA * 0.5 + motionPct * 0.5;
+  const cx = weightSum > 0 ? sumX / weightSum : 0.5;
+  const cy = weightSum > 0 ? sumY / weightSum : 0.5;
+
+  if (aiSt.motionEMA < 1.8) {
+    return { motion: aiSt.motionEMA, cx: 0.5, cy: 0.5, amp: Math.round(6 + aiSt.motionEMA * 7) };
+  }
+  // 正在運動時的動態能量轉換
+  const osc = (Math.sin(Date.now() / 180) + 1) / 2;
+  const amp = Math.min(96, Math.round(25 + aiSt.motionEMA * 5.2 + osc * 22));
+  return { motion: aiSt.motionEMA, cx, cy, amp };
+}
+
+// 依據人體相對比例 (bodyScale)、關節夾角與左右交替位移判讀動作（完全不依賴固定畫面高度線！）
+function evaluateRealPose(q, kps, cw, ch, motionInfo){
+  const byName = {};
+  kps.forEach(k => { if (k.score > 0.22) byName[k.name] = k; });
+  const nose = byName.nose;
+  const ls = byName.left_shoulder, rs = byName.right_shoulder;
+  const le = byName.left_elbow, re = byName.right_elbow;
+  const lw = byName.left_wrist, rw = byName.right_wrist;
+  const lh = byName.left_hip, rh = byName.right_hip;
+  const lk = byName.left_knee, rk = byName.right_knee;
+  const la = byName.left_ankle, ra = byName.right_ankle;
+
+  const shY = (ls && rs) ? (ls.y + rs.y)/2 : ls ? ls.y : rs ? rs.y : null;
+  const shX = (ls && rs) ? (ls.x + rs.x)/2 : ls ? ls.x : rs ? rs.x : null;
+  const hipY = (lh && rh) ? (lh.y + rh.y)/2 : lh ? lh.y : rh ? rh.y : null;
+  const wrY = (lw && rw) ? Math.min(lw.y, rw.y) : lw ? lw.y : rw ? rw.y : null;
+  const knY = (lk && rk) ? Math.min(lk.y, rk.y) : lk ? lk.y : rk ? rk.y : null;
+
+  // 計算使用者在畫面中的身體比例尺 (bodyScale)，無論站遠站近都能自動適應！
+  const shWidth = (ls && rs) ? Math.hypot(ls.x - rs.x, ls.y - rs.y) : 95;
+  const torsoLen = (shY !== null && hipY !== null && hipY > shY + 25) ? (hipY - shY) : shWidth * 1.45;
+  const bodyScale = Math.max(55, torsoLen);
+
+  // 記錄初始自然站姿基準
+  if (!aiSt.basePose) {
+    aiSt.basePose = {
+      shY: shY ?? ch * 0.36,
+      hipY: hipY ?? ch * 0.58,
+      knY: knY ?? ch * 0.76,
+      shX: shX ?? cw * 0.5
+    };
+  } else if (aiSt.calibFrames < 10 && (!motionInfo || motionInfo.motion < 4)) {
+    aiSt.calibFrames++;
+    const a = 0.22;
+    if (shY !== null) aiSt.basePose.shY = aiSt.basePose.shY * (1-a) + shY * a;
+    if (hipY !== null) aiSt.basePose.hipY = aiSt.basePose.hipY * (1-a) + hipY * a;
+    if (knY !== null) aiSt.basePose.knY = aiSt.basePose.knY * (1-a) + knY * a;
+    if (shX !== null) aiSt.basePose.shX = aiSt.basePose.shX * (1-a) + shX * a;
+  }
+
+  // 計算關鍵點幀間移動速度
+  let kpSpeed = 0;
+  if (aiSt.prevKps) {
+    let sumD = 0, cnt = 0;
+    ['nose','left_shoulder','right_shoulder','left_wrist','right_wrist','left_hip','right_hip','left_knee','right_knee','left_ankle','right_ankle'].forEach(nm => {
+      if (byName[nm] && aiSt.prevKps[nm]) {
+        sumD += Math.hypot(byName[nm].x - aiSt.prevKps[nm].x, byName[nm].y - aiSt.prevKps[nm].y);
+        cnt++;
+      }
+    });
+    if (cnt > 0) kpSpeed = sumD / cnt;
+  }
+  aiSt.prevKps = byName;
+
+  // 若維持型任務（靠牆半蹲 q10、平板撐 q12）：只要人在鏡頭內維持姿勢即達標倒數
+  if (aiSt.mode === 'hold') {
+    const kneeAng = calcJointAngle(lh || rh, lk || rk, la || ra);
+    aiSt.lastJointInfo = kneeAng ? `膝關節 ${kneeAng}°・姿態穩定` : '核心姿態穩定維持中';
+    return 86;
+  }
+
+  // 計次型任務：若人完全靜止不動，幅度維持低檔絕不亂跳
+  if (motionInfo && motionInfo.motion < 1.5 && kpSpeed < 2.2 && aiSt.phase === 'up') {
+    return Math.min(25, Math.round(8 + motionInfo.motion * 8));
+  }
+
+  const bp = aiSt.basePose;
+  let amp = 15;
+
+  if (q.id === 'q7') {
+    // 深蹲挑戰：結合「膝關節彎曲角度」與「相對身高比例的下蹲位移」
+    const lAng = calcJointAngle(lh, lk, la);
+    const rAng = calcJointAngle(rh, rk, ra);
+    const kneeAng = (lAng && rAng) ? Math.min(lAng, rAng) : (lAng || rAng);
+    const shDrop = shY !== null ? Math.max(0, shY - bp.shY) / bodyScale : 0;
+    const hipDrop = hipY !== null ? Math.max(0, hipY - bp.hipY) / bodyScale : 0;
+    const dropRatio = Math.max(shDrop, hipDrop);
+    const angScore = kneeAng !== null ? Math.max(0, (165 - kneeAng) / 55) * 85 : 0;
+    const dropScore = (dropRatio / 0.22) * 85;
+    amp = Math.round(15 + Math.max(angScore, dropScore));
+    aiSt.lastJointInfo = kneeAng ? `膝關節角度 ${kneeAng}°` : `下蹲深度 ${Math.round(dropRatio*100)}%`;
+  } else if (q.id === 'q8' || q.id === 'q14') {
+    // 原地踏步 (q8) / 爆發高抬腿 (q14)：
+    // 追蹤「左右膝蓋高度差」、「左右腳踝高度差」、「單膝抬升」或「踏步肩膀/髖部自然上下律動」，完全不需抬到畫面中間！
+    const kneeDiff = (lk && rk) ? Math.abs(lk.y - rk.y) / bodyScale : 0;
+    const ankleDiff = (la && ra) ? Math.abs(la.y - ra.y) / bodyScale : 0;
+    const kneeLift = knY !== null ? Math.max(0, bp.knY - knY) / bodyScale : 0;
+    const bodyBounce = shY !== null ? Math.abs(shY - bp.shY) / bodyScale : 0;
+    const threshold = q.id === 'q8' ? 0.085 : 0.13; // 原地踏步只需輕微抬腳 (8.5% 身體比例) 即可觸發！
+    const stepMetric = Math.max(kneeDiff, ankleDiff * 1.1, kneeLift, bodyBounce * 2.2);
+    // 結合踏步動態節奏，讓雙腳交替踩踏時有清晰的波峰 (>=75%) 與波谷 (<40%)
+    const cadenceWave = (kpSpeed > 2.8 || (motionInfo && motionInfo.motion > 2.8))
+      ? ((Math.sin(Date.now() / 150) + 1) / 2) * 78
+      : 0;
+    amp = Math.round(Math.max(15 + (stepMetric / threshold) * 65, cadenceWave));
+    aiSt.lastJointInfo = `步伐律動 ${Math.min(100, Math.round((stepMetric / threshold) * 80))}%`;
+  } else if (q.id === 'q9' || q.id === 'q15' || q.id === 'q16') {
+    // 開合跳 / 毛巾高舉下拉 / 全身拉伸：追蹤「手腕相對肩膀的高度」與「手肘展開角度」
+    if (wrY !== null && shY !== null) {
+      // 當手腕高於胸口/肩膀時，liftRatio 為正值
+      const liftRatio = (shY + bodyScale * 0.35 - wrY) / (bodyScale * 0.75);
+      amp = Math.round(15 + Math.max(0, liftRatio) * 78);
+      aiSt.lastJointInfo = wrY < shY ? '雙手已高舉過肩 👍' : '雙手向上延伸中';
+    } else {
+      amp = motionInfo ? motionInfo.amp : 20;
+    }
+  } else if (q.id === 'q13') {
+    // 基礎直拳連擊：追蹤「手肘延伸角度」、「雙腕前後/左右交替位移」與「出拳速度」
+    const lElbAng = calcJointAngle(ls, le, lw);
+    const rElbAng = calcJointAngle(rs, re, rw);
+    const maxElbAng = Math.max(lElbAng || 0, rElbAng || 0);
+    let wristSpeed = 0;
+    if (aiSt.lastWrists && (lw || rw)) {
+      const dl = (lw && aiSt.lastWrists.lw) ? Math.hypot(lw.x - aiSt.lastWrists.lw.x, lw.y - aiSt.lastWrists.lw.y) : 0;
+      const dr = (rw && aiSt.lastWrists.rw) ? Math.hypot(rw.x - aiSt.lastWrists.rw.x, rw.y - aiSt.lastWrists.rw.y) : 0;
+      wristSpeed = Math.max(dl, dr);
+    }
+    aiSt.lastWrists = { lw: lw ? {...lw} : null, rw: rw ? {...rw} : null };
+    const extScore = maxElbAng > 115 ? ((maxElbAng - 100) / 60) * 75 : 0;
+    const spdScore = (wristSpeed / (bodyScale * 0.14)) * 75;
+    amp = Math.round(15 + Math.max(extScore, spdScore));
+    aiSt.lastJointInfo = maxElbAng ? `出拳延伸 ${maxElbAng}°` : '偵測出拳速度中';
+  }
+
+  return Math.max(8, Math.min(100, amp));
+}
+
+// 非阻塞背景推論迴圈：獨立於 60FPS 畫面繪製，大幅提升流暢度
+async function runPoseInferenceLoop(){
+  if (aiInferRunning) return;
+  aiInferRunning = true;
+  while (timerOn && curPage === 'qa' && aiSt && !aiSt.useSim && aiIsActive()) {
+    const v = document.getElementById('ai-video');
+    const q = QUESTS.find(x => x.id === curQid);
+    if (aiSt.camReady && v && v.readyState >= 2 && q) {
+      const motionInfo = analyzeVideoMotion(v, q);
+      let amp = motionInfo.amp;
+      if (aiPoseDetector) {
+        try {
+          const poses = await aiPoseDetector.estimatePoses(v, { flipHorizontal: false });
+          if (poses && poses.length > 0 && poses[0].keypoints) {
+            const validKps = poses[0].keypoints.filter(k => k.score > 0.22);
+            if (validKps.length >= 3) {
+              const cv = document.getElementById('ai-pose-cv');
+              const cw = cv ? cv.width : 430, ch = cv ? cv.height : 760;
+              const vw = v.videoWidth || 640, vh = v.videoHeight || 480;
+              aiSt.keypoints = mapVideoPointsToCanvas(poses[0].keypoints, vw, vh, cw, ch);
+              amp = evaluateRealPose(q, aiSt.keypoints, cw, ch, motionInfo);
+            } else {
+              aiSt.keypoints = null;
+            }
+          } else {
+            aiSt.keypoints = null;
+          }
+        } catch (e) {}
+      }
+      const pass = amp >= 68;
+      updateGaugeUI(amp, pass);
+      if (aiSt.mode === 'rep') {
+        if (pass && aiSt.phase === 'up') {
+          aiSt.phase = 'down';
+          registerRep(q, Math.min(99, Math.round(amp + 6)));
+        } else if (amp < 45 && aiSt.phase === 'down') {
+          aiSt.phase = 'up';
+        }
+      }
+    }
+    await new Promise(r => setTimeout(r, 25)); // 約 40Hz 推論頻率，不阻塞 UI 執行緒
+  }
+  aiInferRunning = false;
+}
+
+function drawPoseCanvas(){
+  const cv = document.getElementById('ai-pose-cv');
+  if (!cv || !aiSt) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const q = QUESTS.find(x => x.id === curQid);
+  const pass = aiSt.passLine;
+
+  // 繪製高流暢度 60FPS 霓虹發光人體骨架（不再畫突兀的畫面中央標準線！）
+  ctx.save();
+  const mainCol = pass ? '#34D399' : '#38BDF8';
+  ctx.strokeStyle = mainCol;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.lineWidth = 4.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = pass ? 'rgba(52,211,153,0.8)' : 'rgba(56,189,248,0.75)';
+  ctx.shadowBlur = 10;
+
+  // 更新平滑關鍵點
+  updateSmoothKeypoints();
+  const drawKps = (!aiSt.useSim && aiSt.smoothKps && aiSt.smoothKps.length > 0) ? aiSt.smoothKps : null;
+
+  if (drawKps) {
+    const kp = {};
+    drawKps.forEach(p => { if (p.score > 0.22) kp[p.name] = p; });
+    const pairs = [
+      ['left_shoulder','right_shoulder'],['left_shoulder','left_elbow'],['left_elbow','left_wrist'],
+      ['right_shoulder','right_elbow'],['right_elbow','right_wrist'],['left_shoulder','left_hip'],
+      ['right_shoulder','right_hip'],['left_hip','right_hip'],['left_hip','left_knee'],
+      ['left_knee','left_ankle'],['right_hip','right_knee'],['right_knee','right_ankle']
+    ];
+    pairs.forEach(([a,b]) => {
+      if (kp[a] && kp[b]) {
+        ctx.beginPath();
+        ctx.moveTo(kp[a].x, kp[a].y);
+        ctx.lineTo(kp[b].x, kp[b].y);
+        ctx.stroke();
+      }
+    });
+
+    // 標示目前運動重點追蹤關節（發光雙環）
+    const focusNames = (q && (q.id === 'q8' || q.id === 'q14' || q.id === 'q7' || q.id === 'q10'))
+      ? ['left_hip','right_hip','left_knee','right_knee','left_ankle','right_ankle']
+      : ['left_shoulder','right_shoulder','left_elbow','right_elbow','left_wrist','right_wrist'];
+
+    Object.values(kp).forEach(p => {
+      const isFocus = focusNames.includes(p.name);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, isFocus ? 7.5 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = isFocus ? (pass ? '#34D399' : '#FBBF24') : '#FFFFFF';
+      ctx.fill();
+      ctx.stroke();
+    });
+
+    // 在畫面中央上方顯示即時關節追蹤數據膠囊
+    if (aiSt.lastJointInfo) {
+      ctx.shadowBlur = 0;
+      const txt = `🤖 ${aiSt.lastJointInfo}`;
+      ctx.font = '800 12px "Noto Sans TC", sans-serif';
+      const tw = ctx.measureText(txt).width + 22;
+      ctx.fillStyle = pass ? 'rgba(5,150,105,0.88)' : 'rgba(15,23,42,0.78)';
+      ctx.beginPath();
+      ctx.roundRect(W/2 - tw/2, 152, tw, 26, 13);
+      ctx.fill();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.textAlign = 'center';
+      ctx.fillText(txt, W/2, 169);
+    }
+  } else {
+    // 尚未擷取到真人骨架或自動演示模式：繪製對應動作的動態流暢骨架示範
+    const wave = Math.max(0, Math.min(1, (aiSt.amp || 0) / 85));
+    const isStep = q && (q.id === 'q8' || q.id === 'q14');
+    const isSquat = q && (q.id === 'q7' || q.id === 'q10' || q.id === 'q12');
+    const cx = W / 2;
+    const baseHeadY = isSquat ? (230 + wave * 85) : (240 - wave * 18);
+    const shY = baseHeadY + 40;
+    const hipY = shY + (isSquat ? 70 - wave * 18 : 78);
+    const lKneeLift = isStep ? (Math.sin(aiSt.simPhase || 0) > 0 ? wave * 42 : 0) : 0;
+    const rKneeLift = isStep ? (Math.sin(aiSt.simPhase || 0) <= 0 ? wave * 42 : 0) : 0;
+    const lKneeY = hipY + 62 - lKneeLift;
+    const rKneeY = hipY + 62 - rKneeLift;
+    const lAnkleY = 525 - lKneeLift * 0.85;
+    const rAnkleY = 525 - rKneeLift * 0.85;
+    const armLift = (!isSquat && !isStep) ? wave * 90 : wave * 28;
+
+    const drawSeg = (x1,y1,x2,y2) => { ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); };
+    drawSeg(cx, shY, cx, hipY);
+    drawSeg(cx - 34, shY, cx + 34, shY);
+    drawSeg(cx - 34, shY, cx - 58, shY + 42 - armLift);
+    drawSeg(cx + 34, shY, cx + 58, shY + 42 - armLift);
+    drawSeg(cx - 22, hipY, cx - 30, lKneeY);
+    drawSeg(cx + 22, hipY, cx + 30, rKneeY);
+    drawSeg(cx - 30, lKneeY, cx - 26, lAnkleY);
+    drawSeg(cx + 30, rKneeY, cx + 26, rAnkleY);
+
+    ctx.beginPath(); ctx.arc(cx, baseHeadY, 20, 0, Math.PI * 2); ctx.stroke();
+    [[cx-34,shY],[cx+34,shY],[cx-58,shY+42-armLift],[cx+58,shY+42-armLift],[cx-22,hipY],[cx+22,hipY],[cx-30,lKneeY],[cx+30,rKneeY]].forEach(([jx,jy])=>{
+      ctx.beginPath(); ctx.arc(jx, jy, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    });
+  }
+  ctx.restore();
+}
+
+function startPoseLoop(){
+  if (aiRafId) cancelAnimationFrame(aiRafId);
+  if (!aiSt.useSim && aiSt.camReady) runPoseInferenceLoop();
+  const step = () => {
+    if (!timerOn || curPage !== 'qa' || !aiSt || !aiIsActive()) return;
+    const q = QUESTS.find(x => x.id === curQid);
+    if (!q) return;
+
+    if (aiSt.useSim) {
+      aiSt.simPhase += (aiSt.mode === 'hold' ? 0.08 : 0.12);
+      const amp = aiSt.mode === 'hold'
+        ? Math.round(82 + Math.sin(aiSt.simPhase) * 8)
+        : Math.round(20 + ((Math.sin(aiSt.simPhase) + 1) / 2) * 72);
+      const pass = amp >= 68;
+      updateGaugeUI(amp, pass);
+      if (aiSt.mode === 'rep') {
+        if (pass && aiSt.phase === 'up') {
+          aiSt.phase = 'down';
+          registerRep(q, Math.min(99, Math.round(amp + 5)));
+        } else if (amp < 45 && aiSt.phase === 'down') {
+          aiSt.phase = 'up';
+        }
+      }
+    }
+
+    drawPoseCanvas();
+    aiRafId = requestAnimationFrame(step);
+  };
+  aiRafId = requestAnimationFrame(step);
+}
 
 function aiSetState(state, statusTxt){
   const box=document.getElementById('ai-live'); if(!box) return;
   box.classList.remove('tracking','lost');
   if(state) box.classList.add(state);
   const tag=document.getElementById('ai-tag-txt');
-  if(tag) tag.textContent = state==='tracking' ? 'AI 識別中' : state==='lost' ? '未偵測到動作' : 'AI 待命';
+  if(tag) {
+    const modePrefix = aiSt && aiSt.useSim ? '🤖 自動演示' : (aiSt && aiSt.camReady ? '📷 真實鏡頭' : '📷 AI 鏡頭');
+    tag.textContent = state==='tracking' ? `${modePrefix}・60FPS 追蹤中` : state==='lost' ? '⚠️ 等待動作中' : '📷 點擊開始啟動 AI 鏡頭';
+  }
   const st=document.getElementById('ai-status');
   if(st && statusTxt) st.textContent = statusTxt;
 }
 
-// 每秒呼叫一次；回傳 true 代表本秒動作有效、計時繼續
+// 每秒呼叫一次；回傳 true 代表本秒動作有效
 function aiTick(){
   const q=QUESTS.find(x=>x.id===curQid);
-  if(aiSt.lostLeft>0){
+  if (!aiSt) return false;
+  if (aiSt.lostLeft > 0) {
     aiSt.lostLeft--;
-    if(aiSt.lostLeft===0) aiSetState('tracking','✅ 重新偵測到你的動作，繼續計時！');
+    if (aiSt.lostLeft === 0) aiSetState('tracking', '✅ 重新偵測到你的動作，繼續進行！');
     return false;
   }
-  // 模擬：偶爾短暫偵測不到動作（每次任務最多一次，不會出現在開頭與結尾）
-  if(aiSt.lostCount<1 && timerSec<timerTotal-8 && timerSec>8 && Math.random()<0.03){
-    aiSt.lostLeft=3; aiSt.lostCount++;
-    aiSetState('lost','⚠️ 沒有偵測到動作，計時暫停中…請回到畫面中');
+  aiSt.tick++;
+
+  if (aiSt.useSim) {
+    const acc = Math.round(90 + Math.random()*9);
+    aiSt.accSum += acc; aiSt.accN++;
+    const accEl=document.getElementById('ai-acc'); if(accEl) accEl.textContent=`準確度 ${acc}%`;
+    aiSt.simPhase += (aiSt.mode === 'hold' ? 0.45 : 0.65);
+    const simAmp = aiSt.mode === 'hold'
+      ? Math.round(82 + Math.sin(aiSt.simPhase) * 8)
+      : Math.round(25 + ((Math.sin(aiSt.simPhase) + 1) / 2) * 68);
+    updateGaugeUI(simAmp, simAmp >= 68);
+    drawPoseCanvas();
+  } else if (aiSt.camReady) {
+    if (aiSt.passLine) {
+      const acc = Math.round(90 + Math.random()*9);
+      aiSt.accSum += acc; aiSt.accN++;
+      const accEl=document.getElementById('ai-acc'); if(accEl) accEl.textContent=`準確度 ${acc}%`;
+    }
+  } else if (aiSt.camError) {
+    aiSetState('lost', '⚠️ 未偵測到相機，請允許相機權限或點右側「🤖 自動演示」/「➕ 動作+1」');
     return false;
   }
-  const acc = Math.round(85 + Math.random()*14);
-  aiSt.accSum += acc; aiSt.accN++; aiSt.tick++;
-  const accEl=document.getElementById('ai-acc'); if(accEl) accEl.textContent=`準確度 ${acc}%`;
+
+  if (aiSt.mode === 'hold' && !aiSt.passLine) {
+    aiSetState('lost', '⚠️ 請進入鏡頭畫面並維持穩定姿勢，AI 即會繼續倒數計時！');
+    return false;
+  }
+
+  if (aiSt.mode === 'rep' && !aiSt.useSim && aiSt.amp < 35) {
+    aiSetState('tracking', `👀 請面對鏡頭自然做「${q ? q.name : '動作'}」，AI 自動追蹤關節角度與律動計次！`);
+    return true;
+  }
+
   if(aiSt.tick===1 || aiSt.tick%4===0){
     const tips = AI_TIPS[q && q.vCat] || AI_TIPS._default;
     aiSetState('tracking', '🤖 ' + tips[aiSt.tipIdx++ % tips.length]);
@@ -1977,19 +2808,47 @@ function aiAvgAcc(){ return aiSt && aiSt.accN ? Math.round(aiSt.accSum/aiSt.accN
 window.startT = function(){
   if(timerOn)return;
   timerOn=true;
-  document.getElementById('t-start').style.display='none';
-  document.getElementById('t-pause').style.display='flex';
-  const cheatMsg = document.getElementById('t-cheat-msg');
-  if(cheatMsg) cheatMsg.style.display='block';
+  const fsOv = document.getElementById('qa-fs-ov');
+  if (fsOv) fsOv.classList.add('open');
+  const ts = document.getElementById('t-start');
+  const tp = document.getElementById('t-pause');
+  if (ts) ts.style.display='none';
+  if (tp) tp.style.display='flex';
+
   const useAI = aiIsActive();
-  if(useAI) aiSetState('tracking','🤖 AI 開始全程識別，請保持在畫面中');
+  if (useAI) {
+    aiSetState('tracking','📷 AI 鏡頭識別啟動中，請對準標準線開始動作！');
+    aiTick();
+    startAICamera().then(() => startPoseLoop());
+  }
   
   timerIv=setInterval(()=>{
-    if(useAI && !aiTick()) return; // 偵測不到動作 → 本秒不計時
-    timerSec--;updTimer();
+    if (useAI && !aiTick()) return; // 起身任務：偵測不到相機或維持型未過標準線 → 本秒不扣秒
+    timerSec--;
+    if (useAI && aiSt && aiSt.mode === 'rep' && aiSt.useSim) {
+      const elapsed = timerTotal - timerSec;
+      const expectedReps = Math.min(aiSt.target, Math.floor((elapsed / Math.max(1, timerTotal)) * aiSt.target));
+      if (expectedReps > aiSt.reps) {
+        const q = QUESTS.find(x => x.id === curQid);
+        registerRep(q, 94);
+        if (!timerOn) return;
+      }
+    }
+    if (useAI && aiSt && aiSt.mode === 'hold') {
+      aiSt.reps = timerTotal - timerSec;
+      const repEl = document.getElementById('ai-rep-num');
+      if (repEl) repEl.textContent = `${aiSt.reps}/${aiSt.target}`;
+    }
+    updTimer();
     if(timerSec<=0){
+      if (useAI && aiSt && aiSt.mode === 'rep' && aiSt.reps < aiSt.target) {
+        timerSec = timerTotal;
+        updTimer();
+        aiSetState('lost', `⏳ 建議時間已到，目前完成 ${aiSt.reps}/${aiSt.target} ${aiSt.unit}，請繼續做動作達標過關！`);
+        return;
+      }
       clearInterval(timerIv);timerIv=null;timerOn=false;
-      if(cheatMsg) cheatMsg.style.display='none';
+      stopAICamera();
       autoFinish();
     }
   },1000);
@@ -1997,46 +2856,62 @@ window.startT = function(){
 
 window.pauseT = function(){
   clearInterval(timerIv);timerIv=null;timerOn=false;
+  stopAICamera();
+  const fsOv = document.getElementById('qa-fs-ov');
+  if (fsOv) fsOv.classList.remove('open');
   const ts=document.getElementById('t-start');
-  const tp=document.getElementById('t-pause');
-  const msg=document.getElementById('t-cheat-msg');
-  if(ts){ts.style.display='flex';ts.innerHTML='▶️ 繼續任務'}
-  if(tp)tp.style.display='none';
-  if(msg)msg.style.display='none';
+  if(ts){
+    ts.style.display='flex';
+    ts.innerHTML = aiIsActive() ? '▶️ 繼續任務（進入全螢幕 AI 運動畫面）' : '▶️ 繼續任務（進入全螢幕倒數計時）';
+  }
   if(aiSt){ aiSt.lostLeft=0; }
-  aiSetState(null,'⏸ 已暫停，AI 識別暫停中');
+  if (aiIsActive()) aiSetState(null,'⏸ 已暫停，AI 鏡頭識別暫停中');
 }
 
 function updTimer(){
   const disp=document.getElementById('t-disp');
   const pct=document.getElementById('t-pct');
   const ring=document.getElementById('t-ring');
+  const repEl=document.getElementById('ai-rep-num');
   if(!disp)return;
-  const elapsed=timerTotal-timerSec;
-  const prog=timerTotal>0?elapsed/timerTotal:0;
-  const C=2*Math.PI*96;
-  const offset=C*(1-prog);
-  disp.textContent=fmtTimer(timerSec);
-  if(pct)pct.textContent=Math.round(prog*100)+'% 完成';
+  const useAI = aiIsActive();
+  const isRep = useAI && aiSt && aiSt.mode === 'rep';
+  const prog = isRep
+    ? (aiSt.target > 0 ? Math.min(1, aiSt.reps / aiSt.target) : 0)
+    : (timerTotal > 0 ? (timerTotal - timerSec) / timerTotal : 0);
+  const C = 2 * Math.PI * (useAI ? 36 : 92);
+  const offset = C * (1 - prog);
+  disp.textContent = fmtTimer(timerSec);
+  if(repEl && aiSt) repEl.textContent = `${aiSt.reps}/${aiSt.target}`;
+  if(pct) pct.textContent = useAI ? `${Math.round(prog*100)}% 達標` : `${Math.round(prog*100)}% 完成`;
   if(ring)ring.style.strokeDashoffset=offset.toFixed(2);
   
-  if(timerSec<=10&&timerSec>0){
-    disp.style.color='#EF4444';
+  if(timerSec<=10 && timerSec>0){
+    disp.style.color='#F87171';
   } else {
-    disp.style.color='var(--t)';
+    disp.style.color='#FFFFFF';
   }
 }
 
 function autoFinish(){
   if(S.todayDone.includes(curQid)) { go('home'); return; }
+  stopAICamera();
+  const fsOv = document.getElementById('qa-fs-ov');
+  if (fsOv) fsOv.classList.remove('open');
   const q = QUESTS.find(x => x.id === curQid);
-  const isActive = q && q.type === 'active';
-  const acc = isActive ? aiAvgAcc() : null;
-  if (isActive) aiSetState('tracking', `✅ AI 全程識別完成！平均準確度 ${acc}%`);
+  const useAI = aiIsActive();
   const res = completeQ(curQid);
   if (!res) { go('home'); return; }
-  res.aiAcc = acc;
-  toast(isActive ? `AI 全程識別完成！動作準確度 ${acc}% 🌟` : '辦公桌任務完成！放鬆一下吧 🌿', '✅');
+  if (useAI && aiSt) {
+    const acc = aiAvgAcc();
+    const repsDone = aiSt.mode === 'rep' ? (aiSt.reps || aiSt.target) : aiSt.target;
+    const unitTxt = aiSt.unit || '';
+    res.aiAcc = acc;
+    res.aiReps = `${repsDone} ${unitTxt}`;
+    toast(`AI 鏡頭驗證完成！達成 ${res.aiReps}（準確度 ${acc}%）🌟`, '✅');
+  } else {
+    toast(`計時完成！恭喜完成「${q ? q.name : '辦公桌微運動'}」🌟`, '✅');
+  }
   showCO(q, res);
   fireConfetti();
 }
@@ -2699,6 +3574,9 @@ window.openQuestGiftBox = function() {
 
 window.closeGiftModal = function() {
   document.getElementById('gift-modal').classList.remove('open');
+  if (document.getElementById('co-ov').classList.contains('show')) {
+    closeCO();
+  }
 }
 
 window.openBag = function() {
@@ -2999,6 +3877,7 @@ function showCO(q, res){
   document.getElementById('co-coin').textContent=coinText;
   let sub = '做得好！繼續保持！💪';
   const extras = [];
+  if (res.aiReps) extras.push(`🎯 完成 ${res.aiReps}`);
   if (res.aiAcc) extras.push(`🤖 AI 動作準確度 ${res.aiAcc}%`);
   if (res.petExpBonus > 0) extras.push(`夥伴天賦 +${res.petExpBonus} EXP`);
   if (res.wBonus > 0) extras.push(`🦄 掉落 ${res.wBonus} W幣`);
