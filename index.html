@@ -453,6 +453,115 @@ img{display:block;max-width:100%}
 .map-tile.newly-conquered::after{
   border:2px solid #FBBF24!important;
 }
+
+/* 新手引導：領土擴張動態光環與提示標籤 */
+@keyframes tutorialPulseRing{
+  0%{transform:scale(0.85);opacity:0.95}
+  60%{transform:scale(1.4);opacity:0.2}
+  100%{transform:scale(1.65);opacity:0}
+}
+@keyframes tutorialPulseGlow{
+  0%,100%{
+    transform:scale(1.05);
+    filter:drop-shadow(0 0 10px #FBBF24) drop-shadow(0 0 3px #FFFFFF);
+  }
+  50%{
+    transform:scale(1.18);
+    filter:drop-shadow(0 0 22px #F59E0B) drop-shadow(0 0 8px #FDE68A);
+  }
+}
+@keyframes tutorialLandExpand{
+  0%{transform:scale(0.88);filter:brightness(0.7)}
+  35%{transform:scale(1.36) rotate(-3deg);filter:brightness(1.65) drop-shadow(0 0 24px #34D399) drop-shadow(0 0 8px #FFFFFF)}
+  70%{transform:scale(1.18) rotate(2deg);filter:brightness(1.35) drop-shadow(0 0 16px #FBBF24)}
+  100%{transform:scale(1.06);filter:drop-shadow(0 0 10px #34D399)}
+}
+.map-tile.tutorial-pulse-tile{
+  animation:tutorialPulseGlow 1.3s ease-in-out infinite!important;
+  z-index:20!important;
+}
+.map-tile.tutorial-pulse-tile::after{
+  border:2.5px solid #FBBF24!important;
+}
+.tutorial-pulse-ring{
+  position:absolute;
+  inset:-6px;
+  border-radius:50%;
+  border:2px solid #FBBF24;
+  animation:tutorialPulseRing 1.6s cubic-bezier(0.2,0.8,0.4,1) infinite;
+  pointer-events:none;
+  z-index:10;
+}
+.tutorial-tile-hint{
+  position:absolute;
+  top:-18px;
+  left:50%;
+  transform:translateX(-50%);
+  background:linear-gradient(135deg,#F59E0B,#EF4444);
+  color:#FFFFFF;
+  font-size:10px;
+  font-weight:800;
+  padding:2px 7px;
+  border-radius:99px;
+  white-space:nowrap;
+  box-shadow:0 4px 10px rgba(239,68,68,0.45);
+  animation:bounceSolo 1.6s ease-in-out infinite;
+  pointer-events:none;
+  z-index:22;
+}
+.map-tile.tutorial-expansion-anim{
+  animation:tutorialLandExpand 1.2s cubic-bezier(0.34,1.56,0.64,1) forwards!important;
+  z-index:25!important;
+}
+.hud-tutorial-banner{
+  position:absolute;
+  top:74px;
+  left:14px;
+  right:14px;
+  max-width:min(calc(100vw - 28px),402px);
+  margin:0 auto;
+  background:rgba(255,255,255,0.96);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1.5px solid rgba(139,92,246,0.38);
+  border-radius:18px;
+  padding:10px 14px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  z-index:45;
+  box-shadow:0 8px 24px rgba(139,92,246,0.18);
+  animation:slideDown .35s cubic-bezier(0.34,1.56,0.64,1);
+  cursor:pointer;
+  transition:transform .18s,box-shadow .18s;
+}
+.hud-tutorial-banner:active{
+  transform:scale(0.98);
+}
+.hud-tutorial-icon{
+  font-size:24px;
+  flex-shrink:0;
+  animation:bounceSolo 2s ease-in-out infinite;
+}
+.hud-tutorial-content{
+  flex:1;
+  min-width:0;
+}
+.hud-tutorial-title{
+  font-size:13.5px;
+  font-weight:900;
+  color:var(--p-d);
+  line-height:1.3;
+}
+.hud-tutorial-desc{
+  font-size:11.5px;
+  font-weight:600;
+  color:var(--tm);
+  margin-top:1px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 .tile-item-emo{
   font-size:21px;
   line-height:1;
@@ -838,15 +947,22 @@ img{display:block;max-width:100%}
 .cam-btn:active { transform: scale(0.9); background: #fff; color: #000; }
 
 #toast{
-  position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-130px);
-  background:rgba(255,255,255,.95);backdrop-filter:blur(12px);
+  position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-130px);
+  background:rgba(255,255,255,.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border:1px solid var(--bd);border-radius:100px;
-  padding:14px 24px;font-size:14px;font-weight:700;color:var(--t);
-  z-index:1000;transition:transform .4s;
-  white-space:nowrap;display:flex;align-items:center;gap:10px;
-  box-shadow:0 12px 32px rgba(0,0,0,0.08);max-width:90vw;
+  padding:10px 18px;font-size:13px;font-weight:700;color:var(--t);
+  line-height:1.45;text-align:left;
+  z-index:1000;transition:transform .35s cubic-bezier(.34,1.56,.64,1);
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 12px 32px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.04);
+  width:max-content;
+  max-width:min(calc(100vw - 32px), 398px);
+  box-sizing:border-box;
+  pointer-events:none;
 }
 #toast.show{transform:translateX(-50%) translateY(0)}
+#t-ico{flex-shrink:0;font-size:16px;line-height:1}
+#t-msg{flex:1;min-width:0;white-space:normal;word-break:break-word;overflow-wrap:break-word}
 #conf-cv{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:500}
 
 /* 使用說明 (Help / Tutorial) */
@@ -1208,7 +1324,10 @@ img{display:block;max-width:100%}
   <div class="modal-box" style="max-height:88vh;overflow-y:auto;padding-bottom:28px">
     <div class="modal-head" style="margin-bottom:10px">
       <div class="modal-ttl">📷 喬山器材 QR Code 打卡</div>
-      <button class="btn btn-gh btn-ico" onclick="closeQRScanner()">✕</button>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="btn btn-gh btn-ico" onclick="openHelp('qr')" title="喬山打卡說明">❓</button>
+        <button class="btn btn-gh btn-ico" onclick="closeQRScanner()">✕</button>
+      </div>
     </div>
     <div id="qr-modal-body"></div>
   </div>
@@ -1248,6 +1367,94 @@ img{display:block;max-width:100%}
       <button class="btn btn-gh btn-ico" onclick="closeTerritoryModal()">✕</button>
     </div>
     <div id="territory-modal-body"></div>
+  </div>
+</div>
+
+<!-- TUTORIAL CONQUEST SUMMARY MODAL (新手領土擴張演示與概念總結) -->
+<div class="modal-bg" id="tutorial-summary-modal" style="z-index:260;" onclick="if(event.target===this)finishTutorialConquest()">
+  <div class="modal-box" style="padding:26px 20px 28px;text-align:center;max-width:390px">
+    <div style="font-size:52px;line-height:1;margin-bottom:12px;animation:pop .4s cubic-bezier(.34,1.56,.64,1)">
+      🏰
+    </div>
+    <div style="font-size:20px;font-weight:900;color:var(--t);margin-bottom:6px">
+      太棒了！成功擴張第一塊領地！🎉
+    </div>
+    <div style="font-size:13px;color:var(--p-d);font-weight:700;margin-bottom:16px">
+      🌱 一般地形（防禦進度 2）已正式納入你的王國版圖
+    </div>
+
+    <!-- 核心運作概念三部曲 -->
+    <div style="background:var(--c2);border:1px solid var(--bd);border-radius:18px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="width:28px;height:28px;border-radius:50%;background:rgba(139,92,246,0.15);color:var(--p-d);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">1</div>
+        <div>
+          <div style="font-size:13.5px;font-weight:800;color:var(--t)">🚶 隨時微運動</div>
+          <div style="font-size:12px;color:var(--tm);line-height:1.45;margin-top:2px">每天 1～3 分鐘伸展或計時放鬆，零負擔養成健康好習慣！</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="width:28px;height:28px;border-radius:50%;background:rgba(52,211,153,0.15);color:#059669;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">2</div>
+        <div>
+          <div style="font-size:13.5px;font-weight:800;color:var(--t)">🚩 開拓擴張領土</div>
+          <div style="font-size:12px;color:var(--tm);line-height:1.45;margin-top:2px">每一次運動都能推進開拓進度，逐步將海洋化為你的王國國土！</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="width:28px;height:28px;border-radius:50%;background:rgba(251,191,36,0.18);color:#D97706;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">3</div>
+        <div>
+          <div style="font-size:13.5px;font-weight:800;color:var(--t)">⛺ 經營冒險王國</div>
+          <div style="font-size:12px;color:var(--tm);line-height:1.45;margin-top:2px">在領地上建造帳篷產 G幣、裝備防護盾、解鎖同盟協同作戰！</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-p btn-full btn-lg" style="box-shadow:var(--sh-p);font-size:16px;font-weight:900" onclick="finishTutorialConquest()">
+      🧭 繼續推進，朝東北方開拓第二塊土地！
+    </button>
+  </div>
+</div>
+
+<!-- TUTORIAL ENEMY CONQUEST SUMMARY MODAL (首次攻佔敵方領地演示與概念總結) -->
+<div class="modal-bg" id="tutorial-enemy-summary-modal" style="z-index:260;" onclick="if(event.target===this)finishTutorialEnemyConquest()">
+  <div class="modal-box" style="padding:26px 20px 28px;text-align:center;max-width:390px">
+    <div style="font-size:52px;line-height:1;margin-bottom:12px;animation:pop .4s cubic-bezier(.34,1.56,.64,1)">
+      ⚔️
+    </div>
+    <div style="font-size:20px;font-weight:900;color:var(--t);margin-bottom:6px">
+      大獲全勝！成功攻克敵方領地！🎉
+    </div>
+    <div style="font-size:13px;color:#DC2626;font-weight:700;margin-bottom:16px">
+      🦁 勁敵【獅王・艾瑞克】前哨已被你攻陷，正式化為你的王國國土！
+    </div>
+
+    <!-- 敵方進攻核心概念三部曲 -->
+    <div style="background:var(--c2);border:1px solid var(--bd);border-radius:18px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="width:28px;height:28px;border-radius:50%;background:rgba(239,68,68,0.15);color:#DC2626;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">1</div>
+        <div>
+          <div style="font-size:13.5px;font-weight:800;color:var(--t)">⚔️ 進攻道具卡與邊界接壤</div>
+          <div style="font-size:12px;color:var(--tm);line-height:1.45;margin-top:2px">領地必須互相接壤才能發起進攻；每次進攻消耗 1 張進攻卡（可由每週同盟任務、商城獲取）！</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="width:28px;height:28px;border-radius:50%;background:rgba(59,130,246,0.15);color:#2563EB;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">2</div>
+        <div>
+          <div style="font-size:13.5px;font-weight:800;color:var(--t)">🛡️ 防護盾守護領地</div>
+          <div style="font-size:12px;color:var(--tm);line-height:1.45;margin-top:2px">點擊自己的領地可裝備防護盾，免疫任何敵方進攻；同盟成員間受條約保護互不侵犯！</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="width:28px;height:28px;border-radius:50%;background:rgba(251,191,36,0.18);color:#D97706;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">3</div>
+        <div>
+          <div style="font-size:13.5px;font-weight:800;color:var(--t)">🤝 同盟協同助攻</div>
+          <div style="font-size:12px;color:var(--tm);line-height:1.45;margin-top:2px">遇到高防禦要塞時，可呼叫同盟戰友施展專屬大招助攻推進，同心協力奪下要塞！</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-p btn-full btn-lg" style="box-shadow:var(--sh-p);font-size:16px;font-weight:900;background:linear-gradient(135deg,#DC2626,#991B1B)" onclick="finishTutorialEnemyConquest()">
+      🔥 繼續征戰，向世界開拓！
+    </button>
   </div>
 </div>
 
@@ -1389,7 +1596,20 @@ const QUESTS=[
     steps:['站姿穩定，腹部微收','將雙臂朝兩側平舉展開至肩膀高度','以肩膀為軸心，向前畫順暢的小圓圈','畫完 12 圈後逆時針向後再畫 12 圈','手臂維持水準不垂落，完成 24 圈']},
   {id:'q20',type:'active',bodyPart:'core',name:'站姿核心提膝撞肘',emo:'⚡',desc:'鍛鍊腹直肌與腹斜肌，強力雕塑腰腹核心',dur:60,exp:45,vCat:'hiit',
     ai:{mode:'rep',target:20,unit:'次交替提膝',lineLbl:'🤖 AI 膝手肘相對接近幅度辨識',guide:'提膝同時軀幹微轉，讓對側手肘靠近膝蓋'},
-    steps:['雙腳與肩同寬，雙手輕扶耳後或後腦勺','右膝向上提起的同時，左肘斜向下靠近右膝','感受腹部核心強力擠壓收縮','回正後換左膝提起、右肘靠近','左右交替節奏流暢，累積完成 20 次']}
+    steps:['雙腳與肩同寬，雙手輕扶耳後或後腦勺','右膝向上提起的同時，左肘斜向下靠近右膝','感受腹部核心強力擠壓收縮','回正後換左膝提起、右肘靠近','左右交替節奏流暢，累積完成 20 次']},
+  
+  {id:'q21',type:'active',bodyPart:'neck_shoulder',name:'站姿 W-Y 字伸展',emo:'🙆',desc:'改善圓肩駝背，深度啟動肩胛下壓與後夾放鬆斜方肌',dur:60,exp:35,vCat:'stretch',
+    ai:{mode:'rep',target:12,unit:'次 W-Y 伸展',lineLbl:'🤖 AI 雙臂 Y-W 軌跡與肩胛夾背追蹤',guide:'雙臂向上比 Y 字伸展，再向下彎肘收成 W 字夾緊肩胛骨'},
+    steps:['雙腳與肩同寬站直，挺胸收腹','雙臂向上延伸呈「Y」字型，感受肩頸拉伸','吐氣時手肘向後向下彎曲收成「W」字型','肩胛骨用力向後夾緊停留 1 秒','重複流暢完成 12 次 W-Y 伸展']},
+  {id:'q22',type:'active',bodyPart:'neck_shoulder',name:'站姿大鵬展翅繞肩',emo:'🦅',desc:'以肩關節為軸心帶動手肘畫大圓，釋放肩頸深層僵硬與乳酸',dur:60,exp:30,vCat:'stretch',
+    ai:{mode:'rep',target:16,unit:'次雙肩後繞伸展',lineLbl:'🤖 AI 雙肩環繞與手肘畫圓追蹤',guide:'雙手輕觸肩膀，手肘向前、向上、向後順暢畫大圈'},
+    steps:['雙腳平穩站立，指尖輕觸雙肩','手肘在胸前靠近，再向上高高提起','手肘向兩側向後展開，胸口自然敞開','感受肩胛骨靈活旋轉與後頸放鬆','累積流暢完成 16 次後繞大圈']},
+  {id:'q23',type:'active',bodyPart:'neck_shoulder',name:'站姿後扣擴胸仰望',emo:'💆‍♂️',desc:'雙手後扣下壓開肩，溫和仰頭延伸頸椎前側肌群',dur:60,exp:35,vCat:'stretch',
+    ai:{mode:'rep',target:10,unit:'次後扣仰望延伸',lineLbl:'🤖 AI 雙手後拉與下巴仰角追蹤',guide:'雙手在身後交扣向下向後拉，同時胸口展開、下巴微仰'},
+    steps:['站直雙腳微張，雙手在身後十指交扣','雙臂伸直向後下方延伸拉開肩膀','挺胸並將下巴溫和向上抬起，拉伸前頸','維持呼吸停留 3 秒後緩緩回正','重複完成 10 次後扣仰頭延伸']},
+  {id:'q24',type:'active',bodyPart:'neck_shoulder',name:'站姿側向拉頸沉肩',emo:'🧘',desc:'一手垂下下沉沉肩，另一手引導頸部側傾舒展上斜方肌',dur:60,exp:35,vCat:'stretch',
+    ai:{mode:'rep',target:8,unit:'次左右側頸深層拉伸',lineLbl:'🤖 AI 頭部側傾角度與沉肩位移辨識',guide:'頭部向單側輕緩傾斜，對側手臂向下延伸沉肩'},
+    steps:['站直放鬆，左手自然下垂並用力向下沉肩','右手輕放左耳上方，引導頭部向右側微傾','感受左側頸部與斜方肌溫和被拉開，停留 5 秒','緩慢回正換邊，右手下沉、頭向左傾','左右交替完成 8 次深層拉伸']}
 ];
 
 const BDEFS=[
@@ -1475,8 +1695,8 @@ const DS={
   myCode: null, friends: [], pokes: {}, pokeCount: 0, pokeInbox: [],
   expCD: 0, expDone: 0, eliteMedal: null,
   helpSeen: {}, cloverBuff: false,
-  qrScans: {}, qrTotalCount: 0, qrSelVenue: 'wg_xinyi',
-  mapGrid: {}
+  qrScans: {}, qrTotalCount: 0, qrSelVenue: 'wg_xinyi', lastQRScanTime: 0,
+  mapGrid: {}, tutorialStep1Done: false, tutorialConquestDone: false, tutorialEnemyConquestDone: false
 };
 
 let S={};
@@ -1514,7 +1734,15 @@ function loadS(){
     if(!S.qrScans || typeof S.qrScans !== 'object') S.qrScans = {};
     if(S.qrTotalCount === undefined) S.qrTotalCount = 0;
     if(!S.qrSelVenue) S.qrSelVenue = 'wg_xinyi';
+    if(S.lastQRScanTime === undefined) S.lastQRScanTime = 0;
+    if(S.tutorialStep1Done === undefined) S.tutorialStep1Done = S.tutorialConquestDone || false;
+    if(S.tutorialConquestDone === undefined) S.tutorialConquestDone = false;
+    if(S.tutorialEnemyConquestDone === undefined) S.tutorialEnemyConquestDone = false;
     if(!S.mapGrid || typeof S.mapGrid !== 'object') S.mapGrid = {};
+    if(S.mapGrid['10,12'] && S.mapGrid['10,12'].owner === 'enemy') {
+      delete S.mapGrid['10,12'];
+      delete S.mapGrid[262];
+    }
     if(!S.weeklyClaimed || typeof S.weeklyClaimed !== 'object') S.weeklyClaimed = {};
     if(!S.monthlyClaimed || typeof S.monthlyClaimed !== 'object') S.monthlyClaimed = {};
     if(S.allianceAttacks === undefined) S.allianceAttacks = 0;
@@ -1534,7 +1762,7 @@ function loadS(){
       S.weeklyTeamStart = curWk;
       S.weeklyClaimed = {};
       S.weeklyTeamSteps = Math.floor(Math.random() * 4000) + 21000;
-      S.weeklyTeamWater = Math.floor(Math.random() * 10) + 38;
+      S.weeklyTeamJacks = Math.floor(Math.random() * 15) + 65;
       S.weeklyTeamSquats = Math.floor(Math.random() * 15) + 68;
       S.weeklyTeamPlanks = Math.floor(Math.random() * 10) + 42;
       S.weeklyTeamQuests = Math.floor(Math.random() * 8) + 24;
@@ -1545,9 +1773,9 @@ function loadS(){
       S.monthlyClaimed = {};
       S.monthlyAllianceAttacks = 4;
       S.monthlyConqueredTiles = 1;
-      S.monthlyTeamSteps = 68500;
+      S.monthlyTeamSteps = Math.round(getTeamMemberCount() * 115000);
+      S.monthlyTeamQuests = 140;
       S.monthlyTeamCore = 210;
-      S.monthlyTeamWater = 280;
       S.monthlyTeamStreak = 22;
     }
     // 遷移舊版主城預設值，統一將 25x25 我方主城設於中心點 (12,12) -> index = 312
@@ -1629,6 +1857,7 @@ function loadS(){
       { r: 15, c: 14, data: { type: 'land', owner: 'enemy', rivalName: '毒蠍・雷克斯', ico: '🦂', terrain: 'normal', lbl: '一般地形', attackNeed: 2, attackProg: 0 } },
       { r: 15, c: 15, data: { type: 'land', owner: 'enemy', rivalName: '毒蠍・雷克斯', ico: '🦂', terrain: 'special', lbl: '特殊地形', attackNeed: 4, attackProg: 0 } }
     ];
+    window.rivalSeeds = rivalSeeds;
     rivalSeeds.forEach(({ r, c, data }) => {
       const k = `${r},${c}`;
       const idx = r * 25 + c;
@@ -1710,7 +1939,7 @@ function syncAllyMapTiles(){
 function checkAllyDynamicExpansion(){
   if(!S || !S.mapGrid || !S.hasTeam) return;
   const totalSteps = (S.weeklyTeamSteps || 22000) + (S.actDone || 0) * 150;
-  const totalWater = (S.weeklyTeamWater || 42) + (S.water || 0);
+  const totalJacks = (S.weeklyTeamJacks || 75) + ((S.todayDone && S.todayDone.includes('q9')) ? 15 : 0);
   const totalSquats = (S.weeklyTeamSquats || 75) + ((S.todayDone && S.todayDone.includes('q7')) ? 1 : 0);
 
   // 1. 小米 🐱（步數達到 23,000 步，自主向外擴張 3,8）
@@ -1723,9 +1952,9 @@ function checkAllyDynamicExpansion(){
     const tile = { type: 'land', owner: 'ally', allyCode: 'jay', allyName: '同盟戰友・阿傑 🦊', ico: '🦊', terrain: 'normal', lbl: '阿傑的擴張領地', desc: '【同盟戰友・阿傑 🦊】因每週深蹲達標自主開拓的新綠地！同盟條約保護中，互相無法攻擊！' };
     S.mapGrid['20,7'] = tile; S.mapGrid[20 * 25 + 7] = tile;
   }
-  // 3. 小花花 🌸（飲水達到 42 杯，自主向外擴張 20,18）
-  if(totalWater >= 42 && !S.mapGrid['20,18'] && !S.mapGrid[20 * 25 + 18]){
-    const tile = { type: 'land', owner: 'ally', allyCode: 'flower', allyName: '同盟戰友・小花花 🌸', ico: '🌸', terrain: 'normal', lbl: '小花花的擴張領地', desc: '【同盟戰友・小花花 🌸】因每週補水達標自主開拓的新綠地！同盟條約保護中，互相無法攻擊！' };
+  // 3. 小花花 🌸（開合跳達到 75 次，自主向外擴張 20,18）
+  if(totalJacks >= 75 && !S.mapGrid['20,18'] && !S.mapGrid[20 * 25 + 18]){
+    const tile = { type: 'land', owner: 'ally', allyCode: 'flower', allyName: '同盟戰友・小花花 🌸', ico: '🌸', terrain: 'normal', lbl: '小花花的擴張領地', desc: '【同盟戰友・小花花 🌸】因每週開合跳達標自主開拓的新綠地！同盟條約保護中，互相無法攻擊！' };
     S.mapGrid['20,18'] = tile; S.mapGrid[20 * 25 + 18] = tile;
   }
 }
@@ -1785,7 +2014,7 @@ function dailyReset(){
     S.weeklyTeamStart = curWk;
     S.weeklyClaimed = {};
     S.weeklyTeamSteps = Math.floor(Math.random() * 4000) + 21000;
-    S.weeklyTeamWater = Math.floor(Math.random() * 10) + 38;
+    S.weeklyTeamJacks = Math.floor(Math.random() * 15) + 65;
     S.weeklyTeamSquats = Math.floor(Math.random() * 15) + 68;
     S.weeklyTeamPlanks = Math.floor(Math.random() * 10) + 42;
     S.weeklyTeamQuests = Math.floor(Math.random() * 8) + 24;
@@ -1796,9 +2025,9 @@ function dailyReset(){
     S.monthlyClaimed = {};
     S.monthlyAllianceAttacks = 4;
     S.monthlyConqueredTiles = 1;
-    S.monthlyTeamSteps = 68500;
+    S.monthlyTeamSteps = Math.round(getTeamMemberCount() * 115000);
+    S.monthlyTeamQuests = 140;
     S.monthlyTeamCore = 210;
-    S.monthlyTeamWater = 280;
     S.monthlyTeamStreak = 22;
   } 
 
@@ -2048,18 +2277,38 @@ setInterval(() => {
       }
     }
   }
-  // 更新喬山器材 QR Code 每日冷卻倒數（距離午夜 00:00 重置時間）
+  // 更新喬山器材 QR Code 每日冷卻倒數與器材間 10 分鐘冷卻倒數
   const cdEls = document.querySelectorAll('.qr-cd-timer');
   if (cdEls.length > 0) {
     const leftSec = qrSecUntilMidnight();
     const txt = fmtHMS(leftSec);
     cdEls.forEach(el => { el.textContent = txt; });
   }
+  const intCdEls = document.querySelectorAll('.qr-interval-cd-timer');
+  if (intCdEls.length > 0) {
+    const intLeft = getQRIntervalCooldownLeftSec();
+    const txt = fmtMS(intLeft);
+    intCdEls.forEach(el => { el.textContent = txt; });
+  }
 }, 1000);
 
 // ===== 喬山健康科技 O2O 器材 QR Code 掃描邏輯 =====
 let qrScanTimer = null;
 let qrScanning = false;
+const QR_INTERVAL_COOLDOWN_SEC = 10 * 60; // 器材與器材之間冷卻 10 分鐘 (600 秒)
+
+function getQRIntervalCooldownLeftSec(){
+  if (!S.lastQRScanTime) return 0;
+  const elapsedSec = Math.floor((Date.now() - S.lastQRScanTime) / 1000);
+  const rem = QR_INTERVAL_COOLDOWN_SEC - elapsedSec;
+  return rem > 0 ? rem : 0;
+}
+
+function fmtMS(sec){
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
 
 function qrSecUntilMidnight(){
   const now = new Date();
@@ -2117,6 +2366,7 @@ function renderQRScannerModal(scanningLabel = ''){
   const curV = QR_VENUES.find(v => v.id === S.qrSelVenue) || QR_VENUES[0];
   const tier = getQRBadgeTierInfo();
   const cdTxt = fmtHMS(qrSecUntilMidnight());
+  const intCdSec = getQRIntervalCooldownLeftSec();
 
   const tabsHtml = QR_VENUES.map(v => `
     <button class="qr-loc-tab ${v.id === curV.id ? 'on' : ''}" onclick="selectQRVenue('${v.id}')">📍 ${v.name}</button>
@@ -2131,17 +2381,18 @@ function renderQRScannerModal(scanningLabel = ''){
       <div style="flex:1;min-width:0">
         <div style="font-size:14px;font-weight:800;color:var(--t)">${eq.name} <span style="font-size:11px;color:var(--tm);font-weight:600">(${eq.model})</span></div>
         <div style="font-size:10px;color:#059669;font-family:'Outfit',monospace;font-weight:700;margin-top:2px">QR: ${code}</div>
-        <div style="font-size:11px;color:var(--tm);margin-top:2px">${eq.desc}</div>
       </div>
       ${done ? `
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:11px;font-weight:800;color:var(--tm)">⏳ 冷卻中</div>
+          <div style="font-size:11px;font-weight:800;color:var(--tm)">⏳ 今日已打卡</div>
           <div style="font-size:12px;font-weight:900;font-family:'Outfit';color:#D97706" class="qr-cd-timer">${cdTxt}</div>
           <div style="font-size:9px;color:var(--td)">明日 00:00 重置</div>
         </div>
+      ` : (intCdSec > 0 ? `
+        <button class="btn btn-gh btn-sm qr-scan-btn on-cd" style="padding:8px 12px;font-size:12px;flex-shrink:0;color:#D97706;font-weight:700" onclick="scanEquipmentQR('${curV.id}','${eq.id}')">⏳ 冷卻中 (<span class="qr-interval-cd-timer">${fmtMS(intCdSec)}</span>)</button>
       ` : `
-        <button class="btn btn-g btn-sm" style="padding:8px 12px;font-size:12px;flex-shrink:0" ${qrScanning ? 'disabled' : ''} onclick="scanEquipmentQR('${curV.id}','${eq.id}')">📷 掃描打卡</button>
-      `}
+        <button class="btn btn-g btn-sm qr-scan-btn" style="padding:8px 12px;font-size:12px;flex-shrink:0" ${qrScanning ? 'disabled' : ''} onclick="scanEquipmentQR('${curV.id}','${eq.id}')">📷 掃描打卡</button>
+      `)}
     </div>`;
   }).join('');
 
@@ -2156,15 +2407,31 @@ function renderQRScannerModal(scanningLabel = ''){
         <div style="font-size:11px;font-weight:800;color:#A7F3D0;letter-spacing:.5px">${qrScanning ? 'AI 條碼辨識中...' : 'QR CODE 對準框'}</div>
       </div>
       <div style="font-size:14px;font-weight:900;padding:0 16px;text-align:center" id="qr-vf-txt">${scanningLabel || '請將喬山器材上的專屬 QR Code 置於方框中央'}</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.68);margin-top:4px">每個場館的每種器材每日可掃描領獎 1 次</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.68);margin-top:4px">每種器材每日可打卡 1 次・器材間需間隔 10 分鐘</div>
     </div>
 
-    <div style="background:var(--c2);border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:11.5px;color:var(--t);line-height:1.5">
-      <div style="display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:4px">
-        <span>🏅 探險進度：${tier.cur}（累積 ${tier.cnt} 次）</span>
-        <span style="color:var(--p-d);font-size:11px">${tier.next}</span>
+    ${intCdSec > 0 ? `
+    <div style="background:#FFFBEB;border:1.5px solid #FCD34D;border-radius:12px;padding:9px 12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:18px">⏳</span>
+        <div>
+          <div style="font-size:12px;font-weight:800;color:#92400E">器材掃描冷卻中 (間隔需 10 分鐘)</div>
+          <div style="font-size:11px;color:#B45309">冷卻倒數結束後即可掃描下一台器材</div>
+        </div>
       </div>
-      <div style="color:var(--tm)">💡 <b>同場館同款器材共用 QR Code</b>（例：同店 10 台跑步機皆為同一組，每日限領 1 次；換到不同場館或不同器材即可再次掃描！）</div>
+      <div style="font-size:15px;font-weight:900;font-family:'Outfit';color:#D97706" class="qr-interval-cd-timer">
+        ${fmtMS(intCdSec)}
+      </div>
+    </div>
+    ` : ''}
+
+    <div style="background:var(--c2);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--t);line-height:1.6">
+      <div style="font-weight:800;font-size:12.5px;color:var(--t);margin-bottom:3px">
+        🏅 探險進度：${tier.cur}（累積 ${tier.cnt} 次）
+      </div>
+      <div style="font-size:11.5px;color:var(--p-d);font-weight:700">
+        ${tier.next}
+      </div>
     </div>
 
     <div style="font-size:12px;font-weight:800;color:var(--t);margin-bottom:6px">1️⃣ 選擇所在合作場館／門市（示範切換）</div>
@@ -2184,6 +2451,15 @@ window.scanEquipmentQR = function(venueId, eqId){
   const eq = QR_EQUIPMENTS.find(e => e.id === eqId);
   if (!venue || !eq) return;
 
+  const intCdSec = getQRIntervalCooldownLeftSec();
+  if (intCdSec > 0) {
+    const m = Math.floor(intCdSec / 60);
+    const s = intCdSec % 60;
+    const timeStr = m > 0 ? `${m} 分 ${s} 秒` : `${s} 秒`;
+    toast(`⏳ 器材掃描冷卻中！兩台器材間需間隔 10 分鐘，還需等待 ${timeStr}！`, '⏳');
+    return;
+  }
+
   const code = makeQRCodeStr(venueId, eqId);
   if (isQRScannedToday(venueId, eqId)) {
     toast(`【${venue.name}・${eq.name}】今日已掃描過，冷卻剩餘 ${fmtHMS(qrSecUntilMidnight())}！`, '⏳');
@@ -2191,7 +2467,6 @@ window.scanEquipmentQR = function(venueId, eqId){
   }
 
   S.qrSelVenue = venueId;
-  // 若還沒打開掃描器 Modal（例如從任務頁直接點），先開啟或直接在背景完成，這裡統一打開掃描動畫讓體驗完整
   const m = document.getElementById('qr-modal');
   const modalWasOpen = m && m.classList.contains('open');
   if (!modalWasOpen) m.classList.add('open');
@@ -2205,6 +2480,7 @@ window.scanEquipmentQR = function(venueId, eqId){
     const today = new Date().toDateString();
     if (!S.qrScans) S.qrScans = {};
     S.qrScans[code] = today;
+    S.lastQRScanTime = Date.now();
     S.qrTotalCount = (S.qrTotalCount || 0) + 1;
     S.gcoin += 10;
     const conquered = consumePendingConquest();
@@ -2217,14 +2493,14 @@ window.scanEquipmentQR = function(venueId, eqId){
     } else if (conquered) {
       toast(`🚩 領地擴張成功！掃描【${venue.name}・${eq.name}】+10 G幣、+10 EXP 並佔領新領地！🎉`, '🚩');
     } else {
-      toast(`掃描成功！【${venue.name}・${eq.name}】+10 G幣、+10 EXP 🎉`, '🏋️');
+      toast(`掃描成功！【${venue.name}・${eq.name}】+10 G幣、+10 EXP 🎉 (器材間冷卻 10 分鐘)`, '🏋️');
     }
     fireConfetti();
     const qrModalMsg = (conquered && conquered.partialAttack)
       ? `⚔️ 進攻推進 (${conquered.attackProg}/${conquered.attackNeed})！已獲得 +10 G幣、+10 EXP，再完成 ${conquered.remaining} 項任務即可攻下【${conquered.lbl}】！`
       : (conquered
         ? `🚩 領地擴張成功！已獲得 +10 G幣、+10 EXP 並將【${conquered.lbl}】納入版圖！`
-        : `✅ 掃描成功！已獲得 +10 G幣、+10 EXP`);
+        : `✅ 掃描成功！已獲得 +10 G幣、+10 EXP (冷卻倒數 10 分鐘)`);
     renderQRScannerModal(qrModalMsg);
     if (curPage === 'home') go('home');
     else if (curPage === 'quests') {
@@ -2454,7 +2730,9 @@ const HELP = {
       '點右下角 🎯 可隨時將鏡頭置中回到我方主城，點 🦁 可巡視遠方四大敵對勢力要塞' ] },
     { ico: '💧', t: '右下懸浮按鈕：喝水打卡 & 喬山 QR', items: [
       '點右下角藍色圓形「💧 喝水打卡」按鈕，AI 會即時識別喝水動作，每杯間隔 15 分鐘，目標一天 8 杯',
-      '點右下角綠色圓形「📷 喬山 QR」按鈕，到合作健身房或喬山門市掃描器材專屬 QR Code 立領 10 G幣 + 10 EXP' ] },
+      '點右下角綠色圓形「📷 喬山 QR」按鈕，到合作健身房或喬山門市掃描器材專屬 QR Code 立領 10 G幣 + 10 EXP',
+      '同場館同款器材（如所有跑步機、飛輪車等）共用同一組專屬 QR Code，同器材每日限掃 1 次（隔日 00:00 重置）',
+      '器材與器材之間需間隔 10 分鐘冷卻；換到不同場館或冷卻結束即可繼續打卡領獎' ] },
     { ico: '📅', t: '底部「📅 每日狀態」可收合面板', items: [
       '點擊畫面底部的「📅 每日狀態」浮動面板即可展開／收合',
       '內含「連續簽到（含補簽修復筆）」、「好友戳戳提醒」、「今日推薦任務」與「夥伴餵食／派遣尋寶」',
@@ -2463,14 +2741,9 @@ const HELP = {
   quests: { name: '任務', slides: [
     { ico: '⚡', t: '挑選任務', items: [
       '上方分頁可篩選：全部／🌟 收藏／🪑 辦公桌／🚶 起身／🏋️ 喬山器材',
-      '🪑 辦公桌任務：坐著就能做，約 1～2 分鐘',
-      '🚶 起身任務：EXP 比較高，需要起身活動',
+      '🪑 辦公桌任務：坐著就能做，約 1～2 分鐘，舒緩肩頸與手腕',
+      '🚶 起身任務：全螢幕 AI 骨架辨識，EXP 比較高，活動全身筋骨',
       '今天完成的任務會變成灰色，明天才能再做' ] },
-    { ico: '🏋️', t: '喬山器材 QR Code 打卡', items: [
-      '切換到「🏋️ 喬山器材」分頁，可查看各合作場館（World Gym、健身工廠、喬山旗艦門市）的器材清單',
-      '同場館同款器材共用同一個 QR Code（例：同店 10 台跑步機共用同一組），每個器材每天限掃 1 次，隔日 00:00 重置並顯示冷卻倒數',
-      '換到另一間場館或不同器材，就能掃描不同的 QR Code 再領 10 G幣 + 10 EXP！',
-      '累積掃描 3／10／25 次可依序解鎖初級🥉、中級🥈、高級🥇「喬山探險家」勳章' ] },
     { ico: '🌟', t: '收藏常用任務', items: [
       '點任務卡右上角的 ★ 就能收藏，再點一次取消',
       '收藏的任務會排在最前面',
@@ -2480,6 +2753,14 @@ const HELP = {
       '連續 3 天以上：G幣 +20%（火狐俠 +30%）',
       '飽食度 ≥ 70：G幣 +15%；出戰夥伴的天賦也會有額外加成',
       '完成後還能開一次驚喜禮物盒' ] },
+  ]},
+  qr: { name: '喬山器材打卡說明', slides: [
+    { ico: '🏋️', t: '喬山器材 QR Code 打卡說明', items: [
+      '至合作場館（World Gym、健身工廠、喬山旗艦門市）找到指定器材上的專屬 QR Code 進行掃描打卡',
+      '同場館同款器材（如所有跑步機、飛輪車等）共用同一組專屬 QR Code',
+      '同款器材每日限掃描打卡 1 次（隔日 00:00 重置）',
+      '不同器材與器材之間需間隔 10 分鐘冷卻時間，冷卻結束即可繼續打卡領取 10 G幣 + 10 EXP！',
+      '累積掃描達 3／10／25 次可依序解鎖初級🥉、中級🥈、高級🥇「喬山探險家」勳章' ] }
   ]},
   qa: { name: '任務執行', slides: [
     { ico: '📝', t: '先看說明，再進入全螢幕運動', items: [
@@ -2562,6 +2843,9 @@ function anyOverlayOpen(){
 
 function autoShowHelp(page){
   if(!HELP[page] || (S.helpSeen && S.helpSeen[page])) return;
+  // 若處於領土開拓/進攻導引流程中（已鎖定開拓目標地塊 pendingTargetGrid），暫緩任務/執行頁教學彈窗，讓開拓教學順暢完成，留待下次進入再顯示
+  const hasPendingConquest = (pendingTargetGrid !== null && pendingTargetGrid !== undefined) || (window.pendingTargetGrid !== null && window.pendingTargetGrid !== undefined);
+  if(hasPendingConquest && (page === 'qa' || page === 'quests')) return;
   setTimeout(()=>{
     // 頁面已切換或有其他視窗開著時先不顯示，下次進入此頁再顯示
     if(curPage !== page || anyOverlayOpen()) return;
@@ -2579,7 +2863,13 @@ window.openHelp = function(page){
 
 window.closeHelp = function(){
   document.getElementById('help-modal').classList.remove('open');
+  const wasPage = helpPage;
   if(helpPage && S.helpSeen && !S.helpSeen[helpPage]){ S.helpSeen[helpPage] = true; saveS(); }
+  if(wasPage === 'home' && !S.tutorialConquestDone){
+    setTimeout(()=>{
+      startFirstConquestTutorial();
+    }, 320);
+  }
 }
 
 window.helpStep = function(dir){
@@ -2604,9 +2894,23 @@ function renderHelp(){
 }
 
 window.resetHelp = function(){
-  S.helpSeen = {}; saveS();
-  toast('已重新開啟新手教學，進入各頁面時會自動顯示', '📘');
-  go('profile');
+  S.helpSeen = {};
+  S.tutorialStep1Done = false;
+  S.tutorialConquestDone = false;
+  S.tutorialEnemyConquestDone = false;
+  if(S.mapGrid){
+    delete S.mapGrid['11,12'];
+    delete S.mapGrid[287];
+    delete S.mapGrid['10,13'];
+    delete S.mapGrid[263];
+    delete S.mapGrid['10,14'];
+    delete S.mapGrid[264];
+    delete S.mapGrid['10,12'];
+    delete S.mapGrid[262];
+  }
+  saveS();
+  toast('已重新開啟新手教學與開拓導覽，進入各頁面時會自動顯示', '📘');
+  go('home');
 }
 
 function renderSplash(){
@@ -2737,8 +3041,8 @@ function consumePendingConquest(){
 
     const isEnemyCastle = (existing.type === 'enemy_castle') || RIVAL_STRONGHOLDS.some(s => s.r === r && s.c === c);
     const isSpecial = (existing.terrain === 'special') || isEnemyCastle;
-    const need = existing.attackNeed || (isSpecial ? 4 : 2);
-    const prog = (existing.attackProg || 0) + 1;
+    const need = (!S.tutorialEnemyConquestDone) ? 1 : (existing.attackNeed || (isSpecial ? 4 : 2));
+    const prog = (!S.tutorialEnemyConquestDone) ? 1 : ((existing.attackProg || 0) + 1);
     const rivalName = existing.rivalName || '勁敵・艾瑞克';
     const targetLbl = isEnemyCastle ? '主城' : (isSpecial ? '特殊地形' : '一般地形');
 
@@ -3078,19 +3382,31 @@ function renderHomeMapGrid(){
         </div>`;
       }else if(m.isEnemy){
         // 遠方另一位玩家的領地：敵方主城顯示對手寵物圖示，若設有防護盾或正在進攻中則疊加對應圖示
+        const isTutorialEnemyTarget = (S.tutorialConquestDone && !S.tutorialEnemyConquestDone && m.key === '10,14');
+        const tutEnemyCls = isTutorialEnemyTarget ? ' tutorial-pulse-tile' : '';
         const enemyBadge = m.itemIcon
           ? `<div class="${m.isEnemyCastle ? 'tile-item-badge' : 'tile-item-emo'}" title="${m.itemName}">${m.itemIcon}</div>`
           : (m.attackProg > 0 ? `<div class="${m.isEnemyCastle ? 'tile-item-badge' : 'tile-item-emo'}" title="進攻進度 ${m.attackProg}/${m.attackNeed}">⚔️</div>` : '');
         html += `
-        <div class="map-tile ${m.cls}${extraCls}" data-coord="${m.key}" data-index="${m.index}" onclick="selectMapTile(${r},${c})">
-          ${m.isEnemyCastle ? `<div class="tile-emo" title="${m.rivalName}">${m.ico}</div>` : ''}
+        <div class="map-tile ${m.cls}${extraCls}${tutEnemyCls}" data-coord="${m.key}" data-index="${m.index}" onclick="selectMapTile(${r},${c})">
+          ${m.isEnemyCastle ? `<div class="tile-emo" title="${m.rivalName}">${m.ico}</div>` : (m.ico ? `<div class="tile-emo" title="${m.rivalName}">${m.ico}</div>` : '')}
           ${enemyBadge}
+          ${isTutorialEnemyTarget ? `
+            <div class="tutorial-pulse-ring" style="border-color:#EF4444"></div>
+            <div class="tutorial-tile-hint" style="background:linear-gradient(135deg,#DC2626,#991B1B)">⚔️ 點此進攻</div>
+          ` : ''}
         </div>`;
       }else if(!m.isOccupied){
-        // 海洋：純淨水域，無任何文字或座標
+        const isTutorialTarget = (!S.tutorialStep1Done && m.key === '11,12') || (S.tutorialStep1Done && !S.tutorialConquestDone && m.key === '10,13');
+        const tutCls = isTutorialTarget ? ' tutorial-pulse-tile' : '';
+        // 海洋：純淨水域，無任何文字或座標（新手開拓導覽時高亮開拓提示）
         html += `
-        <div class="map-tile ${m.cls}${extraCls}" data-coord="${m.key}" data-index="${m.index}" onclick="selectMapTile(${r},${c})">
+        <div class="map-tile ${m.cls}${extraCls}${tutCls}" data-coord="${m.key}" data-index="${m.index}" onclick="selectMapTile(${r},${c})">
           <div class="ocean-ripple"></div>
+          ${isTutorialTarget ? `
+            <div class="tutorial-pulse-ring"></div>
+            <div class="tutorial-tile-hint">👆 點此開拓</div>
+          ` : ''}
         </div>`;
       }else if(m.isCastle){
         // 主城：保留主城圖示（出戰夥伴），若建造領地道具則疊加道具圖示
@@ -3360,19 +3676,34 @@ window.openConquestModal = function(index, r, c){
   const attackCardBox = document.getElementById('conquest-attack-card-box');
 
   if(m.isEnemy){
-    const need = m.attackNeed || (m.isSpecialTerrain ? 4 : 2);
+    if(!S.tutorialEnemyConquestDone){
+      let cItem = (S.inventory || []).find(i => i.id === 'attack_card' && (i.qty || 0) > 0);
+      if(!cItem){
+        addItemToBag('attack_card', 1);
+      }
+    }
+    const need = (!S.tutorialEnemyConquestDone) ? 1 : (m.attackNeed || (m.isSpecialTerrain ? 4 : 2));
     const prog = m.attackProg || 0;
     const rem = Math.max(1, need - prog);
     const terrainTag = m.isSpecialTerrain ? '⛰️ 特殊地形（高難度防禦・需 4 個進度）' : '🌱 一般地形（標準防禦・需 2 個進度）';
-    if(ttlEl) ttlEl.textContent = '🔥 進攻敵方領地！';
+    if(ttlEl) ttlEl.textContent = (!S.tutorialEnemyConquestDone) ? '🔥 首次進攻敵方領地實戰！' : '🔥 進攻敵方領地！';
     if(infoEl){
-      infoEl.innerHTML = `<span>⚔️</span><span>鎖定【<b>${m.rivalName}</b>】的「<b>${m.lbl}</b>」（${terrainTag}）・進攻進度 <b>${prog}/${need}</b>（還需 <b>${rem}</b> 次即可攻克！）</span>`;
+      infoEl.innerHTML = (!S.tutorialEnemyConquestDone)
+        ? `<span>⚔️</span><span>鎖定【<b>${m.rivalName}</b>】的「<b>${m.lbl}</b>」・完成進攻任務即可攻陷並納入個人王國版圖！</span>`
+        : `<span>⚔️</span><span>鎖定【<b>${m.rivalName}</b>】的「<b>${m.lbl}</b>」（${terrainTag}）・進攻進度 <b>${prog}/${need}</b>（還需 <b>${rem}</b> 次即可攻克！）</span>`;
     }
     const cardItem = (S.inventory || []).find(i => i.id === 'attack_card');
     const cardQty = cardItem ? (cardItem.qty || 0) : 0;
     if(attackCardBox){
       attackCardBox.style.display = 'block';
-      if(cardQty > 0){
+      if(!S.tutorialEnemyConquestDone){
+        attackCardBox.innerHTML = `
+          <div style="background:linear-gradient(135deg,#FEF2F2,#FFFBEB);border:1.5px solid #F87171;border-radius:12px;padding:9px 12px;font-size:12px;color:#991B1B;display:flex;align-items:center;gap:8px">
+            <span style="font-size:20px">🎁</span>
+            <div style="line-height:1.4"><b>新手征戰禮包：</b>已免費為你準備【進攻道具卡】（進攻必備，完成進攻任務時消耗 1 張）</div>
+          </div>
+        `;
+      }else if(cardQty > 0){
         attackCardBox.innerHTML = `
           <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:9px 12px;font-size:12px;color:#991B1B;display:flex;align-items:center;gap:8px">
             <span style="font-size:18px">⚔️</span>
@@ -3397,12 +3728,32 @@ window.openConquestModal = function(index, r, c){
       btnDesk.style.display = 'block';
       btnDesk.className = 'btn btn-full btn-lg';
       btnDesk.style.boxShadow = '0 8px 24px rgba(220,38,38,0.28)';
-      if(cardQty > 0){
+      if(cardQty > 0 || !S.tutorialEnemyConquestDone){
         btnDesk.style.background = 'linear-gradient(135deg,#DC2626,#B91C1C)';
         btnDesk.style.color = '#fff';
         btnDesk.style.cursor = 'pointer';
-        btnDesk.innerHTML = '⚔️ 發起進攻 (前往運動任務)';
-        btnDesk.onclick = () => startConquestQuest('all');
+        if(!S.tutorialEnemyConquestDone){
+          btnDesk.innerHTML = '⚔️ 開始首次進攻實戰 (微運動攻克)';
+          btnDesk.onclick = () => {
+            pendingTargetGrid = index;
+            window.pendingTargetGrid = index;
+            closeConquestModal();
+            go('qa', 'q2');
+          };
+          if(btnActive){
+            btnActive.style.display = 'block';
+            btnActive.className = 'btn btn-gh btn-full';
+            btnActive.style.background = 'var(--c1)';
+            btnActive.style.boxShadow = 'none';
+            btnActive.style.color = 'var(--tm)';
+            btnActive.style.fontSize = '13px';
+            btnActive.textContent = '挑選其他進攻任務 ➔';
+            btnActive.onclick = () => startConquestQuest('all');
+          }
+        }else{
+          btnDesk.innerHTML = '⚔️ 發起進攻 (前往運動任務)';
+          btnDesk.onclick = () => startConquestQuest('all');
+        }
       }else{
         btnDesk.style.background = 'var(--c3)';
         btnDesk.style.color = 'var(--tm)';
@@ -3411,34 +3762,134 @@ window.openConquestModal = function(index, r, c){
         btnDesk.onclick = () => { toast('⚔️ 進攻他人領地需要持有【進攻道具卡】！可由每週同盟任務、商城或登入獎勵取得！', '⚔️'); };
       }
     }
-    if(footEl) footEl.textContent = `⚔️ 進攻敵方領地必須持有【進攻道具卡】（每次進攻消耗 1 張），完成 ${need} 次進攻即可攻破並納入個人版圖！`;
+    if(footEl) footEl.textContent = (!S.tutorialEnemyConquestDone)
+      ? '⚔️ 首次攻克體驗：完成任務將攻破敵方領地並納入你的個人版圖！'
+      : `⚔️ 進攻敵方領地必須持有【進攻道具卡】（每次進攻消耗 1 張），完成 ${need} 次進攻即可攻破並納入個人版圖！`;
   }else{
-    if(ttlEl) ttlEl.textContent = '⚔️ 發起佔領挑戰！';
-    if(infoEl){
-      infoEl.innerHTML = `<span>🧭</span><span>已鎖定相鄰空地（佔領後為：<b>🌱 一般地形</b>，防禦進度 2），請選擇挑戰類型：</span>`;
+    if(!S.tutorialStep1Done){
+      if(ttlEl) ttlEl.textContent = '✨ 讓我們來擴張第一塊土地吧！';
+      if(infoEl){
+        infoEl.innerHTML = `<span>🧭</span><span>完成一項簡單微運動，就能將這塊海域納入你的王國！</span>`;
+      }
+      if(attackCardBox){
+        attackCardBox.style.display = 'block';
+        attackCardBox.innerHTML = `
+          <div style="background:linear-gradient(135deg,rgba(139,92,246,0.1),rgba(251,191,36,0.12));border:1.5px solid var(--p-l);border-radius:14px;padding:12px;margin-bottom:6px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+              <span style="font-size:26px">🙆</span>
+              <div>
+                <div style="font-size:15px;font-weight:900;color:var(--t)">推薦任務：站姿 W-Y 字伸展</div>
+                <div style="font-size:12px;color:var(--p-d);font-weight:700">🚶 起身微運動・肩頸深度放鬆（約 1 分鐘）</div>
+              </div>
+            </div>
+            <div style="font-size:12px;color:var(--tm);line-height:1.5">
+              💡 動作溫和不流汗，站立輕輕伸展雙臂放鬆肩頸，即可成功開拓土地！
+            </div>
+          </div>
+        `;
+      }
+      if(btnDesk){
+        btnDesk.style.display = 'block';
+        btnDesk.className = 'btn btn-p btn-full btn-lg';
+        btnDesk.style.background = 'linear-gradient(135deg,#8B5CF6,#7C3AED)';
+        btnDesk.style.boxShadow = '0 8px 24px rgba(139,92,246,0.35)';
+        btnDesk.style.color = '#fff';
+        btnDesk.style.cursor = 'pointer';
+        btnDesk.innerHTML = '▶️ 開始站姿 W-Y 伸展（開拓領地）';
+        btnDesk.onclick = () => {
+          pendingTargetGrid = index;
+          window.pendingTargetGrid = index;
+          closeConquestModal();
+          go('qa', 'q21');
+        };
+      }
+      if(btnActive){
+        btnActive.style.display = 'block';
+        btnActive.className = 'btn btn-gh btn-full';
+        btnActive.style.background = 'var(--c1)';
+        btnActive.style.boxShadow = 'none';
+        btnActive.style.color = 'var(--tm)';
+        btnActive.style.fontSize = '13px';
+        btnActive.textContent = '挑選其他運動任務 ➔';
+        btnActive.onclick = () => startConquestQuest('all');
+      }
+      if(footEl) footEl.textContent = '完成後將立即為你演示領土擴張動態與概念！';
+    }else if(S.tutorialStep1Done && !S.tutorialConquestDone){
+      if(ttlEl) ttlEl.textContent = '🧭 推進邊界・開拓第二塊土地！';
+      if(infoEl){
+        infoEl.innerHTML = `<span>🧭</span><span>完成一項輕鬆微運動，將王國版圖向前延伸，正式與【獅王・艾瑞克】前哨接壤！</span>`;
+      }
+      if(attackCardBox){
+        attackCardBox.style.display = 'block';
+        attackCardBox.innerHTML = `
+          <div style="background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(139,92,246,0.12));border:1.5px solid rgba(59,130,246,0.35);border-radius:14px;padding:12px;margin-bottom:6px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+              <span style="font-size:26px">🧘</span>
+              <div>
+                <div style="font-size:15px;font-weight:900;color:var(--t)">推薦任務：坐姿頸部伸展</div>
+                <div style="font-size:12px;color:var(--p-d);font-weight:700">🪑 辦公桌舒緩・純計時放鬆（約 1 分鐘）</div>
+              </div>
+            </div>
+            <div style="font-size:12px;color:var(--tm);line-height:1.5">
+              💡 坐在椅子上輕輕放鬆頸部，即可將領土推進至敵方前線！
+            </div>
+          </div>
+        `;
+      }
+      if(btnDesk){
+        btnDesk.style.display = 'block';
+        btnDesk.className = 'btn btn-p btn-full btn-lg';
+        btnDesk.style.background = 'linear-gradient(135deg,#3B82F6,#2563EB)';
+        btnDesk.style.boxShadow = '0 8px 24px rgba(59,130,246,0.35)';
+        btnDesk.style.color = '#fff';
+        btnDesk.style.cursor = 'pointer';
+        btnDesk.innerHTML = '▶️ 開始頸部伸展（推進前線領地）';
+        btnDesk.onclick = () => {
+          pendingTargetGrid = index;
+          window.pendingTargetGrid = index;
+          closeConquestModal();
+          go('qa', 'q1');
+        };
+      }
+      if(btnActive){
+        btnActive.style.display = 'block';
+        btnActive.className = 'btn btn-gh btn-full';
+        btnActive.style.background = 'var(--c1)';
+        btnActive.style.boxShadow = 'none';
+        btnActive.style.color = 'var(--tm)';
+        btnActive.style.fontSize = '13px';
+        btnActive.textContent = '挑選其他運動任務 ➔';
+        btnActive.onclick = () => startConquestQuest('all');
+      }
+      if(footEl) footEl.textContent = '完成後領土將向前延伸，正式觸發與【獅王・艾瑞克】的接壤挑戰！';
+    }else{
+      if(ttlEl) ttlEl.textContent = '⚔️ 發起佔領挑戰！';
+      if(infoEl){
+        infoEl.innerHTML = `<span>🧭</span><span>已鎖定相鄰空地（佔領後為：<b>🌱 一般地形</b>，防禦進度 2），請選擇挑戰類型：</span>`;
+      }
+      if(attackCardBox) attackCardBox.style.display = 'none';
+      if(btnDesk){
+        btnDesk.style.display = 'block';
+        btnDesk.className = 'btn btn-p btn-full btn-lg';
+        btnDesk.style.background = 'linear-gradient(135deg,#3B82F6,#2563EB)';
+        btnDesk.style.boxShadow = '0 8px 24px rgba(59,130,246,0.28)';
+        btnDesk.style.color = '#fff';
+        btnDesk.style.cursor = 'pointer';
+        btnDesk.textContent = '🪑 選擇辦公桌任務 (輕鬆佔領)';
+        btnDesk.onclick = () => startConquestQuest('desk');
+      }
+      if(btnActive){
+        btnActive.style.display = 'block';
+        btnActive.className = 'btn btn-s btn-full btn-lg';
+        btnActive.style.background = 'linear-gradient(135deg,#F59E0B,#EF4444)';
+        btnActive.style.boxShadow = '0 8px 24px rgba(239,68,68,0.28)';
+        btnActive.style.color = '#fff';
+        btnActive.style.cursor = 'pointer';
+        btnActive.textContent = '🚶 選擇全身微運動 (高難度佔領)';
+        btnActive.onclick = () => startConquestQuest('active');
+      }
+      if(footEl) footEl.textContent = '完成任何一項任務，即可將此地納入你的版圖！';
     }
-    if(attackCardBox) attackCardBox.style.display = 'none';
-    if(btnDesk){
-      btnDesk.style.display = 'block';
-      btnDesk.className = 'btn btn-p btn-full btn-lg';
-      btnDesk.style.background = 'linear-gradient(135deg,#3B82F6,#2563EB)';
-      btnDesk.style.boxShadow = '0 8px 24px rgba(59,130,246,0.28)';
-      btnDesk.style.color = '#fff';
-      btnDesk.style.cursor = 'pointer';
-      btnDesk.textContent = '🪑 選擇辦公桌任務 (輕鬆佔領)';
-      btnDesk.onclick = () => startConquestQuest('desk');
-    }
-    if(btnActive){
-      btnActive.style.display = 'block';
-      btnActive.className = 'btn btn-s btn-full btn-lg';
-      btnActive.style.background = 'linear-gradient(135deg,#F59E0B,#EF4444)';
-      btnActive.style.boxShadow = '0 8px 24px rgba(239,68,68,0.28)';
-      btnActive.style.color = '#fff';
-      btnActive.style.cursor = 'pointer';
-      btnActive.textContent = '🚶 選擇全身微運動 (高難度佔領)';
-      btnActive.onclick = () => startConquestQuest('active');
-    }
-    if(footEl) footEl.textContent = '完成任何一項任務，即可將此地納入你的版圖！';
   }
 
   const modal = document.getElementById('conquest-modal');
@@ -3563,6 +4014,135 @@ window.closeConquestModal = function(){
   if(modal) modal.classList.remove('open');
 };
 
+// ===== 新手領土開拓導覽實戰流程 =====
+window.startFirstConquestTutorial = function(){
+  if(curPage !== 'home') return;
+  setTimeout(()=>{
+    panToSpecificCoord('11,12');
+  }, 250);
+  toast('✨ 讓我們來擴張第一塊土地吧！點擊閃爍海域發起開拓！', '🗺️');
+};
+
+window.startTutorialStep1Flow = function(){
+  panToSpecificCoord('11,12');
+  selectedTileKey = '11,12';
+  selectMapTile(11, 12);
+};
+
+window.startTutorialStep2Flow = function(){
+  panToSpecificCoord('10,13');
+  selectedTileKey = '10,13';
+  selectMapTile(10, 13);
+};
+
+window.startTutorialConquestFlow = function(){
+  if(!S.tutorialStep1Done){
+    startTutorialStep1Flow();
+  } else if(!S.tutorialConquestDone){
+    startTutorialStep2Flow();
+  } else {
+    startTutorialEnemyConquestFlow();
+  }
+};
+
+window.startTutorialQuest = function(){
+  pendingTargetGrid = 287;
+  window.pendingTargetGrid = 287;
+  closeConquestModal();
+  go('qa', 'q21');
+};
+
+window.quickFinishTutorialQuest = function(){
+  if(pendingTargetGrid === null || pendingTargetGrid === undefined){
+    pendingTargetGrid = (!S.tutorialStep1Done) ? 287 : 263;
+    window.pendingTargetGrid = pendingTargetGrid;
+  }
+  toast('✨ 新手快速體驗：已為你模擬完成開拓運動！', '🙆');
+  setTimeout(()=>{
+    autoFinish();
+  }, 200);
+};
+
+window.quickFinishTutorialEnemyQuest = function(){
+  if(pendingTargetGrid === null || pendingTargetGrid === undefined){
+    pendingTargetGrid = 264;
+    window.pendingTargetGrid = 264;
+  }
+  toast('⚔️ 新手快速進攻：已為你模擬完成進攻運動！', '💥');
+  setTimeout(()=>{
+    autoFinish();
+  }, 200);
+};
+
+window.playTutorialExpansionDemo = function(tileKey){
+  if(!tileKey) tileKey = '11,12';
+  panToSpecificCoord(tileKey);
+  const tileEl = document.querySelector(`#map-container .map-tile[data-coord="${tileKey}"]`);
+  if(tileEl){
+    tileEl.classList.add('tutorial-expansion-anim');
+  }
+  fireConfetti();
+  setTimeout(() => fireConfetti(), 400);
+
+  setTimeout(() => {
+    const modal = document.getElementById('tutorial-summary-modal');
+    if(modal) modal.classList.add('open');
+  }, 900);
+};
+
+window.playTutorialStep2ExpansionDemo = function(tileKey){
+  if(!tileKey) tileKey = '10,13';
+  panToSpecificCoord(tileKey);
+  const tileEl = document.querySelector(`#map-container .map-tile[data-coord="${tileKey}"]`);
+  if(tileEl){
+    tileEl.classList.add('tutorial-expansion-anim');
+  }
+  fireConfetti();
+  toast('🎉 第二塊領地開拓成功！你的王國版圖已正式與【獅王・艾瑞克】前哨接壤！', '🦁');
+};
+
+window.finishTutorialConquest = function(){
+  const modal = document.getElementById('tutorial-summary-modal');
+  if(modal) modal.classList.remove('open');
+  S.tutorialStep1Done = true;
+  saveS();
+  if(curPage === 'home') go('home');
+  toast('🌟 第一塊領地開拓成功！請繼續朝東北方開拓第二塊土地，逼近敵對陣營！', '🧭');
+  fireConfetti();
+};
+
+window.startTutorialEnemyConquestFlow = function(){
+  panToSpecificCoord('10,14');
+  selectedTileKey = '10,14';
+  selectMapTile(10, 14);
+};
+
+window.playTutorialEnemyExpansionDemo = function(tileKey){
+  if(!tileKey) tileKey = '10,14';
+  panToSpecificCoord(tileKey);
+  const tileEl = document.querySelector(`#map-container .map-tile[data-coord="${tileKey}"]`);
+  if(tileEl){
+    tileEl.classList.add('tutorial-expansion-anim');
+  }
+  fireConfetti();
+  setTimeout(() => fireConfetti(), 400);
+
+  setTimeout(() => {
+    const modal = document.getElementById('tutorial-enemy-summary-modal');
+    if(modal) modal.classList.add('open');
+  }, 900);
+};
+
+window.finishTutorialEnemyConquest = function(){
+  const modal = document.getElementById('tutorial-enemy-summary-modal');
+  if(modal) modal.classList.remove('open');
+  S.tutorialEnemyConquestDone = true;
+  saveS();
+  if(curPage === 'home') go('home');
+  toast('🌟 敵方領地已化為你的國土！持續開拓，向更遠大的要塞邁進吧！', '🚀');
+  fireConfetti();
+};
+
 window.startConquestQuest = function(tabType){
   const target = (pendingTargetGrid !== null && pendingTargetGrid !== undefined) ? pendingTargetGrid : window.pendingTargetGrid;
   if(target !== null && target !== undefined){
@@ -3629,6 +4209,25 @@ window.selectMapTile = function(r, c){
   }
 
   if(m.isEnemy){
+    if(!S.tutorialEnemyConquestDone){
+      // 首次探索/進攻敵方領地：免費贈送 1 張進攻道具卡
+      let cItem = (S.inventory || []).find(i => i.id === 'attack_card' && (i.qty || 0) > 0);
+      if(!cItem){
+        addItemToBag('attack_card', 1);
+        toast('🎁 首次探索敵方領地！已為你送上免費【進攻道具卡 x1】！', '⚔️');
+      }
+      if(!m.isAdjacentToMe){
+        // 若使用者點擊的是尚未接壤的遠方要塞，自動鎖定引導至已接壤的前線哨所 (10,14)
+        const adjEnemy = getHomeTileMeta(10, 14);
+        if(adjEnemy && adjEnemy.isEnemy && adjEnemy.isAdjacentToMe){
+          panToSpecificCoord('10,14');
+          selectedTileKey = '10,14';
+          toast('⚔️ 目標領地尚未接壤！已為你切換至已接壤的前線敵方領地【獅王・艾瑞克】！', '🦁');
+          openConquestModal(264, 10, 14);
+          return;
+        }
+      }
+    }
     if(!m.isAdjacentToMe){
       closeConquestModal();
       toast('⚔️ 尚未與該敵方領地接壤！必須持續向外擴張領地直到碰觸邊界才能進攻！', '🗺️');
@@ -3819,6 +4418,38 @@ function pgHome(){
       </div>
     </div>
 
+    ${(!S.tutorialStep1Done) ? `
+    <div class="hud-tutorial-banner" id="hud-tutorial-banner" onclick="startTutorialStep1Flow()">
+      <div class="hud-tutorial-icon">✨</div>
+      <div class="hud-tutorial-content">
+        <div class="hud-tutorial-title">讓我們來擴張第一塊土地吧！</div>
+        <div class="hud-tutorial-desc">點擊主城正上方【閃爍相鄰海域 🌊】發起開拓！</div>
+      </div>
+      <button class="btn btn-p btn-sm" style="flex-shrink:0;padding:6px 12px;font-size:12px;box-shadow:0 4px 12px rgba(139,92,246,0.3)" onclick="event.stopPropagation();startTutorialStep1Flow()">
+        開拓 ➔
+      </button>
+    </div>` : ((S.tutorialStep1Done && !S.tutorialConquestDone) ? `
+    <div class="hud-tutorial-banner" id="hud-tutorial-banner" onclick="startTutorialStep2Flow()">
+      <div class="hud-tutorial-icon">🧭</div>
+      <div class="hud-tutorial-content">
+        <div class="hud-tutorial-title">推進邊界！開拓第二塊土地！</div>
+        <div class="hud-tutorial-desc">點擊東北方【閃爍海域 🌊】，將領土延伸逼近敵方哨所！</div>
+      </div>
+      <button class="btn btn-p btn-sm" style="flex-shrink:0;padding:6px 12px;font-size:12px;background:linear-gradient(135deg,#3B82F6,#2563EB);color:#fff;box-shadow:0 4px 12px rgba(59,130,246,0.3)" onclick="event.stopPropagation();startTutorialStep2Flow()">
+        推進 ➔
+      </button>
+    </div>` : (!S.tutorialEnemyConquestDone ? `
+    <div class="hud-tutorial-banner" id="hud-tutorial-banner" style="border-color:rgba(239,68,68,0.45);box-shadow:0 8px 24px rgba(239,68,68,0.18)" onclick="startTutorialEnemyConquestFlow()">
+      <div class="hud-tutorial-icon">🔥</div>
+      <div class="hud-tutorial-content">
+        <div class="hud-tutorial-title" style="color:#DC2626">首次進攻敵對勢力領地！</div>
+        <div class="hud-tutorial-desc">點擊東北方【接壤敵方哨所 🦁】發起首次進攻！</div>
+      </div>
+      <button class="btn btn-sm" style="flex-shrink:0;padding:6px 12px;font-size:12px;background:linear-gradient(135deg,#DC2626,#B91C1C);color:#fff;box-shadow:0 4px 12px rgba(220,38,38,0.35);font-weight:800" onclick="event.stopPropagation();startTutorialEnemyConquestFlow()">
+        進攻 ➔
+      </button>
+    </div>` : ''))}
+
     <!-- 【底層地圖】：可自由拖曳/滑動的 25x25 六角形戰略網格 (#map-container) -->
     <div id="map-viewport">
       <div class="map-world">
@@ -3986,6 +4617,7 @@ function renderQREquipmentTabHTML(){
   const curV = QR_VENUES.find(v => v.id === S.qrSelVenue) || QR_VENUES[0];
   const tier = getQRBadgeTierInfo();
   const cdTxt = fmtHMS(qrSecUntilMidnight());
+  const intCdSec = getQRIntervalCooldownLeftSec();
 
   const venueTabs = QR_VENUES.map(v => `
     <button class="qr-loc-tab ${v.id === curV.id ? 'on' : ''}" onclick="selectQRVenue('${v.id}', true)">📍 ${v.name}</button>
@@ -3994,19 +4626,27 @@ function renderQREquipmentTabHTML(){
   const cards = QR_EQUIPMENTS.map(eq => {
     const code = makeQRCodeStr(curV.id, eq.id);
     const done = isQRScannedToday(curV.id, eq.id);
+    const cardCdTxt = done
+      ? `<span class="chip cr">⏳ 今日已打卡 (${cdTxt})</span>`
+      : (intCdSec > 0
+        ? `<span class="chip cs" style="color:#D97706;background:#FFFBEB">⏳ 器材冷卻中 (<b class="qr-interval-cd-timer">${fmtMS(intCdSec)}</b>)</span>`
+        : `<span class="chip cg">📷 點擊掃描打卡</span>`);
+    const clickAction = done
+      ? `toast('此場館的【${eq.name}】今日已掃描過，請等待冷卻重置或至其他場館掃描！','⏳')`
+      : (intCdSec > 0
+        ? `toast('⏳ 器材掃描冷卻中！兩台器材間需間隔 10 分鐘，還需等待 ${fmtMS(intCdSec)}！','⏳')`
+        : `scanEquipmentQR('${curV.id}','${eq.id}')`);
     return `
-    <div class="qcard qr${done ? ' done' : ''}" onclick="${done ? `toast('此場館的【${eq.name}】今日已掃描過，請等待冷卻重置或至其他場館掃描！','⏳')` : `scanEquipmentQR('${curV.id}','${eq.id}')`}">
+    <div class="qcard qr${done ? ' done' : ''}" onclick="${clickAction}">
       <div style="font-size:36px;flex-shrink:0">${eq.emo}</div>
       <div style="flex:1;min-width:0">
         <div class="qnm">${eq.name}${done ? ' ✓' : ''} <span style="font-size:11px;color:var(--tm);font-weight:600">(${eq.model})</span></div>
-        <div class="qdesc" style="margin-bottom:4px">${curV.name}・${eq.desc}</div>
+        <div class="qdesc" style="margin-bottom:4px">📍 ${curV.name}</div>
         <div style="font-size:10px;color:#059669;font-family:'Outfit',monospace;font-weight:700;margin-bottom:8px">專屬 QR Code：${code}</div>
         <div class="qmeta">
           <span class="chip cp">⚡ +10 EXP</span>
           <span class="chip cs">🪙 +10 G幣</span>
-          ${done
-            ? `<span class="chip cr">⏳ 冷卻倒數 <b class="qr-cd-timer" style="font-family:'Outfit';margin-left:3px">${cdTxt}</b></span>`
-            : `<span class="chip cg">📷 點擊掃描打卡</span>`}
+          ${cardCdTxt}
         </div>
       </div>
     </div>`;
@@ -4015,15 +4655,15 @@ function renderQREquipmentTabHTML(){
   return `
     <div class="card2" style="margin-bottom:12px;background:linear-gradient(135deg,#ECFDF5,#F5F3FF);border:1px solid rgba(16,185,129,.25)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-size:14px;font-weight:900;color:#059669">🏋️ 喬山健康科技 O2O 器材打卡專區</div>
+        <div style="font-size:14px;font-weight:900;color:#059669;display:flex;align-items:center;gap:6px">
+          <span>🏋️ 喬山健康科技 O2O 器材打卡專區</span>
+          <button class="btn btn-gh btn-ico" style="width:22px;height:22px;min-width:22px;font-size:11px;padding:0;border-radius:50%;background:rgba(16,185,129,.15);color:#059669;font-weight:900" onclick="openHelp('qr')" title="喬山打卡說明">?</button>
+        </div>
         <button class="btn btn-g btn-sm" style="padding:5px 10px;font-size:11px" onclick="openQRScanner('${curV.id}')">📷 開啟掃描器</button>
       </div>
-      <div style="font-size:11.5px;color:var(--t);line-height:1.5;margin-bottom:8px">
-        同場館同款器材（如 10 台跑步機）皆貼有<b>同一組專屬 QR Code</b>，每個器材每日限掃 1 次（隔日 00:00 重置）；換到不同場館或不同器材即可掃描領獎！
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:800;color:var(--p-d);background:rgba(255,255,255,.7);padding:6px 10px;border-radius:10px">
-        <span>${tier.cur}（累積 ${tier.cnt} 次）</span>
-        <span>${tier.next}</span>
+      <div style="font-size:11.5px;font-weight:800;color:var(--p-d);background:rgba(255,255,255,.7);padding:8px 10px;border-radius:10px;line-height:1.5">
+        <div>🏅 探險進度：${tier.cur}（累積 ${tier.cnt} 次）</div>
+        <div style="font-size:11px;color:var(--tm);margin-top:2px">${tier.next}</div>
       </div>
     </div>
     <div style="font-size:12px;font-weight:800;color:var(--t);margin-bottom:6px">📍 切換所在場館／門市查看器材冷卻狀態：</div>
@@ -4117,7 +4757,6 @@ function pgQA(qid){
     <div class="qa-head" style="padding:44px 16px 10px">
       <button class="btn btn-gh btn-ico" onclick="go('quests')">←</button>
       <div style="flex:1;min-width:0">
-        <div style="font-size:11px;color:var(--tm);font-weight:700">${useAI?'🚶 起身微運動（全螢幕 AI 骨架辨識）':'🪑 辦公桌微運動（純計時放鬆）'}</div>
         <div style="font-size:18px;font-weight:900;color:var(--t);display:flex;align-items:center;gap:6px"><span>${q.emo}</span><span>${q.name}</span></div>
       </div>
       <span class="chip ${useAI?(isRep?'cs':'cp'):'cg'}" style="font-size:11px">${useAI?`🎯 目標 ${ai.target} ${ai.unit}`:`⏱ 計時 ${fmtTimer(q.dur)}`}</span>
@@ -4137,6 +4776,25 @@ function pgQA(qid){
       <div style="font-size:13px;color:var(--tm);margin-top:4px">明天繼續加油！💪</div>
     </div>` : `
     <!-- 外部準備卡片：顯示目標說明與「開始任務」按鈕（點擊後才進入全螢幕運動畫面） -->
+    ${(!S.tutorialStep1Done && (pendingTargetGrid !== null || qid === 'q21')) ? `
+    <div style="margin:0 16px 14px;background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(59,130,246,0.12));border:1.5px solid var(--p-l);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:24px">🧭</span>
+      <div style="font-size:12.5px;color:var(--t);line-height:1.45">
+        <b>新手開拓實戰（第 1/2 步）：</b>完成這個輕鬆的伸展，就能成功將海域開拓為你的第一塊王國領土囉！
+      </div>
+    </div>` : ((S.tutorialStep1Done && !S.tutorialConquestDone && (pendingTargetGrid !== null || qid === 'q1')) ? `
+    <div style="margin:0 16px 14px;background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(59,130,246,0.12));border:1.5px solid rgba(16,185,129,0.4);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:24px">🧭</span>
+      <div style="font-size:12.5px;color:var(--t);line-height:1.45">
+        <b>邊界推進實戰（第 2/2 步）：</b>完成這項運動，將領土向前延伸並正式接觸【獅王・艾瑞克】邊界！
+      </div>
+    </div>` : ((S.tutorialConquestDone && !S.tutorialEnemyConquestDone && pendingTargetGrid !== null) ? `
+    <div style="margin:0 16px 14px;background:linear-gradient(135deg,rgba(239,68,68,0.12),rgba(245,158,11,0.12));border:1.5px solid rgba(239,68,68,0.4);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:24px">⚔️</span>
+      <div style="font-size:12.5px;color:var(--t);line-height:1.45">
+        <b>新手進攻實戰：</b>完成這項運動消耗 1 張進攻卡，攻陷【獅王・艾瑞克】的前線領地！
+      </div>
+    </div>` : ''))}
     <div class="qa-prep-card" id="qa-prep-card">
       <div style="font-size:44px;margin-bottom:6px">${q.emo}</div>
       <div style="font-size:17px;font-weight:900;color:var(--t);margin-bottom:4px">${useAI ? `目標：完成 ${ai.target} ${ai.unit}` : `目標：跟隨引導放鬆 ${fmtTimer(q.dur)}`}</div>
@@ -4148,6 +4806,13 @@ function pgQA(qid){
       <button class="btn btn-p btn-full btn-lg" id="t-start" onclick="startT()">
         ${useAI ? '▶️ 開始任務（進入全螢幕 AI 運動畫面）' : '▶️ 開始任務（進入全螢幕倒數計時）'}
       </button>
+      ${(!S.tutorialConquestDone && (pendingTargetGrid !== null || qid === 'q21' || qid === 'q1')) ? `
+      <button class="btn btn-gh btn-full" style="margin-top:10px;border:1.5px dashed var(--p-l);color:var(--p-d);font-weight:700" onclick="quickFinishTutorialQuest()">
+        ${!S.tutorialStep1Done ? '✨ 快速演示完成（體驗開拓演示）' : '✨ 快速演示推進（體驗邊界推進演示）'}
+      </button>` : ((S.tutorialConquestDone && !S.tutorialEnemyConquestDone && pendingTargetGrid !== null) ? `
+      <button class="btn btn-gh btn-full" style="margin-top:10px;border:1.5px dashed #F87171;color:#DC2626;font-weight:700" onclick="quickFinishTutorialEnemyQuest()">
+        ✨ 快速演示進攻（體驗攻克演示）
+      </button>` : '')}
     </div>
 
     <!-- 點擊「開始任務」後彈出的全螢幕運動畫面 (#qa-fs-ov) -->
@@ -4591,7 +5256,9 @@ function evaluateRealPose(q, kps, cw, ch, motionInfo){
       shY: shY ?? ch * 0.36,
       hipY: hipY ?? ch * 0.58,
       knY: knY ?? ch * 0.76,
-      shX: shX ?? cw * 0.5
+      shX: shX ?? cw * 0.5,
+      noseY: (nose ? nose.y : null) ?? (shY ? shY - 45 : ch * 0.25),
+      noseX: (nose ? nose.x : null) ?? (shX ?? cw * 0.5)
     };
   } else if (aiSt.calibFrames < 10 && (!motionInfo || motionInfo.motion < 4)) {
     aiSt.calibFrames++;
@@ -4600,6 +5267,12 @@ function evaluateRealPose(q, kps, cw, ch, motionInfo){
     if (hipY !== null) aiSt.basePose.hipY = aiSt.basePose.hipY * (1-a) + hipY * a;
     if (knY !== null) aiSt.basePose.knY = aiSt.basePose.knY * (1-a) + knY * a;
     if (shX !== null) aiSt.basePose.shX = aiSt.basePose.shX * (1-a) + shX * a;
+    if (nose) {
+      if (aiSt.basePose.noseY) aiSt.basePose.noseY = aiSt.basePose.noseY * (1-a) + nose.y * a;
+      else aiSt.basePose.noseY = nose.y;
+      if (aiSt.basePose.noseX) aiSt.basePose.noseX = aiSt.basePose.noseX * (1-a) + nose.x * a;
+      else aiSt.basePose.noseX = nose.x;
+    }
   }
 
   // 計算關鍵點幀間移動速度
@@ -4722,6 +5395,59 @@ function evaluateRealPose(q, kps, cw, ch, motionInfo){
       amp = Math.round(15 + (kneeLift / 0.14) * 75);
       aiSt.lastJointInfo = '提膝核心發力中';
     }
+  } else if (q.id === 'q21') {
+    // 站姿 W-Y 字伸展 (q21)：追蹤雙臂 Y-W 轉換（手腕高於肩 vs 手肘彎曲夾背）
+    if (lw && rw && ls && rs && le && re) {
+      const lElbAng = calcJointAngle(ls, le, lw) || 120;
+      const rElbAng = calcJointAngle(rs, re, rw) || 120;
+      const avgElbAng = (lElbAng + rElbAng) / 2;
+      const wScore = Math.max(0, (145 - avgElbAng) / 50) * 85;
+      const yScore = (ls.y - Math.min(lw.y, rw.y)) / (bodyScale * 0.32) * 85;
+      const wyCadence = (motionInfo && motionInfo.motion > 2.0) ? ((Math.sin(Date.now() / 160) + 1) / 2) * 78 : 0;
+      amp = Math.round(16 + Math.max(wScore, yScore, wyCadence));
+      aiSt.lastJointInfo = (lw.y < ls.y && rw.y < rs.y) ? '雙臂 Y 字向上高舉 👍' : `W 字手肘夾背角度 ${Math.round(avgElbAng)}°`;
+    } else {
+      amp = motionInfo ? motionInfo.amp : 20;
+    }
+  } else if (q.id === 'q22') {
+    // 站姿大鵬展翅繞肩 (q22)：追蹤雙手手肘繞環與上下起伏
+    if (le && re && ls && rs) {
+      const elbHeight = (ls.y + rs.y)/2 - (le.y + re.y)/2;
+      const elbLift = Math.max(0, elbHeight / (bodyScale * 0.22)) * 80;
+      const circleCadence = (kpSpeed > 2.0 || (motionInfo && motionInfo.motion > 2.0))
+        ? ((Math.sin(Date.now() / 150) + 1) / 2) * 78
+        : 0;
+      amp = Math.round(16 + Math.max(elbLift, circleCadence));
+      aiSt.lastJointInfo = elbHeight > 0 ? '手肘高抬展開中 👍' : '雙肩靈活繞環中';
+    } else {
+      amp = motionInfo ? motionInfo.amp : 20;
+    }
+  } else if (q.id === 'q23') {
+    // 站姿後扣擴胸仰望 (q23)：追蹤後背扣手開肩與下巴仰起伸展前頸
+    if (nose && ls && rs) {
+      const chinLift = (bp.noseY !== undefined && nose.y < bp.noseY)
+        ? Math.max(0, bp.noseY - nose.y) / (bodyScale * 0.12)
+        : 0;
+      const chestExpansion = (shY !== null && wrY !== null && wrY > shY) ? 35 : 0;
+      const score = Math.min(85, chinLift * 65 + chestExpansion);
+      const cadence = (motionInfo && motionInfo.motion > 2.0) ? ((Math.sin(Date.now() / 180) + 1) / 2) * 75 : 0;
+      amp = Math.round(18 + Math.max(score, cadence));
+      aiSt.lastJointInfo = chinLift > 0.35 ? '下巴仰起頸椎延展 👍' : '挺胸後扣深呼吸中';
+    } else {
+      amp = motionInfo ? motionInfo.amp : 20;
+    }
+  } else if (q.id === 'q24') {
+    // 站姿側向拉頸沉肩 (q24)：追蹤頭部相對肩膀中線的側傾幅度與沉肩
+    if (nose && ls && rs) {
+      const headTilt = Math.abs(nose.x - shX) / (bodyScale * 0.16);
+      const shDrop = Math.abs(ls.y - rs.y) / (bodyScale * 0.14);
+      const tiltScore = Math.min(85, headTilt * 60 + shDrop * 35);
+      const cadence = (motionInfo && motionInfo.motion > 2.0) ? ((Math.sin(Date.now() / 180) + 1) / 2) * 75 : 0;
+      amp = Math.round(18 + Math.max(tiltScore, cadence));
+      aiSt.lastJointInfo = headTilt > 0.38 ? '側頸深層拉伸達標 👍' : '頭部側傾引導中';
+    } else {
+      amp = motionInfo ? motionInfo.amp : 20;
+    }
   }
 
   return Math.max(8, Math.min(100, amp));
@@ -4818,6 +5544,8 @@ function drawPoseCanvas(){
     // 標示目前運動重點追蹤關節（發光雙環）
     const focusNames = (q && (q.id === 'q8' || q.id === 'q14' || q.id === 'q7' || q.id === 'q10'))
       ? ['left_hip','right_hip','left_knee','right_knee','left_ankle','right_ankle']
+      : (q && (q.id === 'q23' || q.id === 'q24'))
+      ? ['nose','left_shoulder','right_shoulder','left_elbow','right_elbow']
       : ['left_shoulder','right_shoulder','left_elbow','right_elbow','left_wrist','right_wrist'];
 
     Object.values(kp).forEach(p => {
@@ -4848,8 +5576,10 @@ function drawPoseCanvas(){
     const wave = Math.max(0, Math.min(1, (aiSt.amp || 0) / 85));
     const isStep = q && (q.id === 'q8' || q.id === 'q14');
     const isSquat = q && (q.id === 'q7' || q.id === 'q10' || q.id === 'q12');
+    const isTilt = q && q.id === 'q24';
     const cx = W / 2;
     const baseHeadY = isSquat ? (230 + wave * 85) : (240 - wave * 18);
+    const headX = isTilt ? (cx + Math.sin(aiSt.simPhase || 0) * 16) : cx;
     const shY = baseHeadY + 40;
     const hipY = shY + (isSquat ? 70 - wave * 18 : 78);
     const lKneeLift = isStep ? (Math.sin(aiSt.simPhase || 0) > 0 ? wave * 42 : 0) : 0;
@@ -4870,8 +5600,8 @@ function drawPoseCanvas(){
     drawSeg(cx - 30, lKneeY, cx - 26, lAnkleY);
     drawSeg(cx + 30, rKneeY, cx + 26, rAnkleY);
 
-    ctx.beginPath(); ctx.arc(cx, baseHeadY, 20, 0, Math.PI * 2); ctx.stroke();
-    [[cx-34,shY],[cx+34,shY],[cx-58,shY+42-armLift],[cx+58,shY+42-armLift],[cx-22,hipY],[cx+22,hipY],[cx-30,lKneeY],[cx+30,rKneeY]].forEach(([jx,jy])=>{
+    ctx.beginPath(); ctx.arc(headX, baseHeadY, 20, 0, Math.PI * 2); ctx.stroke();
+    [[headX,baseHeadY],[cx-34,shY],[cx+34,shY],[cx-58,shY+42-armLift],[cx+58,shY+42-armLift],[cx-22,hipY],[cx+22,hipY],[cx-30,lKneeY],[cx+30,rKneeY]].forEach(([jx,jy])=>{
       ctx.beginPath(); ctx.arc(jx, jy, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     });
   }
@@ -5417,10 +6147,15 @@ window.switchTeamTab = function(tab){
   go('team');
 };
 
+function getTeamMemberCount(){
+  if(S && Array.isArray(S.teamMembers) && S.teamMembers.length > 0) return S.teamMembers.length;
+  return 4;
+}
+
 const WEEKLY_TEAM_QUESTS = [
   {
     id: 'w_steps',
-    title: '👟 每週同盟萬步征途',
+    title: '👟 萬步征途',
     metric: 'steps',
     goal: 30000,
     unit: '步',
@@ -5432,21 +6167,21 @@ const WEEKLY_TEAM_QUESTS = [
     desc: '全隊合力累積走完 30,000 步，為同盟儲備遠征作戰體力！'
   },
   {
-    id: 'w_water',
-    title: '💧 每週同盟綠洲補水',
-    metric: 'water',
-    goal: 60,
-    unit: '杯',
-    rewardCoins: 100,
+    id: 'w_jacks',
+    title: '🏃 心肺開合跳',
+    metric: 'jacks',
+    goal: 100,
+    unit: '次',
+    rewardCoins: 120,
     rewardItem: 'attack_card',
     rewardItemQty: 1,
     col1: '#3B82F6',
     col2: '#60A5FA',
-    desc: '同盟成員每週喝水 60 杯，全員保持充沛作戰體力！'
+    desc: '同盟成員合力完成開合跳 100 次，爆發心肺耐力與全身燃脂活力！獲得【⚔️ 進攻道具卡】！'
   },
   {
     id: 'w_squats',
-    title: '🏋️ 每週同盟深蹲馬拉松',
+    title: '🏋️ 深蹲馬拉松',
     metric: 'squats',
     goal: 100,
     unit: '次',
@@ -5455,11 +6190,11 @@ const WEEKLY_TEAM_QUESTS = [
     rewardItemQty: 1,
     col1: '#F59E0B',
     col2: '#FBBF24',
-    desc: '同盟全員深蹲 100 次，強化下盤爆發推進力！'
+    desc: '同盟全員深蹲 100 次，強化下盤爆發推進力！獲得【⚔️ 進攻道具卡】！'
   },
   {
     id: 'w_planks',
-    title: '🔥 每週同盟核心平板撐',
+    title: '🔥 核心平板撐',
     metric: 'planks',
     goal: 60,
     unit: '次',
@@ -5472,7 +6207,7 @@ const WEEKLY_TEAM_QUESTS = [
   },
   {
     id: 'w_quests',
-    title: '⚡ 每週同盟全能微運動大賽',
+    title: '⚡ 全能微運動大賽',
     metric: 'quests',
     goal: 40,
     unit: '個',
@@ -5493,25 +6228,23 @@ const MONTHLY_TEAM_QUESTS = [
     tag: '月度史詩・限定挑戰',
     col: '#8B5CF6',
     bg: 'linear-gradient(135deg, #FAF5FF, #F3E8FF)',
-    desc: '同盟全員攜手進軍敵方領地、刷新全隊運動與飲水極限，達成五大複合戰略指標！',
+    desc: '同盟全員攜手進軍敵方領地、推進全隊步數與運動極限，達成五大複合戰略指標！',
     subGoals: [
       { id: 'attacks', label: '⚔️ 對敵方領地發動進攻', cur: () => (S.monthlyAllianceAttacks || 4) + (S.allianceAttacks || 0), goal: 8, unit: '次' },
       { id: 'conquers', label: '🚩 攻陷並佔領敵方領地', cur: () => (S.monthlyConqueredTiles || 1) + (S.conqueredEnemyTiles || 0), goal: 2, unit: '塊' },
-      { id: 'steps', label: '👟 全隊本月累計總步數', cur: () => (S.monthlyTeamSteps || 68500) + S.actDone * 300, goal: 100000, unit: '步' },
-      { id: 'water', label: '💧 全隊本月累計飲水', cur: () => (S.monthlyTeamWater || 280) + S.water, goal: 350, unit: '杯' },
+      { id: 'steps', label: '👟 全隊本月累計總步數', cur: () => (S.monthlyTeamSteps || Math.round(getTeamMemberCount() * 115000)) + S.actDone * 300, get goal() { return getTeamMemberCount() * 150000; }, unit: '步' },
+      { id: 'quests_done', label: '⚡ 全隊本月完成微運動總數', cur: () => (S.monthlyTeamQuests || 140) + S.done, goal: 180, unit: '次' },
       { id: 'squats_planks', label: '🏋️ 深蹲與平板撐總次數', cur: () => (S.monthlyTeamCore || 210) + (S.todayDone.includes('q7') ? 5 : 0) + (S.todayDone.includes('q12') ? 5 : 0), goal: 300, unit: '次' }
     ],
     rewards: [
-      { type: 'coin', label: '2,000 G幣', icon: '💰' },
-      { type: 'wcoin', label: '50 W幣', icon: '💎' },
+      { type: 'coin', label: '3,000 G幣', icon: '💰' },
       { type: 'item', id: 'attack_card', label: '進攻道具卡 x3', icon: '⚔️', qty: 3 },
       { type: 'item', id: 'pet_feast', label: '寵物豪華大餐 x1', icon: '🍱', qty: 1 },
       { type: 'item', id: 'double_exp', label: '雙倍經驗卡 x3', icon: '⚡', qty: 3 },
       { type: 'item', id: 'clover', label: '幸運四葉草 x2', icon: '🍀', qty: 2 }
     ],
     rewardAction: () => {
-      S.gcoin = (S.gcoin || 0) + 2000;
-      S.wcoin = (S.wcoin || 0) + 50;
+      S.gcoin = (S.gcoin || 0) + 3000;
       addItemToBag('attack_card', 3);
       addItemToBag('pet_feast', 1);
       addItemToBag('double_exp', 3);
@@ -5530,7 +6263,7 @@ window.claimWeeklyTeamQuest = function(questId){
   }
   let cur = 0;
   if(q.metric === 'steps') cur = (S.weeklyTeamSteps || 22000) + S.actDone * 150;
-  else if(q.metric === 'water') cur = (S.weeklyTeamWater || 42) + S.water;
+  else if(q.metric === 'jacks') cur = (S.weeklyTeamJacks || 75) + (S.todayDone.includes('q9') ? 15 : 0);
   else if(q.metric === 'squats') cur = (S.weeklyTeamSquats || 75) + (S.todayDone.includes('q7') ? 1 : 0);
   else if(q.metric === 'planks') cur = (S.weeklyTeamPlanks || 45) + (S.todayDone.includes('q12') ? 1 : 0);
   else if(q.metric === 'quests') cur = (S.weeklyTeamQuests || 28) + S.todayDone.length;
@@ -5550,7 +6283,7 @@ window.claimWeeklyTeamQuest = function(questId){
   }
   saveS();
   fireConfetti();
-  toast(`🎉 達成每週同盟任務！獲得【進攻道具卡】x${q.rewardItemQty || 1} 與 ${q.rewardCoins} G幣！`, '⚔️');
+  toast(`🎉 達成每週同盟任務！獲得【${q.rewardItem === 'terrain_card' ? '地形卡' : '進攻道具卡'}】與 ${q.rewardCoins} G幣！`, '⚔️');
   go('team');
 };
 
@@ -5562,7 +6295,11 @@ window.claimMonthlyTeamQuest = function(questId){
     toast('本月此項限定史詩大獎已經領取過了！', '✅');
     return;
   }
-  const allMet = q.subGoals.every(sg => (typeof sg.cur === 'function' ? sg.cur() : 0) >= sg.goal);
+  const allMet = q.subGoals.every(sg => {
+    const c = typeof sg.cur === 'function' ? sg.cur() : 0;
+    const g = typeof sg.goal === 'function' ? sg.goal() : sg.goal;
+    return c >= g;
+  });
   if(!allMet){
     toast('此月度限定任務的複合條件尚未完全達成！', '🎯');
     return;
@@ -5694,7 +6431,7 @@ function pgTeamMain(){
     const questsHtml = WEEKLY_TEAM_QUESTS.map(q => {
       let cur = 0;
       if(q.metric === 'steps') cur = (S.weeklyTeamSteps || 22000) + S.actDone * 150;
-      else if(q.metric === 'water') cur = (S.weeklyTeamWater || 42) + S.water;
+      else if(q.metric === 'jacks') cur = (S.weeklyTeamJacks || 75) + (S.todayDone.includes('q9') ? 15 : 0);
       else if(q.metric === 'squats') cur = (S.weeklyTeamSquats || 75) + userSquat;
       else if(q.metric === 'planks') cur = (S.weeklyTeamPlanks || 45) + userPlank;
       else if(q.metric === 'quests') cur = (S.weeklyTeamQuests || 28) + S.todayDone.length;
@@ -5736,7 +6473,7 @@ function pgTeamMain(){
         ${canClaim ? 
           `<button class="btn btn-full btn-sm" style="margin-top:10px;background:linear-gradient(135deg,#DC2626,#EF4444);color:#fff;font-weight:900;animation:pulse 1s infinite;box-shadow:0 4px 14px rgba(220,38,38,0.32)" onclick="claimWeeklyTeamQuest('${q.id}')">🎁 達標！領取 ${ITEM_DEFS[q.rewardItem]?.name || '道具'} + G幣</button>` : 
           claimed ? 
-          `<div style="text-align:center;margin-top:10px;font-size:12.5px;color:#059669;font-weight:800;padding:6px;background:#ECFDF5;border-radius:8px">✅ 本週獎勵已領取</div>` :
+          `<div style="text-align:center;margin-top:10px;font-size:12.5px;color:#059669;font-weight:800;padding:6px;background:#ECFDF5;border-radius:8px">✅ 本週獎勵已領取</div>` : 
           `<div style="text-align:center;margin-top:10px;font-size:12px;color:var(--tm);font-weight:600">本週進度 ${pct}%，全隊共同累計！</div>`
         }
       </div>`;
@@ -5748,19 +6485,20 @@ function pgTeamMain(){
     `;
   } else if(teamActiveTab === 'monthly'){
     const monthlyCardsHtml = MONTHLY_TEAM_QUESTS.map(q => {
-      const allMet = q.subGoals.every(sg => (typeof sg.cur === 'function' ? sg.cur() : 0) >= sg.goal);
+      const allMet = q.subGoals.every(sg => (typeof sg.cur === 'function' ? sg.cur() : 0) >= (typeof sg.goal === 'function' ? sg.goal() : sg.goal));
       const claimed = !!(S.monthlyClaimed && S.monthlyClaimed[q.id]);
       const canClaim = allMet && !claimed;
 
       const subGoalsHtml = q.subGoals.map(sg => {
         const curVal = typeof sg.cur === 'function' ? sg.cur() : 0;
-        const subPct = Math.min(100, Math.round(curVal / sg.goal * 100));
-        const met = curVal >= sg.goal;
+        const goalVal = typeof sg.goal === 'function' ? sg.goal() : sg.goal;
+        const subPct = Math.min(100, Math.round(curVal / goalVal * 100));
+        const met = curVal >= goalVal;
         return `
           <div style="margin-bottom:8px;background:rgba(255,255,255,0.75);padding:8px 10px;border-radius:10px;border:1px solid var(--bd)">
             <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;margin-bottom:4px">
               <span style="color:var(--t)">${met ? '✅' : '⏳'} ${sg.label}</span>
-              <span style="color:${met ? '#059669' : 'var(--tm)'}">${curVal.toLocaleString()} / ${sg.goal.toLocaleString()} ${sg.unit}</span>
+              <span style="color:${met ? '#059669' : 'var(--tm)'}">${curVal.toLocaleString()} / ${goalVal.toLocaleString()} ${sg.unit}</span>
             </div>
             <div class="barw" style="height:6px"><div class="barf" style="width:${subPct}%;background:${met ? '#10B981' : q.col}"></div></div>
           </div>
@@ -6623,6 +7361,33 @@ window.closeCO = function(){
   // 強制導回首頁，讓玩家能馬上看到地圖上剛打下來、還在閃爍的新領地
   go('home');
 
+  if (!S.tutorialStep1Done && wasConquest) {
+    const tileKey = (cq && cq.key) ? cq.key : '11,12';
+    setTimeout(()=>{
+      playTutorialExpansionDemo(tileKey);
+    }, 200);
+    return;
+  }
+
+  if (S.tutorialStep1Done && !S.tutorialConquestDone && wasConquest) {
+    const tileKey = (cq && cq.key) ? cq.key : '10,13';
+    S.tutorialConquestDone = true;
+    saveS();
+    go('home');
+    setTimeout(()=>{
+      playTutorialStep2ExpansionDemo(tileKey);
+    }, 200);
+    return;
+  }
+
+  if (S.tutorialConquestDone && !S.tutorialEnemyConquestDone && wasConquest && cq && cq.isAttack) {
+    const tileKey = (cq && cq.key) ? cq.key : '10,14';
+    setTimeout(()=>{
+      playTutorialEnemyExpansionDemo(tileKey);
+    }, 200);
+    return;
+  }
+
   if (wasConquest) {
     if (cq && cq.partialAttack) {
       toast(`⚔️ 進攻進度 ${cq.attackProg}/${cq.attackNeed}！再完成 ${cq.remaining} 項任務即可奪下【${cq.lbl}】！`, '🔥');
@@ -6796,6 +7561,8 @@ function init(){
   safeAddL('qr-modal', closeQRScanner);
   safeAddL('conquest-modal', closeConquestModal);
   safeAddL('territory-modal', closeTerritoryModal);
+  safeAddL('tutorial-summary-modal', finishTutorialConquest);
+  safeAddL('tutorial-enemy-summary-modal', finishTutorialEnemyConquest);
   
   if(S.onboarded){ document.getElementById('bnav').style.display='flex'; go('home'); }
   else { renderSplash(); }
