@@ -388,6 +388,39 @@ img{display:block;max-width:100%}
   border:1.8px solid #FEF3C7;
 }
 
+/* 【同盟領地】：同盟成員駐守據點 (Alliance Outpost) */
+.map-tile.ally-tile{
+  background:linear-gradient(180deg, #60A5FA 0%, #2563EB 55%, #1D4ED8 100%);
+  filter:drop-shadow(0 4px 0 #1E3A8A) drop-shadow(0 6px 12px rgba(37,99,235,0.45));
+  z-index:4;
+}
+.map-tile.ally-tile::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 35%, rgba(191,219,254,0.4) 0%, transparent 70%);
+  pointer-events:none;
+  animation:pulse 2.5s infinite;
+}
+.map-tile.ally-tile::after{
+  border:1.5px solid #93C5FD;
+}
+.map-tile.ally-tile .tile-emo{
+  font-size:24px;
+  animation:bounceSolo 2.5s ease-in-out infinite;
+  filter:drop-shadow(0 3px 5px rgba(0,0,0,0.45));
+}
+
+/* 同盟標籤切換按鈕 */
+.team-tab-bar{
+  display:flex;gap:6px;background:var(--c2);padding:4px;border-radius:14px;margin-bottom:16px;
+}
+.team-tab-btn{
+  flex:1;padding:9px 6px;border-radius:10px;font-size:12px;font-weight:800;color:var(--tm);
+  transition:all .2s ease;text-align:center;border:none;background:none;cursor:pointer;
+}
+.team-tab-btn.active{
+  background:#fff;color:var(--t);box-shadow:0 2px 8px rgba(0,0,0,0.08);font-weight:900;
+}
+
 /* 剛打下來、正在閃爍的新領地動畫 */
 @keyframes newlyConqueredFlash{
   0%,100%{
@@ -1174,10 +1207,13 @@ img{display:block;max-width:100%}
       <div class="modal-ttl" id="conquest-modal-ttl">⚔️ 發起佔領挑戰！</div>
       <button class="btn btn-gh btn-ico" onclick="closeConquestModal()">✕</button>
     </div>
-    <div id="conquest-target-info" style="font-size:13px;color:var(--tm);font-weight:700;margin-bottom:16px;background:var(--c2);padding:10px 14px;border-radius:14px;display:flex;align-items:center;gap:8px">
+    <div id="conquest-target-info" style="font-size:13px;color:var(--tm);font-weight:700;margin-bottom:14px;background:var(--c2);padding:10px 14px;border-radius:14px;display:flex;align-items:center;gap:8px">
       <span>🧭</span>
       <span>已鎖定相鄰海域，請選擇挑戰方式開拓領土</span>
     </div>
+    <div id="conquest-alliance-banner" style="display:none;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:1.5px solid #93C5FD;border-radius:14px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#1E40AF"></div>
+    <div id="conquest-attack-card-box" style="display:none;margin-bottom:12px"></div>
+    <div id="conquest-alliance-assist-box" style="display:none;margin-bottom:12px"></div>
     <div style="display:flex;flex-direction:column;gap:12px">
       <button class="btn btn-p btn-full btn-lg" id="btn-conquest-desk" style="background:linear-gradient(135deg,#3B82F6,#2563EB);box-shadow:0 8px 24px rgba(59,130,246,0.28)" onclick="startConquestQuest('desk')">
         🪑 選擇辦公桌任務 (輕鬆佔領)
@@ -1208,7 +1244,7 @@ img{display:block;max-width:100%}
 <nav id="bnav" style="display:none">
   <button class="nbtn on" id="nb-home" onclick="go('home')"><span class="ni">🏠</span><span>首頁</span></button>
   <button class="nbtn" id="nb-quests" onclick="go('quests')"><span class="ni">⚡</span><span>任務</span></button>
-  <button class="nbtn" id="nb-team" onclick="go('team')"><span class="ni">👥</span><span>社交</span></button>
+  <button class="nbtn" id="nb-team" onclick="go('team')"><span class="ni">👥</span><span>同盟</span></button>
   <button class="nbtn" id="nb-shop" onclick="go('shop')"><span class="ni">🏪</span><span>商城</span></button>
   <button class="nbtn" id="nb-profile" onclick="go('profile')"><span class="ni">👤</span><span>我的</span></button>
 </nav>
@@ -1234,7 +1270,8 @@ const ITEM_DEFS = {
   'clover': { name: '幸運四葉草', icon: '🍀', desc: '神秘的植物！使用後，下一次完成任務開啟的驚喜禮物盒必定獲得稀有獎勵。', usable: true },
   'shield': { name: '防護盾', icon: '🛡️', desc: '保護這塊領地', usable: true },
   'tent': { name: '健身帳篷', icon: '⛺', desc: '蓋在領地上，每日自動產出 5 G幣', usable: true },
-  'terrain_card': { name: '地形卡', icon: '🗺️', desc: '對一般地形使用可更換為特殊地形，他人進攻難度提高為 4 個進度', usable: true }
+  'terrain_card': { name: '地形卡', icon: '🗺️', desc: '對一般地形使用可更換為特殊地形，他人進攻難度提高為 4 個進度', usable: true },
+  'attack_card': { name: '進攻道具卡', icon: '⚔️', desc: '每週同盟任務限定掉落！一張進攻道具卡可進攻非同盟一塊領地（推進 1 次進攻進度，達標直接攻陷）！', usable: true }
 };
 
 const MOODS={
@@ -1349,7 +1386,7 @@ const BDEFS=[
   {id:'s7',nm:'一週王者',emo:'📅',desc:'連續7天',chk:s=>s.streak>=7},
   {id:'act10',nm:'燃燒吧！',emo:'🔥',desc:'10個起身任務',chk:s=>s.actDone>=10},
   {id:'lv5',nm:'菁英稱號',emo:'🌟',desc:'達到5級',chk:s=>s.lv>=5},
-  {id:'team',nm:'隊伍夥伴',emo:'🤝',desc:'加入一支隊伍',chk:s=>s.hasTeam},
+  {id:'team',nm:'同盟夥伴',emo:'🤝',desc:'加入一個同盟',chk:s=>s.hasTeam},
   {id:'water8',nm:'水分大師',emo:'💧',desc:'單日喝滿 8 杯水',chk:s=>s.water>=8},
   {id:'friend1',nm:'交個朋友',emo:'👋',desc:'加入第一位好友',chk:s=>(s.friends||[]).length>=1},
   {id:'friend3',nm:'好友達人',emo:'🫂',desc:'加入 3 位好友',chk:s=>(s.friends||[]).length>=3},
@@ -1406,7 +1443,9 @@ const DS={
   v:11, done:0, onboarded:false, charId:0, name:'旅行者',
   exp:0, lv:1, streak:0, lastDate:null,
   todayDone:[], actDone:0, badges:[],
-  hasTeam:false, teamName:'', wexp:0, wStart:null,
+  hasTeam:false, teamName:'MicroMove 先鋒同盟', wexp:0, wStart:null,
+  teamMembers:[], weeklyTeamStart:null, weeklyClaimed:{}, monthlyTeamKey:null, monthlyClaimed:{},
+  allianceAttacks:0, conqueredEnemyTiles:0, teamAssistToday:false,
   gcoin:0, wcoin:0, favQs:[], unlockedChars:[0,1,2],
   water:0, waterCD:0, shared:false, refUsed:false, teamClaimed:false,
   teamSteps: 8500, claimedLvs: [1], 
@@ -1459,6 +1498,41 @@ function loadS(){
     if(S.qrTotalCount === undefined) S.qrTotalCount = 0;
     if(!S.qrSelVenue) S.qrSelVenue = 'wg_xinyi';
     if(!S.mapGrid || typeof S.mapGrid !== 'object') S.mapGrid = {};
+    if(!S.weeklyClaimed || typeof S.weeklyClaimed !== 'object') S.weeklyClaimed = {};
+    if(!S.monthlyClaimed || typeof S.monthlyClaimed !== 'object') S.monthlyClaimed = {};
+    if(S.allianceAttacks === undefined) S.allianceAttacks = 0;
+    if(S.conqueredEnemyTiles === undefined) S.conqueredEnemyTiles = 0;
+    if(S.teamAssistToday === undefined) S.teamAssistToday = false;
+    if(!Array.isArray(S.teamMembers) || S.teamMembers.length === 0){
+      S.teamMembers = [
+        { id: 'me', name: S.name || '旅行者', emo: CHARS.find(c => c.id === S.charId)?.emo || '🐰', lv: S.lv || 1, role: '隊長', isMe: true },
+        { id: 'mimi', name: '小米', emo: '🐱', lv: 7, role: '同盟核心', code: 'MM-MIMI23', active: true },
+        { id: 'jay', name: '阿傑', emo: '🦊', lv: 5, role: '同盟成員', code: 'MM-JAY456', active: true },
+        { id: 'flower', name: '小花花', emo: '🌸', lv: 6, role: '同盟副隊長', code: 'MM-FLOWER', active: true }
+      ];
+    }
+    if(S.hasTeam && !S.teamName) S.teamName = 'MicroMove 先鋒同盟';
+    const curWk = wkStart();
+    if(!S.weeklyTeamStart || S.weeklyTeamStart !== curWk){
+      S.weeklyTeamStart = curWk;
+      S.weeklyClaimed = {};
+      S.weeklyTeamSteps = Math.floor(Math.random() * 4000) + 21000;
+      S.weeklyTeamWater = Math.floor(Math.random() * 10) + 38;
+      S.weeklyTeamSquats = Math.floor(Math.random() * 15) + 68;
+      S.weeklyTeamPlanks = Math.floor(Math.random() * 10) + 42;
+      S.weeklyTeamQuests = Math.floor(Math.random() * 8) + 24;
+    }
+    const curMonth = new Date().getFullYear() + '-' + (new Date().getMonth() + 1);
+    if(!S.monthlyTeamKey || S.monthlyTeamKey !== curMonth){
+      S.monthlyTeamKey = curMonth;
+      S.monthlyClaimed = {};
+      S.monthlyAllianceAttacks = 4;
+      S.monthlyConqueredTiles = 1;
+      S.monthlyTeamSteps = 68500;
+      S.monthlyTeamCore = 210;
+      S.monthlyTeamWater = 280;
+      S.monthlyTeamStreak = 22;
+    }
     // 遷移舊版 7x7 主城預設值，統一將 15x15 我方主城設於中心點 (7,7) -> index = 112
     if(S.mapGrid['3,3'] && S.mapGrid['3,3'].type === 'castle' && !S.mapGrid['7,7']){
       delete S.mapGrid['3,3'];
@@ -1473,6 +1547,54 @@ function loadS(){
     } else if(S.mapGrid[112] && !S.mapGrid['7,7']) {
       S.mapGrid['7,7'] = S.mapGrid[112];
     }
+    // 清理舊版過度靠近的同盟格，確保各大區塊獨立分佈於四角與中央，互不卡位
+    if(S.mapGrid){
+      if(S.mapGrid['6,7'] && S.mapGrid['6,7'].owner === 'ally') delete S.mapGrid['6,7'];
+      if(S.mapGrid[97] && S.mapGrid[97].owner === 'ally') delete S.mapGrid[97];
+      if(S.mapGrid['11,4'] && S.mapGrid['11,4'].owner === 'ally') delete S.mapGrid['11,4'];
+      if(S.mapGrid[169] && S.mapGrid[169].owner === 'ally') delete S.mapGrid[169];
+      if(S.mapGrid['12,4'] && S.mapGrid['12,4'].owner === 'ally') delete S.mapGrid['12,4'];
+      if(S.mapGrid[184] && S.mapGrid[184].owner === 'ally') delete S.mapGrid[184];
+      if(S.mapGrid['3,3'] && S.mapGrid['3,3'].owner === 'me') delete S.mapGrid['3,3'];
+      if(S.mapGrid[48] && S.mapGrid[48].owner === 'me') delete S.mapGrid[48];
+    }
+    // 初始化三大同盟夥伴的專屬獨立領地區塊（分別坐落於西北、西南、東南海域，各大區塊獨立歸屬個人，互不卡位）
+    const allySeeds = [
+      // 1. 西北海域獨立領地：同盟夥伴・小米 🐱
+      { r: 3, c: 3, data: { type: 'land', owner: 'ally', allyCode: 'mimi', allyName: '同盟夥伴・小米 🐱', ico: '🐱', terrain: 'normal', lbl: '小米的主城營地', desc: '【同盟夥伴・小米 🐱】的獨立主城・西北海域據點，同盟友好條約保護中，互相無法攻擊！' } },
+      { r: 3, c: 4, data: { type: 'land', owner: 'ally', allyCode: 'mimi', allyName: '同盟夥伴・小米 🐱', ico: '🐱', terrain: 'normal', lbl: '小米的開拓領地', desc: '【同盟夥伴・小米 🐱】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } },
+      { r: 4, c: 3, data: { type: 'land', owner: 'ally', allyCode: 'mimi', allyName: '同盟夥伴・小米 🐱', ico: '🐱', terrain: 'normal', lbl: '小米的開拓領地', desc: '【同盟夥伴・小米 🐱】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } },
+
+      // 2. 西南海域獨立領地：同盟戰友・阿傑 🦊
+      { r: 11, c: 3, data: { type: 'land', owner: 'ally', allyCode: 'jay', allyName: '同盟戰友・阿傑 🦊', ico: '🦊', terrain: 'normal', lbl: '阿傑的主城營地', desc: '【同盟戰友・阿傑 🦊】的獨立主城・西南海域據點，同盟友好條約保護中，互相無法攻擊！' } },
+      { r: 12, c: 3, data: { type: 'land', owner: 'ally', allyCode: 'jay', allyName: '同盟戰友・阿傑 🦊', ico: '🦊', terrain: 'normal', lbl: '阿傑的開拓領地', desc: '【同盟戰友・阿傑 🦊】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } },
+      { r: 11, c: 2, data: { type: 'land', owner: 'ally', allyCode: 'jay', allyName: '同盟戰友・阿傑 🦊', ico: '🦊', terrain: 'normal', lbl: '阿傑的開拓領地', desc: '【同盟戰友・阿傑 🦊】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } },
+
+      // 3. 東南海域獨立領地：同盟戰友・小花花 🌸
+      { r: 11, c: 11, data: { type: 'land', owner: 'ally', allyCode: 'flower', allyName: '同盟戰友・小花花 🌸', ico: '🌸', terrain: 'normal', lbl: '小花花的主城營地', desc: '【同盟戰友・小花花 🌸】的獨立主城・東南海域據點，同盟友好條約保護中，互相無法攻擊！' } },
+      { r: 11, c: 12, data: { type: 'land', owner: 'ally', allyCode: 'flower', allyName: '同盟戰友・小花花 🌸', ico: '🌸', terrain: 'normal', lbl: '小花花的開拓領地', desc: '【同盟戰友・小花花 🌸】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } },
+      { r: 12, c: 11, data: { type: 'land', owner: 'ally', allyCode: 'flower', allyName: '同盟戰友・小花花 🌸', ico: '🌸', terrain: 'normal', lbl: '小花花的開拓領地', desc: '【同盟戰友・小花花 🌸】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } }
+    ];
+    allySeeds.forEach(({ r, c, data }) => {
+      const ak = `${r},${c}`;
+      const aidx = r * 15 + c;
+      if(!S.mapGrid[ak] && !S.mapGrid[aidx]){
+        S.mapGrid[ak] = { ...data };
+        S.mapGrid[aidx] = S.mapGrid[ak];
+      } else {
+        const curAlly = S.mapGrid[ak] || S.mapGrid[aidx];
+        if(curAlly && curAlly.owner === 'ally'){
+          curAlly.allyCode = data.allyCode;
+          curAlly.allyName = data.allyName;
+          curAlly.ico = data.ico;
+          curAlly.lbl = data.lbl;
+          curAlly.desc = data.desc;
+          S.mapGrid[ak] = curAlly;
+          S.mapGrid[aidx] = curAlly;
+        }
+      }
+    });
+    checkAllyDynamicExpansion();
     // 初始化遠方另一位玩家（勁敵・艾瑞克 🦁）的主城 (4,10) 與周邊領地（僅分「一般地形：進攻進度 2」與「特殊地形：進攻進度 4」）
     const rivalSeeds = [
       { r: 4, c: 10, data: { type: 'enemy_castle', owner: 'enemy', rivalName: '勁敵・艾瑞克', ico: '🦁', terrain: 'special', lbl: '敵方主城', lv: 3, attackNeed: 4, attackProg: 0 } },
@@ -1503,6 +1625,29 @@ function loadS(){
   }catch(e){S={...DS}; S.myCode = genFriendCode();}
 }
 function saveS(){localStorage.setItem('mm_s',JSON.stringify(S))}
+
+function checkAllyDynamicExpansion(){
+  if(!S || !S.mapGrid) return;
+  const totalSteps = (S.weeklyTeamSteps || 22000) + (S.actDone || 0) * 150;
+  const totalWater = (S.weeklyTeamWater || 42) + (S.water || 0);
+  const totalSquats = (S.weeklyTeamSquats || 75) + ((S.todayDone && S.todayDone.includes('q7')) ? 1 : 0);
+
+  // 1. 小米 🐱（步數達到 23,000 步，自主向外擴張 2,3）
+  if(totalSteps >= 23000 && !S.mapGrid['2,3'] && !S.mapGrid[2 * 15 + 3]){
+    const tile = { type: 'land', owner: 'ally', allyCode: 'mimi', allyName: '同盟夥伴・小米 🐱', ico: '🐱', terrain: 'normal', lbl: '小米的擴張領地', desc: '【同盟夥伴・小米 🐱】因每週步數達標自主開拓的新綠地！同盟條約保護中，互相無法攻擊！' };
+    S.mapGrid['2,3'] = tile; S.mapGrid[2 * 15 + 3] = tile;
+  }
+  // 2. 阿傑 🦊（深蹲達到 75 次，自主向外擴張 10,3）
+  if(totalSquats >= 75 && !S.mapGrid['10,3'] && !S.mapGrid[10 * 15 + 3]){
+    const tile = { type: 'land', owner: 'ally', allyCode: 'jay', allyName: '同盟戰友・阿傑 🦊', ico: '🦊', terrain: 'normal', lbl: '阿傑的擴張領地', desc: '【同盟戰友・阿傑 🦊】因每週深蹲達標自主開拓的新綠地！同盟條約保護中，互相無法攻擊！' };
+    S.mapGrid['10,3'] = tile; S.mapGrid[10 * 15 + 3] = tile;
+  }
+  // 3. 小花花 🌸（飲水達到 42 杯，自主向外擴張 12,12）
+  if(totalWater >= 42 && !S.mapGrid['12,12'] && !S.mapGrid[12 * 15 + 12]){
+    const tile = { type: 'land', owner: 'ally', allyCode: 'flower', allyName: '同盟戰友・小花花 🌸', ico: '🌸', terrain: 'normal', lbl: '小花花的擴張領地', desc: '【同盟戰友・小花花 🌸】因每週補水達標自主開拓的新綠地！同盟條約保護中，互相無法攻擊！' };
+    S.mapGrid['12,12'] = tile; S.mapGrid[12 * 15 + 12] = tile;
+  }
+}
 
 function genFriendCode(){
   const cs='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -1552,6 +1697,29 @@ function dailyReset(){
   S.teamQuests = Math.floor(Math.random()*10)+5;
   S.teamSquats = Math.floor(Math.random()*20)+15; 
   S.teamPlanks = Math.floor(Math.random()*10)+10; 
+  S.teamAssistToday = false;
+
+  const curWk = wkStart();
+  if(!S.weeklyTeamStart || S.weeklyTeamStart !== curWk){
+    S.weeklyTeamStart = curWk;
+    S.weeklyClaimed = {};
+    S.weeklyTeamSteps = Math.floor(Math.random() * 4000) + 21000;
+    S.weeklyTeamWater = Math.floor(Math.random() * 10) + 38;
+    S.weeklyTeamSquats = Math.floor(Math.random() * 15) + 68;
+    S.weeklyTeamPlanks = Math.floor(Math.random() * 10) + 42;
+    S.weeklyTeamQuests = Math.floor(Math.random() * 8) + 24;
+  }
+  const curMonth = new Date().getFullYear() + '-' + (new Date().getMonth() + 1);
+  if(!S.monthlyTeamKey || S.monthlyTeamKey !== curMonth){
+    S.monthlyTeamKey = curMonth;
+    S.monthlyClaimed = {};
+    S.monthlyAllianceAttacks = 4;
+    S.monthlyConqueredTiles = 1;
+    S.monthlyTeamSteps = 68500;
+    S.monthlyTeamCore = 210;
+    S.monthlyTeamWater = 280;
+    S.monthlyTeamStreak = 22;
+  } 
 
   // 遍歷 S.mapGrid，每發現一個 tent 就自動讓 S.gcoin += 5
   let tentCoins = 0;
@@ -2194,7 +2362,7 @@ function go(page,data){
 // ===== 使用說明 / 新手教學 =====
 // 每頁第一次進入時自動顯示，之後可點右下角 ❓ 重新開啟
 const HELP = {
-  home: { name: '首頁 (Game HUD)', slides: [
+  home: { name: '首頁 ', slides: [
     { ico: '🏰', t: '歡迎來到 15×15 六角形戰略地圖', items: [
       '畫面中央是可自由拖曳／滑動的 15×15 六角形群島地圖，中心為你的「主城」與目前出戰夥伴',
       '深藍色為未佔領的「海洋」，點擊相鄰空地即可開拓佔領並擴張版圖！',
@@ -2244,26 +2412,26 @@ const HELP = {
       '可能抽到罐頭、補簽修復筆、雙倍經驗卡、加速鞋、四葉草、豪華大餐或 G幣',
       '按「繼續探索」後，可能會推薦相關的專業影音課程' ] },
   ]},
-  team: { name: '社交', slides: [
-    { ico: '🤝', t: '建立隊伍', items: [
-      '還沒有隊伍時，按「➕ 建立體驗隊伍」',
-      '「🔍 加入公開隊伍」功能建置中，敬請期待',
-      '加入隊伍可以解鎖「隊伍夥伴」勳章' ] },
-    { ico: '🎯', t: '每日團隊任務', items: [
-      '共 5 項：步數、喝水、深蹲、平板撐、任務數',
-      '你完成的任務和喝水都會算進團隊進度',
-      '達標後按「🎁 達標！領取」，每項每天限領一次',
-      '右上角「🏆 排行榜」可以看本週 EXP 排名' ] },
-    { ico: '🫂', t: '好友 & 戳一下', items: [
-      '按「📋 複製」把你的好友代碼分享給朋友',
-      '輸入好友代碼後按「加好友」（可以先用下方的示範代碼試試）',
-      '按「👉 戳戳他」提醒好友運動，每人每天一次',
-      '好友回戳你時，首頁會出現通知' ] },
+  team: { name: '同盟系統', slides: [
+    { ico: '🤝', t: '加入同盟結為夥伴', items: [
+      '加入或建立同盟後，與同盟成員結盟，解鎖「同盟夥伴」勳章',
+      '世界地圖由許多獨立區塊組成，每個區塊土地均歸個人所有，同盟成員各自擁有獨立領地、互不相卡',
+      '同盟條約受保護「互相無法攻擊」，但可以「一起進攻非同盟領地」，攻下後歸個人版圖！' ] },
+    { ico: '⚔️', t: '每週同盟任務 & 進攻道具卡', items: [
+      '包含步數、喝水、深蹲、平板撐、全能任務等每週挑戰，全隊共同累計進度',
+      '每週同盟任務完成時，可獲得限定「⚔️ 進攻道具卡」！',
+      '一張進攻道具卡可直接進攻非同盟一塊領地（推進 1 次進攻進度，達標直接攻陷納入個人版圖）' ] },
+    { ico: '🌕', t: '每月限定同盟任務', items: [
+      '每月 1 日重置，包含五大戰略指標（進攻非同盟領地、攻陷領地、累計步數、飲水、核心訓練）',
+      '達成即可領取超豐厚大獎：2,000 G幣、50 W幣、進攻道具卡與稀有道具！' ] },
+    { ico: '🫂', t: '同盟助攻與邀請', items: [
+      '可邀請好友加入同盟，或呼叫同盟戰友！',
+      '進攻非同盟領地時，每日可呼叫同盟戰友發起協同突襲支援助攻！' ] },
   ]},
   shop: { name: '商城', slides: [
     { ico: '🔄', t: '貨幣兌換', items: [
       '100 G幣 可以兌換 1 W幣',
-      'G幣：做任務、簽到、團隊任務、尋寶都能拿到',
+      'G幣：做任務、簽到、同盟任務、尋寶都能拿到',
       'W幣：用來購買 VIP 與兌換實體商品' ] },
     { ico: '🎬', t: '影音課程 & VIP', items: [
       '每部課程可用 200～300 G幣 解鎖',
@@ -2388,6 +2556,12 @@ function startGame(){
 const MAP_SIZE = 15;
 const CASTLE_R = 7, CASTLE_C = 7, CASTLE_KEY = '7,7', CASTLE_IDX = 112;
 const RIVAL_CASTLE_R = 4, RIVAL_CASTLE_C = 10, RIVAL_CASTLE_KEY = '4,10', RIVAL_CASTLE_IDX = 70;
+const ALLY_BASES = [
+  { code: 'mimi', name: '同盟夥伴・小米 🐱', short: '小米 🐱', r: 3, c: 3, key: '3,3', region: '西北海域' },
+  { code: 'jay', name: '同盟戰友・阿傑 🦊', short: '阿傑 🦊', r: 11, c: 3, key: '11,3', region: '西南海域' },
+  { code: 'flower', name: '同盟戰友・小花花 🌸', short: '小花花 🌸', r: 11, c: 11, key: '11,11', region: '東南海域' }
+];
+let allyPanIndex = 0;
 let homeDailyOpen = false;
 let mapZoomedOut = false;
 let selectedTileKey = CASTLE_KEY;
@@ -2436,6 +2610,13 @@ function consumePendingConquest(){
   if(!S.mapGrid || typeof S.mapGrid !== 'object') S.mapGrid = {};
   const existing = S.mapGrid[idx] || S.mapGrid[key] || null;
 
+  // 同盟領地互不侵犯，無法佔領
+  if(existing && existing.owner === 'ally'){
+    pendingTargetGrid = null;
+    window.pendingTargetGrid = null;
+    return null;
+  }
+
   // 若目標為敵方領地：檢查是否有防護盾，並依地形決定進攻進度（一般地形 2、特殊地形 4）
   if(existing && existing.owner === 'enemy'){
     if(existing.item === 'shield'){
@@ -2448,7 +2629,9 @@ function consumePendingConquest(){
     const need = existing.attackNeed || (isSpecial ? 4 : 2);
     const prog = (existing.attackProg || 0) + 1;
     const rivalName = existing.rivalName || '勁敵・艾瑞克';
-    const targetLbl = isEnemyCastle ? '敵方主城' : (isSpecial ? '特殊地形' : '一般地形');
+    const targetLbl = isEnemyCastle ? '非同盟主城' : (isSpecial ? '非同盟特殊地形' : '非同盟一般地形');
+
+    S.allianceAttacks = (S.allianceAttacks || 0) + 1;
 
     if(prog < need){
       const updatedEnemy = {
@@ -2478,7 +2661,7 @@ function consumePendingConquest(){
       };
     }
 
-    // 進攻任務次數已達標，正式攻陷敵方領地並納入我方版圖（擴張獲得的領地皆為一般地形，進攻進度 2）
+    // 進攻任務次數已達標，正式攻陷非同盟領地並納入個人版圖
     const normalDef = TERRAIN_TYPES.normal;
     const tileData = {
       type: 'land',
@@ -2489,12 +2672,13 @@ function consumePendingConquest(){
       cls: normalDef.cls,
       attackNeed: normalDef.attackNeed,
       attackProg: 0,
-      desc: `一般地形・自【${rivalName}】手中攻佔的領地（他人進攻進度：2）`,
+      desc: `一般地形・自【${rivalName}】手中攻佔的個人領地（他人進攻進度：2）`,
       conqueredFrom: rivalName,
       conqueredAt: Date.now()
     };
     S.mapGrid[idx] = tileData;
     S.mapGrid[key] = tileData;
+    S.conqueredEnemyTiles = (S.conqueredEnemyTiles || 0) + 1;
 
     pendingTargetGrid = null;
     window.pendingTargetGrid = null;
@@ -2574,6 +2758,18 @@ function isEnemyTile(r, c){
   );
 }
 
+function isAllyTile(r, c){
+  if(!S.mapGrid || typeof S.mapGrid !== 'object') return false;
+  const key = `${r},${c}`;
+  const idx = r * MAP_SIZE + c;
+  const byKey = S.mapGrid[key];
+  const byIdx = S.mapGrid[idx];
+  return !!(
+    (byKey && (byKey.owner === 'ally' || byKey.type === 'ally_land')) ||
+    (byIdx && (byIdx.owner === 'ally' || byIdx.type === 'ally_land'))
+  );
+}
+
 // 平頂六角形網格相鄰關係（奇數列下移半格，同時涵蓋上下左右與對應斜向共 6 個相鄰六角形）
 function getHexNeighbors(r, c){
   const isOddCol = (c % 2 === 1);
@@ -2586,7 +2782,7 @@ function getHexNeighbors(r, c){
 }
 
 function isTileAdjacentToOccupied(r, c){
-  if(isTileOccupied(r, c)) return false;
+  if(isTileOccupied(r, c) || isAllyTile(r, c) || isEnemyTile(r, c)) return false;
   return getHexNeighbors(r, c).some(([nr, nc]) => isTileOccupied(nr, nc));
 }
 
@@ -2601,15 +2797,17 @@ function getHomeTileMeta(r, c){
   const tileItem = (savedIdx && savedIdx.item) || (savedKey && savedKey.item) || null;
   const itemDef = (tileItem && ITEM_DEFS[tileItem]) ? ITEM_DEFS[tileItem] : null;
   const isOccupied = isTileOccupied(r, c);
-  const isEnemy = !isOccupied && isEnemyTile(r, c);
+  const isAlly = !isOccupied && isAllyTile(r, c);
+  const isEnemy = !isOccupied && !isAlly && isEnemyTile(r, c);
   const isEnemyCastle = isEnemy && ((saved && saved.type === 'enemy_castle') || (r === RIVAL_CASTLE_R && c === RIVAL_CASTLE_C));
-  const isAdjacent = !isOccupied && !isEnemy && isTileAdjacentToOccupied(r, c);
+  const isAdjacent = !isOccupied && !isAlly && !isEnemy && isTileAdjacentToOccupied(r, c);
   const isAdjacentToMe = isEnemy && getHexNeighbors(r, c).some(([nr, nc]) => isTileOccupied(nr, nc));
 
   if(isCastle){
     return {
       key, index, r, c,
       isOccupied: true,
+      isAlly: false,
       isEnemy: false,
       isEnemyCastle: false,
       isAdjacent: false,
@@ -2627,18 +2825,46 @@ function getHomeTileMeta(r, c){
     };
   }
 
+  if(isAlly){
+    const allyName = (saved && (saved.allyName || saved.rivalName)) || '同盟成員・小米 🐱';
+    const allyIco = (saved && saved.ico) || '🐱';
+    return {
+      key, index, r, c,
+      isOccupied: false,
+      isAlly: true,
+      isEnemy: false,
+      isEnemyCastle: false,
+      isAdjacent: false,
+      isAdjacentToMe: false,
+      isCastle: false,
+      terrain: 'normal',
+      isSpecialTerrain: false,
+      allyName,
+      ico: allyIco,
+      lbl: '🛡️ 同盟領地',
+      cls: 'ally-tile',
+      item: tileItem,
+      itemIcon: itemDef ? itemDef.icon : '',
+      itemName: itemDef ? itemDef.name : '',
+      attackNeed: 2,
+      attackProg: 0,
+      desc: (saved && saved.desc) ? saved.desc : `🛡️ 【${allyName}】的獨立領地・同盟友好條約保護中，互相無法攻擊！可協同進攻他人！`
+    };
+  }
+
   if(isEnemy){
     const rivalName = (saved && saved.rivalName) || '勁敵・艾瑞克';
     const rivalIco = (saved && saved.ico) || '🦁';
     const isSpecialTerrain = (saved && saved.terrain === 'special') || isEnemyCastle;
     const terrain = isSpecialTerrain ? 'special' : 'normal';
-    const lbl = isEnemyCastle ? '敵方主城' : (isSpecialTerrain ? '特殊地形' : '一般地形');
+    const lbl = isEnemyCastle ? '非同盟主城' : (isSpecialTerrain ? '非同盟特殊地形' : '非同盟一般地形');
     const attackNeed = (saved && saved.attackNeed) || (isSpecialTerrain ? 4 : 2);
     const attackProg = (saved && saved.attackProg) || 0;
     const hasShield = (tileItem === 'shield');
     return {
       key, index, r, c,
       isOccupied: false,
+      isAlly: false,
       isEnemy: true,
       isEnemyCastle,
       isAdjacent: false,
@@ -2657,10 +2883,10 @@ function getHomeTileMeta(r, c){
       attackNeed,
       attackProg,
       desc: hasShield
-        ? `🛡️ 【${rivalName}】的${lbl}・設有防護盾保護中，無法進攻！`
+        ? `🛡️ 【非同盟・${rivalName}】的${lbl}・設有防護盾保護中，無法進攻！`
         : (isEnemyCastle
-          ? `🏯 【${rivalName}】主城・點擊發起進攻（需完成 ${attackNeed} 項任務，進度 ${attackProg}/${attackNeed}）！`
-          : `⚔️ 【${rivalName}】的${lbl}・點擊發起進攻（需完成 ${attackNeed} 項任務，進度 ${attackProg}/${attackNeed}）！`)
+          ? `🏯 【非同盟・${rivalName}】主城・點擊與同盟成員合力進攻（需完成 ${attackNeed} 次，進度 ${attackProg}/${attackNeed}）！`
+          : `⚔️ 【非同盟・${rivalName}】的${lbl}・點擊與同盟成員合力進攻（需完成 ${attackNeed} 次，進度 ${attackProg}/${attackNeed}）！`)
     };
   }
 
@@ -2727,7 +2953,14 @@ function renderHomeMapGrid(){
       const isSel = selectedTileKey === m.key;
       const isNewlyConquered = (lastConqueredKey === m.key);
       const extraCls = `${isSel ? ' selected' : ''}${isNewlyConquered ? ' newly-conquered' : ''}`;
-      if(m.isEnemy){
+      if(m.isAlly){
+        // 同盟領地：同盟成員駐守營地，顯示隊友 Emoji 與同盟盾牌徽章
+        html += `
+        <div class="map-tile ${m.cls}${extraCls}" data-coord="${m.key}" data-index="${m.index}" onclick="selectMapTile(${r},${c})">
+          <div class="tile-emo" title="${m.allyName}">${m.ico}</div>
+          <div class="tile-item-badge" title="🛡️ 同盟保護中">🛡️</div>
+        </div>`;
+      }else if(m.isEnemy){
         // 遠方另一位玩家的領地：敵方主城顯示對手寵物圖示，若設有防護盾或正在進攻中則疊加對應圖示
         const enemyBadge = m.itemIcon
           ? `<div class="${m.isEnemyCastle ? 'tile-item-badge' : 'tile-item-emo'}" title="${m.itemName}">${m.itemIcon}</div>`
@@ -2991,7 +3224,7 @@ window.openConquestModal = function(index, r, c){
   const m = getHomeTileMeta(r, c);
   if(m.isEnemy && m.hasShield){
     closeConquestModal();
-    toast(`🛡️ 目標領地【${m.lbl}】設有防護盾保護，無法發起進攻！`, '🛡️');
+    toast(`🛡️ 目標非同盟領地【${m.lbl}】設有防護盾保護，無法發起進攻！`, '🛡️');
     return;
   }
 
@@ -3003,24 +3236,92 @@ window.openConquestModal = function(index, r, c){
   const btnDesk = document.getElementById('btn-conquest-desk');
   const btnActive = document.getElementById('btn-conquest-active');
   const footEl = document.getElementById('conquest-modal-foot');
+  const allianceBanner = document.getElementById('conquest-alliance-banner');
+  const attackCardBox = document.getElementById('conquest-attack-card-box');
+  const allianceAssistBox = document.getElementById('conquest-alliance-assist-box');
 
   if(m.isEnemy){
     const need = m.attackNeed || (m.isSpecialTerrain ? 4 : 2);
     const prog = m.attackProg || 0;
     const rem = Math.max(1, need - prog);
     const terrainTag = m.isSpecialTerrain ? '⛰️ 特殊地形（高難度防禦・需 4 個進度）' : '🌱 一般地形（標準防禦・需 2 個進度）';
-    if(ttlEl) ttlEl.textContent = '🔥 發起領地進攻！';
+    if(ttlEl) ttlEl.textContent = '🔥 進攻非同盟領地！';
     if(infoEl){
-      infoEl.innerHTML = `<span>⚔️</span><span>鎖定【<b>${m.rivalName}</b>】的「<b>${m.lbl}</b>」（${terrainTag}）・進攻進度 <b>${prog}/${need}</b>（還需完成 <b>${rem}</b> 項任務即可奪取！）</span>`;
+      infoEl.innerHTML = `<span>⚔️</span><span>鎖定【<b>非同盟・${m.rivalName}</b>】的「<b>${m.lbl}</b>」（${terrainTag}）・進攻進度 <b>${prog}/${need}</b>（還需 <b>${rem}</b> 次即可攻克！）</span>`;
+    }
+    if(allianceBanner){
+      allianceBanner.style.display = 'block';
+      const teamName = S.teamName || 'MicroMove 先鋒同盟';
+      allianceBanner.innerHTML = `
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+          <span style="font-size:16px">🛡️</span>
+          <span style="font-weight:900;color:#1E40AF">【${teamName}】同盟協同作戰中</span>
+        </div>
+        <div style="font-size:11.5px;color:#2563EB;line-height:1.4">
+          你與同盟夥伴（小米 🐱、阿傑 🦊、小花花 🌸）已結盟！可使用<b>每週任務掉落的進攻道具卡</b>或<b>呼叫同盟戰友助攻</b>，一起進攻非同盟領地！
+        </div>
+      `;
+    }
+    if(attackCardBox){
+      attackCardBox.style.display = 'block';
+      const cardItem = (S.inventory || []).find(i => i.id === 'attack_card');
+      const cardQty = cardItem ? (cardItem.qty || 0) : 0;
+      if(cardQty > 0){
+        attackCardBox.innerHTML = `
+          <button class="btn btn-full btn-lg" style="background:linear-gradient(135deg,#DC2626,#B91C1C);color:#fff;box-shadow:0 6px 20px rgba(220,38,38,0.32);display:flex;align-items:center;justify-content:center;gap:8px;font-weight:900;margin-bottom:4px" onclick="useAttackCardOnCurrentTile()">
+            <span style="font-size:20px">⚔️</span>
+            <span>使用進攻道具卡突襲 (擁有 x${cardQty})</span>
+          </button>
+          <div style="font-size:11px;color:#DC2626;text-align:center;font-weight:700">⚡ 消耗 1 張道具卡立即推進 1 點進攻進度（每週同盟任務限定掉落）</div>
+        `;
+      }else{
+        attackCardBox.innerHTML = `
+          <div style="background:var(--c2);border:1.5px dashed var(--bd);border-radius:12px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:20px;opacity:0.6">⚔️</span>
+              <div style="font-size:11.5px;color:var(--tm);font-weight:700">進攻道具卡 (0張・每週同盟任務限定掉落)</div>
+            </div>
+            <button class="btn btn-gh btn-sm" style="font-weight:800;color:var(--p-d)" onclick="closeConquestModal();go('team');switchTeamTab('weekly');toast('每週同盟任務可獲得進攻道具卡！','⚔️')">去每週任務 ➔</button>
+          </div>
+        `;
+      }
+    }
+    if(allianceAssistBox){
+      allianceAssistBox.style.display = 'block';
+      if(S.hasTeam){
+        if(!S.teamAssistToday){
+          allianceAssistBox.innerHTML = `
+            <button class="btn btn-ol btn-full" style="border:1.5px solid #3B82F6;color:#1D4ED8;background:#EFF6FF;font-weight:800;padding:10px;display:flex;align-items:center;justify-content:center;gap:6px" onclick="callAllianceAssist()">
+              <span>🤝</span>
+              <span>呼叫同盟戰友協同突襲 (今日可用 1 次・推進 +1)</span>
+            </button>
+          `;
+        }else{
+          allianceAssistBox.innerHTML = `
+            <div style="text-align:center;font-size:11.5px;color:var(--tm);font-weight:700;padding:6px;background:var(--c2);border-radius:10px">
+              🤝 今日同盟協同助攻次數已使用，明日重置
+            </div>
+          `;
+        }
+      }else{
+        allianceAssistBox.innerHTML = `
+          <div style="text-align:center;font-size:11.5px;color:var(--tm);font-weight:700;padding:6px;background:var(--c2);border-radius:10px">
+            💡 加入同盟後，可解鎖「同盟成員每日協同突襲」支援！
+          </div>
+        `;
+      }
     }
     if(btnDesk) btnDesk.textContent = `🪑 選擇辦公桌任務 (推進進攻 +1)`;
     if(btnActive) btnActive.textContent = `🚶 選擇全身微運動 (推進進攻 +1)`;
-    if(footEl) footEl.textContent = `⚔️ 進攻此領地需要完成 ${need} 項任務（${m.isSpecialTerrain ? '特殊地形需 4 個進度' : '一般地形需 2 個進度'}），累積達標即可攻佔納入版圖！`;
+    if(footEl) footEl.textContent = `⚔️ 進攻非同盟領地需完成 ${need} 次進攻（可透過道具卡、同盟協同或完成運動），達標即可攻破並納入個人版圖！`;
   }else{
     if(ttlEl) ttlEl.textContent = '⚔️ 發起佔領挑戰！';
     if(infoEl){
       infoEl.innerHTML = `<span>🧭</span><span>已鎖定相鄰空地（佔領後為：<b>🌱 一般地形</b>，防禦進度 2），請選擇挑戰類型：</span>`;
     }
+    if(allianceBanner) allianceBanner.style.display = 'none';
+    if(attackCardBox) attackCardBox.style.display = 'none';
+    if(allianceAssistBox) allianceAssistBox.style.display = 'none';
     if(btnDesk) btnDesk.textContent = '🪑 選擇辦公桌任務 (輕鬆佔領)';
     if(btnActive) btnActive.textContent = '🚶 選擇全身微運動 (高難度佔領)';
     if(footEl) footEl.textContent = '完成任何一項任務，即可將此地納入你的版圖！';
@@ -3028,6 +3329,211 @@ window.openConquestModal = function(index, r, c){
 
   const modal = document.getElementById('conquest-modal');
   if(modal) modal.classList.add('open');
+};
+
+window.useAttackCardOnCurrentTile = function(){
+  const target = (pendingTargetGrid !== null && pendingTargetGrid !== undefined)
+    ? pendingTargetGrid
+    : ((window.pendingTargetGrid !== null && window.pendingTargetGrid !== undefined) ? window.pendingTargetGrid : null);
+  if(target === null || target === undefined){
+    toast('請先選擇要進攻的非同盟領地！', '⚔️');
+    return;
+  }
+  let r = CASTLE_R, c = CASTLE_C, idx = CASTLE_IDX, key = CASTLE_KEY;
+  if(typeof target === 'string' && target.includes(',')){
+    const parts = target.split(',').map(Number);
+    r = parts[0]; c = parts[1];
+    idx = r * MAP_SIZE + c;
+    key = `${r},${c}`;
+  }else{
+    idx = Number(target);
+    r = Math.floor(idx / MAP_SIZE);
+    c = idx % MAP_SIZE;
+    key = `${r},${c}`;
+  }
+  if(!S.mapGrid || typeof S.mapGrid !== 'object') S.mapGrid = {};
+  const existing = S.mapGrid[idx] || S.mapGrid[key] || null;
+  if(!existing || existing.owner !== 'enemy'){
+    if(existing && existing.owner === 'ally'){
+      toast('🛡️ 這是同盟成員的領地！同盟之間受條約保護，互相無法攻擊！', '🤝');
+      return;
+    }
+    toast('進攻道具卡只能對【非同盟領地】使用！', '⚔️');
+    return;
+  }
+  if(existing.item === 'shield'){
+    toast('🛡️ 目標領地有防護盾保護，無法進攻！', '🛡️');
+    return;
+  }
+  if(!S.inventory) S.inventory = [];
+  const cardIdx = S.inventory.findIndex(i => i.id === 'attack_card' && (i.qty || 0) > 0);
+  if(cardIdx === -1){
+    toast('進攻道具卡不足！只有每週同盟任務會掉落喔！', '⚔️');
+    return;
+  }
+
+  // 扣除 1 張進攻道具卡
+  S.inventory[cardIdx].qty -= 1;
+  if(S.inventory[cardIdx].qty <= 0) S.inventory.splice(cardIdx, 1);
+
+  const isEnemyCastle = (existing.type === 'enemy_castle') || (r === RIVAL_CASTLE_R && c === RIVAL_CASTLE_C);
+  const isSpecial = (existing.terrain === 'special') || isEnemyCastle;
+  const need = existing.attackNeed || (isSpecial ? 4 : 2);
+  const prog = (existing.attackProg || 0) + 1;
+  const rivalName = existing.rivalName || '勁敵・艾瑞克';
+  const targetLbl = isEnemyCastle ? '非同盟主城' : (isSpecial ? '非同盟特殊地形' : '非同盟一般地形');
+
+  S.allianceAttacks = (S.allianceAttacks || 0) + 1;
+
+  if(prog < need){
+    const updatedEnemy = {
+      ...existing,
+      terrain: isSpecial ? 'special' : 'normal',
+      lbl: targetLbl,
+      attackNeed: need,
+      attackProg: prog
+    };
+    S.mapGrid[idx] = updatedEnemy;
+    S.mapGrid[key] = updatedEnemy;
+    saveS();
+    openConquestModal(idx, r, c);
+    const mc = document.getElementById('map-container');
+    if(mc) mc.innerHTML = renderHomeMapGrid();
+    toast(`⚔️ 進攻道具卡發動！摧毀敵方防禦 1 點！進度 ${prog}/${need}（還需 ${need - prog} 次攻克）！`, '🔥');
+    fireConfetti();
+  }else{
+    // 攻克領地！
+    const normalDef = TERRAIN_TYPES.normal;
+    const tileData = {
+      type: 'land',
+      owner: 'me',
+      terrain: 'normal',
+      ico: normalDef.ico,
+      lbl: normalDef.lbl,
+      cls: normalDef.cls,
+      attackNeed: normalDef.attackNeed,
+      attackProg: 0,
+      desc: `一般地形・使用進攻道具卡自【${rivalName}】手中攻佔的個人領地（他人進攻進度：2）`,
+      conqueredFrom: rivalName,
+      conqueredAt: Date.now()
+    };
+    S.mapGrid[idx] = tileData;
+    S.mapGrid[key] = tileData;
+    S.conqueredEnemyTiles = (S.conqueredEnemyTiles || 0) + 1;
+    pendingTargetGrid = null;
+    window.pendingTargetGrid = null;
+    lastConqueredKey = key;
+    selectedTileKey = key;
+    saveS();
+    closeConquestModal();
+    const mc = document.getElementById('map-container');
+    if(mc) mc.innerHTML = renderHomeMapGrid();
+    toast(`🚩 進攻道具卡大獲全勝！成功攻陷非同盟領地【${targetLbl}】！已納入個人版圖！`, '🎉');
+    fireConfetti();
+  }
+};
+
+window.callAllianceAssist = function(){
+  const target = (pendingTargetGrid !== null && pendingTargetGrid !== undefined)
+    ? pendingTargetGrid
+    : ((window.pendingTargetGrid !== null && window.pendingTargetGrid !== undefined) ? window.pendingTargetGrid : null);
+  if(target === null || target === undefined){
+    toast('請先選擇要進攻的非同盟領地！', '🤝');
+    return;
+  }
+  let r = CASTLE_R, c = CASTLE_C, idx = CASTLE_IDX, key = CASTLE_KEY;
+  if(typeof target === 'string' && target.includes(',')){
+    const parts = target.split(',').map(Number);
+    r = parts[0]; c = parts[1];
+    idx = r * MAP_SIZE + c;
+    key = `${r},${c}`;
+  }else{
+    idx = Number(target);
+    r = Math.floor(idx / MAP_SIZE);
+    c = idx % MAP_SIZE;
+    key = `${r},${c}`;
+  }
+  if(!S.mapGrid || typeof S.mapGrid !== 'object') S.mapGrid = {};
+  const existing = S.mapGrid[idx] || S.mapGrid[key] || null;
+  if(!existing || existing.owner !== 'enemy'){
+    if(existing && existing.owner === 'ally'){
+      toast('🛡️ 這是同盟成員的領地！同盟之間受條約保護，互相無法攻擊！', '🤝');
+      return;
+    }
+    toast('同盟協同助攻只能對【非同盟領地】發動！', '🤝');
+    return;
+  }
+  if(existing.item === 'shield'){
+    toast('🛡️ 目標領地有防護盾保護，無法進攻！', '🛡️');
+    return;
+  }
+  if(S.teamAssistToday){
+    toast('今日同盟協同助攻次數已用完，明日重置！', '🤝');
+    return;
+  }
+
+  S.teamAssistToday = true;
+  S.allianceAttacks = (S.allianceAttacks || 0) + 1;
+
+  const allies = [
+    { name: '小米', emo: '🐱', move: '閃電微步爪擊' },
+    { name: '阿傑', emo: '🦊', move: '爆發深蹲飛躍' },
+    { name: '小花花', emo: '🌸', move: '核心平板破防震盪' }
+  ];
+  const chosen = allies[Math.floor(Math.random() * allies.length)];
+
+  const isEnemyCastle = (existing.type === 'enemy_castle') || (r === RIVAL_CASTLE_R && c === RIVAL_CASTLE_C);
+  const isSpecial = (existing.terrain === 'special') || isEnemyCastle;
+  const need = existing.attackNeed || (isSpecial ? 4 : 2);
+  const prog = (existing.attackProg || 0) + 1;
+  const rivalName = existing.rivalName || '勁敵・艾瑞克';
+  const targetLbl = isEnemyCastle ? '非同盟主城' : (isSpecial ? '非同盟特殊地形' : '非同盟一般地形');
+
+  if(prog < need){
+    const updatedEnemy = {
+      ...existing,
+      terrain: isSpecial ? 'special' : 'normal',
+      lbl: targetLbl,
+      attackNeed: need,
+      attackProg: prog
+    };
+    S.mapGrid[idx] = updatedEnemy;
+    S.mapGrid[key] = updatedEnemy;
+    saveS();
+    openConquestModal(idx, r, c);
+    const mc = document.getElementById('map-container');
+    if(mc) mc.innerHTML = renderHomeMapGrid();
+    toast(`🤝 同盟戰友【${chosen.name} ${chosen.emo}】響應集結！施展【${chosen.move}】支援！進攻進度 ${prog}/${need}！`, '💥');
+    fireConfetti();
+  }else{
+    const normalDef = TERRAIN_TYPES.normal;
+    const tileData = {
+      type: 'land',
+      owner: 'me',
+      terrain: 'normal',
+      ico: normalDef.ico,
+      lbl: normalDef.lbl,
+      cls: normalDef.cls,
+      attackNeed: normalDef.attackNeed,
+      attackProg: 0,
+      desc: `一般地形・與同盟戰友【${chosen.name}】合力攻佔的個人領地（他人進攻進度：2）`,
+      conqueredFrom: rivalName,
+      conqueredAt: Date.now()
+    };
+    S.mapGrid[idx] = tileData;
+    S.mapGrid[key] = tileData;
+    S.conqueredEnemyTiles = (S.conqueredEnemyTiles || 0) + 1;
+    pendingTargetGrid = null;
+    window.pendingTargetGrid = null;
+    lastConqueredKey = key;
+    selectedTileKey = key;
+    saveS();
+    closeConquestModal();
+    const mc = document.getElementById('map-container');
+    if(mc) mc.innerHTML = renderHomeMapGrid();
+    toast(`🏆 同盟戰友【${chosen.name} ${chosen.emo}】與你合力攻破非同盟領地【${targetLbl}】！已納入個人版圖！`, '🎉');
+    fireConfetti();
+  }
 };
 
 window.closeConquestModal = function(){
@@ -3062,7 +3568,7 @@ window.selectMapTile = function(r, c){
   const m = getHomeTileMeta(r, c);
   const toastEl = document.getElementById('hud-tile-toast');
   if(toastEl){
-    const ico = m.itemIcon || (m.isCastle ? m.ico : (m.isEnemy ? '🦁' : (m.isOccupied ? '🚩' : (m.isAdjacent ? '⚔️' : '🌊'))));
+    const ico = m.itemIcon || (m.isCastle ? m.ico : (m.isEnemy ? '🦁' : (m.isAlly ? '🐱' : (m.isOccupied ? '🚩' : (m.isAdjacent ? '⚔️' : '🌊')))));
     toastEl.innerHTML = `<span style="font-size:16px">${ico}</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.desc}</span>`;
   }
 
@@ -3071,10 +3577,15 @@ window.selectMapTile = function(r, c){
     return;
   }
 
+  if(m.isAlly){
+    toast(`🛡️ 這是【${m.allyName}】的獨立領地！同盟之間受友好條約保護，互相無法攻擊！`, '🤝');
+    return;
+  }
+
   if(m.isEnemy){
     if(m.hasShield || m.item === 'shield'){
       closeConquestModal();
-      toast(`🛡️ 目標領地【${m.lbl}】設有防護盾保護，無法發起進攻！`, '🛡️');
+      toast(`🛡️ 目標非同盟領地【${m.lbl}】設有防護盾保護，無法發起進攻！`, '🛡️');
       return;
     }
     openConquestModal(index, r, c);
@@ -3094,18 +3605,13 @@ window.centerHomeMap = function(smooth){
   const vp = document.getElementById('map-viewport');
   if(!vp) return;
   const castleEl = document.querySelector(`#map-container .map-tile[data-coord="${CASTLE_KEY}"]`);
-  const rivalEl = document.querySelector(`#map-container .map-tile[data-coord="${RIVAL_CASTLE_KEY}"]`);
   let targetLeft = Math.max(0, (vp.scrollWidth - vp.clientWidth) / 2);
   let targetTop = Math.max(0, (vp.scrollHeight - vp.clientHeight) / 2 - 20);
-  if(castleEl && rivalEl && !smooth){
-    // 初次載入時將鏡頭置於我方主城 (7,7) 與遠方對手 (4,10) 之間，讓畫面同時看見我方主城與遠方另一位玩家
+  if(castleEl){
     const vpRect = vp.getBoundingClientRect();
     const cRect = castleEl.getBoundingClientRect();
-    const rRect = rivalEl.getBoundingClientRect();
-    const midX = (cRect.left + rRect.left) / 2 + cRect.width / 2 - vpRect.left + vp.scrollLeft;
-    const midY = (cRect.top + rRect.top) / 2 + cRect.height / 2 - vpRect.top + vp.scrollTop;
-    targetLeft = Math.max(0, midX - vp.clientWidth / 2);
-    targetTop = Math.max(0, midY - vp.clientHeight / 2);
+    targetLeft = Math.max(0, (cRect.left - vpRect.left + vp.scrollLeft) - vp.clientWidth / 2 + cRect.width / 2);
+    targetTop = Math.max(0, (cRect.top - vpRect.top + vp.scrollTop) - vp.clientHeight / 2 + cRect.height / 2);
   }
   if(smooth && vp.scrollTo){
     vp.scrollTo({ left: targetLeft, top: targetTop, behavior: 'smooth' });
@@ -3115,17 +3621,27 @@ window.centerHomeMap = function(smooth){
   }
 };
 
-window.panToRival = function(){
+window.panToSpecificCoord = function(coordKey, toastMsg, toastIcon){
   const vp = document.getElementById('map-viewport');
-  const rivalEl = document.querySelector(`#map-container .map-tile[data-coord="${RIVAL_CASTLE_KEY}"]`);
-  if(!vp || !rivalEl) return;
+  const el = document.querySelector(`#map-container .map-tile[data-coord="${coordKey}"]`);
+  if(!vp || !el) return;
   const vpRect = vp.getBoundingClientRect();
-  const rRect = rivalEl.getBoundingClientRect();
-  const targetLeft = Math.max(0, (rRect.left - vpRect.left + vp.scrollLeft) - vp.clientWidth / 2 + rRect.width / 2);
-  const targetTop = Math.max(0, (rRect.top - vpRect.top + vp.scrollTop) - vp.clientHeight / 2 + rRect.height / 2);
+  const elRect = el.getBoundingClientRect();
+  const targetLeft = Math.max(0, (elRect.left - vpRect.left + vp.scrollLeft) - vp.clientWidth / 2 + elRect.width / 2);
+  const targetTop = Math.max(0, (elRect.top - vpRect.top + vp.scrollTop) - vp.clientHeight / 2 + elRect.height / 2);
   if(vp.scrollTo) vp.scrollTo({ left: targetLeft, top: targetTop, behavior: 'smooth' });
   else { vp.scrollLeft = targetLeft; vp.scrollTop = targetTop; }
-  toast('🔭 鏡頭已移至遠方玩家【勁敵・艾瑞克 🦁】的領地！', '🦁');
+  if(toastMsg) toast(toastMsg, toastIcon || '🗺️');
+};
+
+window.panToRival = function(){
+  panToSpecificCoord(RIVAL_CASTLE_KEY, '🔭 鏡頭已移至東北海域【勁敵・艾瑞克 🦁】的獨立領地！', '🦁');
+};
+
+window.panToAlly = function(){
+  const target = ALLY_BASES[allyPanIndex % ALLY_BASES.length];
+  allyPanIndex++;
+  panToSpecificCoord(target.key, `🛡️ 鏡頭移至【${target.name}】${target.region}獨立領地！`, '🛡️');
 };
 
 window.toggleMapZoom = function(){
@@ -3258,7 +3774,8 @@ function pgHome(){
     <!-- 【底部/右下懸浮】：鏡頭控制、喝水打卡 與 喬山 QR 掃描 圓形懸浮按鈕 (FAB) -->
     <div class="hud-fab-col">
       <button class="hud-fab center-fab" id="btn-map-zoom" onclick="toggleMapZoom()" title="切換全覽縮放">${mapZoomedOut ? '🔍+' : '🔍-'}</button>
-      <button class="hud-fab center-fab" onclick="panToRival()" title="查看遠方敵方玩家領地">🔭</button>
+      <button class="hud-fab center-fab" onclick="panToRival()" title="查看東北敵方玩家領地">🔭</button>
+      <button class="hud-fab center-fab" onclick="panToAlly()" title="查看西南同盟戰友領地">🛡️</button>
       <button class="hud-fab center-fab" onclick="centerHomeMap(true)" title="回到我方主城">🎯</button>
 
       <button class="hud-fab water-fab" onclick="handleWaterFabClick()" title="喝水打卡 (${S.water}/8 杯)">
@@ -4675,7 +5192,7 @@ window.rollGacha = function(){
 
 window.closeGacha = function(){ document.getElementById('gacha-ov').classList.remove('show'); go('shop'); }
 
-function pgTeam(){ return pgTeamMain() + friendsSectionHTML(); }
+function pgTeam(){ return pgTeamMain(); }
 
 function friendActiveToday(code){
   const key=code+new Date().toDateString();
@@ -4699,8 +5216,7 @@ function friendsSectionHTML(){
     </div>`;
   }).join('');
   return `
-  <div style="padding:0 16px 16px">
-    <div class="stit" style="margin-top:8px">🫂 我的好友 (${(S.friends||[]).length})</div>
+    <div class="stit" style="margin-top:20px">🫂 我的好友 (${(S.friends||[]).length})</div>
     <div class="card" style="margin-bottom:12px">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">
         <div>
@@ -4715,10 +5231,9 @@ function friendsSectionHTML(){
       </div>
       <div style="font-size:11px;color:var(--td);margin-top:8px">示範代碼：MM-ERIC88、MM-MIMI23、MM-JAY456、MM-PANDA7、MM-DOUDOU</div>
     </div>
-    <div class="card">
+    <div class="card" style="margin-bottom:20px">
       ${list || '<div style="text-align:center;padding:16px;font-size:13px;color:var(--tm)">還沒有好友，輸入好友代碼一起運動吧！</div>'}
-    </div>
-  </div>`;
+    </div>`;
 }
 
 window.copyMyCode = function(){
@@ -4737,7 +5252,7 @@ window.addFriend = function(){
   S.friends.push({code,name:info.name,emo:info.emo,lv:info.lv});
   chkBadges(); saveS();
   toast(`已和 ${info.name} 成為好友！`,'🎉');
-  go('team');
+  go('profile');
 }
 
 window.pokeFriend = function(code){
@@ -4747,7 +5262,7 @@ window.pokeFriend = function(code){
   S.pokes[code]=today; S.pokeCount=(S.pokeCount||0)+1;
   chkBadges(); saveS();
   toast(`你戳了 ${f.name}，提醒他記得運動！`,'👉');
-  go('team');
+  if(curPage==='profile') go('profile'); else go(curPage);
   // 模擬好友回戳
   if(Math.random()<0.5){
     setTimeout(()=>{
@@ -4776,62 +5291,520 @@ function renderPokeBanner(){
   </div>`;
 }
 
-function pgTeamMain(){
-  if(!S.hasTeam){
-    return`<div class="ph"><div class="ph1">👥 隊伍</div></div><div style="padding:0 16px 16px;text-align:center"><div style="font-size:64px;margin-bottom:16px;animation:bounceSolo 2s infinite">🤝</div><div style="font-size:20px;font-weight:900;margin-bottom:8px;color:var(--t)">加入隊伍，一起更強！</div><div style="display:flex;flex-direction:column;gap:10px;margin-top:20px"><button class="btn btn-p btn-full btn-lg" onclick="toast('加入隊伍功能建置中...','🔍')">🔍 加入公開隊伍</button><button class="btn btn-ol btn-full" onclick="createTeam()">➕ 建立體驗隊伍</button></div></div>`;
+let teamActiveTab = 'weekly';
+window.switchTeamTab = function(tab){
+  teamActiveTab = tab;
+  go('team');
+};
+
+const WEEKLY_TEAM_QUESTS = [
+  {
+    id: 'w_steps',
+    title: '👟 每週同盟萬步征途',
+    metric: 'steps',
+    goal: 30000,
+    unit: '步',
+    rewardCoins: 150,
+    rewardItem: 'attack_card',
+    rewardItemQty: 1,
+    col1: '#10B981',
+    col2: '#34D399',
+    desc: '全隊合力累積走完 30,000 步，為同盟儲備遠征作戰體力！'
+  },
+  {
+    id: 'w_water',
+    title: '💧 每週同盟綠洲補水',
+    metric: 'water',
+    goal: 60,
+    unit: '杯',
+    rewardCoins: 100,
+    rewardItem: 'attack_card',
+    rewardItemQty: 1,
+    col1: '#3B82F6',
+    col2: '#60A5FA',
+    desc: '同盟成員每週喝水 60 杯，全員保持充沛作戰體力！'
+  },
+  {
+    id: 'w_squats',
+    title: '🏋️ 每週同盟深蹲馬拉松',
+    metric: 'squats',
+    goal: 100,
+    unit: '次',
+    rewardCoins: 120,
+    rewardItem: 'attack_card',
+    rewardItemQty: 1,
+    col1: '#F59E0B',
+    col2: '#FBBF24',
+    desc: '同盟全員深蹲 100 次，強化下盤爆發推進力！'
+  },
+  {
+    id: 'w_planks',
+    title: '🔥 每週同盟核心平板撐',
+    metric: 'planks',
+    goal: 60,
+    unit: '次',
+    rewardCoins: 150,
+    rewardItem: 'attack_card',
+    rewardItemQty: 1,
+    col1: '#EF4444',
+    col2: '#F87171',
+    desc: '核心肌群特訓 60 次，鍛造鋼鐵意志與防守韌性！'
+  },
+  {
+    id: 'w_quests',
+    title: '⚡ 每週同盟全能微運動大賽',
+    metric: 'quests',
+    goal: 40,
+    unit: '個',
+    rewardCoins: 200,
+    rewardItem: 'attack_card',
+    rewardItemQty: 2,
+    bonusItem: 'clover',
+    col1: '#8B5CF6',
+    col2: '#A78BFA',
+    desc: '全體隊員完成微運動 40 次，同盟全員士氣高昂！'
+  }
+];
+
+const MONTHLY_TEAM_QUESTS = [
+  {
+    id: 'm_epic_alliance_campaign',
+    title: '🏆【月度同盟史詩】全域遠征與體能突破大決戰',
+    tag: '月度史詩・限定挑戰',
+    col: '#8B5CF6',
+    bg: 'linear-gradient(135deg, #FAF5FF, #F3E8FF)',
+    desc: '同盟全員攜手進軍非同盟領地、刷新全隊運動與飲水極限，達成五大複合戰略指標！',
+    subGoals: [
+      { id: 'attacks', label: '⚔️ 對非同盟領地發動進攻', cur: () => (S.monthlyAllianceAttacks || 4) + (S.allianceAttacks || 0), goal: 8, unit: '次' },
+      { id: 'conquers', label: '🚩 攻陷並佔領非同盟領地', cur: () => (S.monthlyConqueredTiles || 1) + (S.conqueredEnemyTiles || 0), goal: 2, unit: '塊' },
+      { id: 'steps', label: '👟 全隊本月累計總步數', cur: () => (S.monthlyTeamSteps || 68500) + S.actDone * 300, goal: 100000, unit: '步' },
+      { id: 'water', label: '💧 全隊本月累計飲水', cur: () => (S.monthlyTeamWater || 280) + S.water, goal: 350, unit: '杯' },
+      { id: 'squats_planks', label: '🏋️ 深蹲與平板撐總次數', cur: () => (S.monthlyTeamCore || 210) + (S.todayDone.includes('q7') ? 5 : 0) + (S.todayDone.includes('q12') ? 5 : 0), goal: 300, unit: '次' }
+    ],
+    rewards: [
+      { type: 'coin', label: '2,000 G幣', icon: '💰' },
+      { type: 'wcoin', label: '50 W幣', icon: '💎' },
+      { type: 'item', id: 'attack_card', label: '進攻道具卡 x3', icon: '⚔️', qty: 3 },
+      { type: 'item', id: 'pet_feast', label: '寵物豪華大餐 x1', icon: '🍱', qty: 1 },
+      { type: 'item', id: 'double_exp', label: '雙倍經驗卡 x3', icon: '⚡', qty: 3 },
+      { type: 'item', id: 'clover', label: '幸運四葉草 x2', icon: '🍀', qty: 2 }
+    ],
+    rewardAction: () => {
+      S.gcoin = (S.gcoin || 0) + 2000;
+      S.wcoin = (S.wcoin || 0) + 50;
+      addItemToBag('attack_card', 3);
+      addItemToBag('pet_feast', 1);
+      addItemToBag('double_exp', 3);
+      addItemToBag('clover', 2);
+    }
+  }
+];
+
+window.claimWeeklyTeamQuest = function(questId){
+  const q = WEEKLY_TEAM_QUESTS.find(x => x.id === questId);
+  if(!q) return;
+  if(!S.weeklyClaimed) S.weeklyClaimed = {};
+  if(S.weeklyClaimed[questId]){
+    toast('本週此項同盟任務獎勵已經領取過了！', '✅');
+    return;
+  }
+  let cur = 0;
+  if(q.metric === 'steps') cur = (S.weeklyTeamSteps || 22000) + S.actDone * 150;
+  else if(q.metric === 'water') cur = (S.weeklyTeamWater || 42) + S.water;
+  else if(q.metric === 'squats') cur = (S.weeklyTeamSquats || 75) + (S.todayDone.includes('q7') ? 1 : 0);
+  else if(q.metric === 'planks') cur = (S.weeklyTeamPlanks || 45) + (S.todayDone.includes('q12') ? 1 : 0);
+  else if(q.metric === 'quests') cur = (S.weeklyTeamQuests || 28) + S.todayDone.length;
+
+  if(cur < q.goal){
+    toast('進度尚未達標，繼續與同盟成員一起努力！', '💪');
+    return;
   }
 
-  const curSteps = (S.teamSteps || 0) + S.actDone * 150; 
-  const curWater = (S.teamWater || 0) + S.water;
-  const curQs = (S.teamQuests || 0) + S.todayDone.length;
-  
+  S.weeklyClaimed[questId] = true;
+  if(q.rewardCoins) S.gcoin = (S.gcoin || 0) + q.rewardCoins;
+  if(q.rewardItem){
+    addItemToBag(q.rewardItem, q.rewardItemQty || 1);
+  }
+  if(q.bonusItem){
+    addItemToBag(q.bonusItem, 1);
+  }
+  saveS();
+  fireConfetti();
+  toast(`🎉 達成每週同盟任務！獲得【進攻道具卡】x${q.rewardItemQty || 1} 與 ${q.rewardCoins} G幣！`, '⚔️');
+  go('team');
+};
+
+window.claimMonthlyTeamQuest = function(questId){
+  const q = MONTHLY_TEAM_QUESTS.find(x => x.id === questId);
+  if(!q) return;
+  if(!S.monthlyClaimed) S.monthlyClaimed = {};
+  if(S.monthlyClaimed[questId]){
+    toast('本月此項限定史詩大獎已經領取過了！', '✅');
+    return;
+  }
+  const allMet = q.subGoals.every(sg => (typeof sg.cur === 'function' ? sg.cur() : 0) >= sg.goal);
+  if(!allMet){
+    toast('此月度限定任務的複合條件尚未完全達成！', '🎯');
+    return;
+  }
+  S.monthlyClaimed[questId] = true;
+  if(typeof q.rewardAction === 'function'){
+    q.rewardAction();
+  }
+  saveS();
+  fireConfetti();
+  toast(`🏆 成功領取【${q.title}】月度史詩大獎！超豐厚獎勵已入庫！`, '👑');
+  go('team');
+};
+
+window.joinPublicTeam = function(name, leader, emo){
+  S.hasTeam = true;
+  S.teamName = name || 'MicroMove 先鋒同盟';
+  S.teamMembers = [
+    { id: 'me', name: S.name || '旅行者', emo: CHARS.find(c => c.id === S.charId)?.emo || '🐰', lv: S.lv || 1, role: '成員', isMe: true },
+    { id: 'leader', name: leader || '小米', emo: emo || '🐱', lv: 7, role: '盟主', code: 'MM-MIMI23', active: true },
+    { id: 'jay', name: '阿傑', emo: '🦊', lv: 5, role: '同盟成員', code: 'MM-JAY456', active: true },
+    { id: 'flower', name: '小花花', emo: '🌸', lv: 6, role: '同盟副隊長', code: 'MM-FLOWER', active: true }
+  ];
+  chkBadges();
+  saveS();
+  fireConfetti();
+  toast(`🎉 成功加入【${S.teamName}】！已與全員結為同盟，可一起進攻非同盟領地！`, '🛡️');
+  go('team');
+};
+
+window.createTeam = function(){
+  S.hasTeam = true;
+  S.teamName = 'MicroMove 先鋒同盟';
+  S.teamMembers = [
+    { id: 'me', name: S.name || '旅行者', emo: CHARS.find(c => c.id === S.charId)?.emo || '🐰', lv: S.lv || 1, role: '盟主', isMe: true },
+    { id: 'mimi', name: '小米', emo: '🐱', lv: 7, role: '同盟核心', code: 'MM-MIMI23', active: true },
+    { id: 'jay', name: '阿傑', emo: '🦊', lv: 5, role: '同盟成員', code: 'MM-JAY456', active: true },
+    { id: 'flower', name: '小花花', emo: '🌸', lv: 6, role: '同盟副隊長', code: 'MM-FLOWER', active: true }
+  ];
+  chkBadges();
+  saveS();
+  fireConfetti();
+  toast('🎉 成功建立專屬同盟！戰友已結盟，隨時準備出擊！', '🤝');
+  go('team');
+};
+
+window.leaveTeam = function(){
+  if(confirm('確定要退出目前的同盟嗎？退出後將無法參與同盟進攻與領取同盟任務獎勵。')){
+    S.hasTeam = false;
+    saveS();
+    toast('已退出同盟', '🚪');
+    go('team');
+  }
+};
+
+window.inviteFriendToTeam = function(friendCode){
+  const f = (S.friends || []).find(x => x.code === friendCode);
+  if(!f) return;
+  if(S.teamMembers && S.teamMembers.some(m => m.code === friendCode)){
+    toast(`${f.name} 已經在同盟中了！`, '🛡️');
+    return;
+  }
+  if(!S.teamMembers) S.teamMembers = [];
+  S.teamMembers.push({ id: f.code, name: f.name, emo: f.emo, lv: f.lv, role: '同盟成員', code: f.code, active: true });
+  saveS();
+  fireConfetti();
+  toast(`🎉 成功邀請【${f.name} ${f.emo}】加入同盟！同盟戰力大增！`, '🤝');
+  go('team');
+};
+
+function pgTeamMain(){
+  if(!S.hasTeam){
+    return `
+    <div class="ph"><div class="ph1">👥 同盟</div></div>
+    <div style="padding:0 16px 20px;text-align:center">
+      <div style="font-size:56px;margin:12px 0;animation:bounceSolo 2.4s infinite">🛡️</div>
+      <div style="font-size:20px;font-weight:900;color:var(--t);margin-bottom:6px">加入同盟，攜手征伐！</div>
+      <div style="font-size:13px;color:var(--tm);line-height:1.5;max-width:320px;margin:0 auto 18px">
+        與同盟成員結盟，可以<b>一起進攻非同盟領地</b>、挑戰每週任務獲取<b>【進攻道具卡】</b>，並奪取<b>每月限定史詩大獎</b>！
+        <div style="font-size:11.5px;color:var(--p-d);margin-top:6px;font-weight:700">💡 領地為個人獨立開拓與管理，同盟成員協同提供進攻助攻！</div>
+      </div>
+      <button class="btn btn-ol btn-full btn-lg" style="margin-bottom:16px;border:1.5px solid var(--p);color:var(--p-d);font-weight:800" onclick="createTeam()">
+        ➕ 建立專屬同盟 (成為盟主)
+      </button>
+      <div class="stit" style="text-align:left;margin-bottom:10px">🔍 推薦公開同盟 (一鍵加入結盟出征)</div>
+      <div style="display:flex;flex-direction:column;gap:10px;text-align:left">
+        <div class="card" style="display:flex;align-items:center;gap:12px;padding:12px 14px">
+          <div style="font-size:32px">🐱</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:800;color:var(--t)">微動先鋒同盟</div>
+            <div style="font-size:11.5px;color:var(--tm)">盟主：小米 (Lv.7) · 成員 3/5</div>
+            <div style="font-size:11px;color:#059669;font-weight:700;margin-top:2px">🛡️ 主打：每週步數攻堅 · 積極征伐</div>
+          </div>
+          <button class="btn btn-p btn-sm" onclick="joinPublicTeam('微動先鋒同盟','小米','🐱')">加入結盟</button>
+        </div>
+        <div class="card" style="display:flex;align-items:center;gap:12px;padding:12px 14px">
+          <div style="font-size:32px">🦊</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:800;color:var(--t)">燃脂極限戰隊</div>
+            <div style="font-size:11.5px;color:var(--tm)">盟主：阿傑 (Lv.5) · 成員 2/5</div>
+            <div style="font-size:11px;color:#D97706;font-weight:700;margin-top:2px">⚡ 主打：核心肌力挑戰 · 史詩攻堅</div>
+          </div>
+          <button class="btn btn-p btn-sm" onclick="joinPublicTeam('燃脂極限戰隊','阿傑','🦊')">加入結盟</button>
+        </div>
+        <div class="card" style="display:flex;align-items:center;gap:12px;padding:12px 14px">
+          <div style="font-size:32px">🐨</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:800;color:var(--t)">朝活元氣同盟</div>
+            <div style="font-size:11.5px;color:var(--tm)">盟主：豆豆 (Lv.3) · 成員 3/5</div>
+            <div style="font-size:11px;color:#2563EB;font-weight:700;margin-top:2px">💧 主打：健康喝水與每日簽到防守</div>
+          </div>
+          <button class="btn btn-p btn-sm" onclick="joinPublicTeam('朝活元氣同盟','豆豆','🐨')">加入結盟</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const cardInv = (S.inventory || []).find(i => i.id === 'attack_card');
+  const cardQty = cardInv ? (cardInv.qty || 0) : 0;
   const userSquat = S.todayDone.includes('q7') ? 1 : 0;
-  const curSquats = (S.teamSquats || 0) + userSquat;
-  
   const userPlank = S.todayDone.includes('q12') ? 1 : 0;
-  const curPlanks = (S.teamPlanks || 0) + userPlank;
 
-  const pctSteps = Math.min(100, Math.round(curSteps/10000*100));
-  const pctWater = Math.min(100, Math.round(curWater/30*100));
-  const pctQs = Math.min(100, Math.round(curQs/20*100));
-  const pctSquats = Math.min(100, Math.round(curSquats/50*100));
-  const pctPlanks = Math.min(100, Math.round(curPlanks/30*100));
+  let tabContentHtml = '';
 
-  return`
+  if(teamActiveTab === 'weekly'){
+    const questsHtml = WEEKLY_TEAM_QUESTS.map(q => {
+      let cur = 0;
+      if(q.metric === 'steps') cur = (S.weeklyTeamSteps || 22000) + S.actDone * 150;
+      else if(q.metric === 'water') cur = (S.weeklyTeamWater || 42) + S.water;
+      else if(q.metric === 'squats') cur = (S.weeklyTeamSquats || 75) + userSquat;
+      else if(q.metric === 'planks') cur = (S.weeklyTeamPlanks || 45) + userPlank;
+      else if(q.metric === 'quests') cur = (S.weeklyTeamQuests || 28) + S.todayDone.length;
+
+      const pct = Math.min(100, Math.round(cur / q.goal * 100));
+      const claimed = !!(S.weeklyClaimed && S.weeklyClaimed[q.id]);
+      const canClaim = cur >= q.goal && !claimed;
+
+      return `
+      <div class="card" style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div style="font-size:15px;font-weight:800;color:${q.col1}">${q.title}</div>
+          <div style="font-size:12px;color:var(--tm);font-weight:700">目標 ${q.goal.toLocaleString()} ${q.unit}</div>
+        </div>
+        <div style="font-size:11.5px;color:var(--tm);margin-bottom:8px;font-weight:600">${q.desc}</div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+          <div style="font-size:22px;font-weight:900;font-family:'Outfit';color:var(--t)">${cur.toLocaleString()}</div>
+          <div style="font-size:12px;color:var(--tm)">${q.unit}</div>
+        </div>
+        <div class="barw" style="height:8px"><div class="barf" style="width:${pct}%;background:linear-gradient(90deg,${q.col1},${q.col2})"></div></div>
+        
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--c2);padding:7px 10px;border-radius:10px;margin-top:10px">
+          <div style="font-size:12px;font-weight:700;color:var(--t);display:flex;align-items:center;gap:6px">
+            <span>🎁 任務掉落：</span>
+            <span style="color:#DC2626;font-weight:800;background:#FEE2E2;padding:2px 6px;border-radius:6px">⚔️ 進攻道具卡 x${q.rewardItemQty || 1}</span>
+            <span style="color:var(--tm)">+ ${q.rewardCoins} G幣</span>
+            ${q.bonusItem ? `<span style="color:#059669">+ 🍀 四葉草</span>` : ''}
+          </div>
+        </div>
+
+        ${canClaim ? 
+          `<button class="btn btn-full btn-sm" style="margin-top:10px;background:linear-gradient(135deg,#DC2626,#EF4444);color:#fff;font-weight:900;animation:pulse 1s infinite;box-shadow:0 4px 14px rgba(220,38,38,0.32)" onclick="claimWeeklyTeamQuest('${q.id}')">🎁 達標！領取進攻道具卡 + G幣</button>` : 
+          claimed ? 
+          `<div style="text-align:center;margin-top:10px;font-size:12.5px;color:#059669;font-weight:800;padding:6px;background:#ECFDF5;border-radius:8px">✅ 本週獎勵已領取</div>` :
+          `<div style="text-align:center;margin-top:10px;font-size:12px;color:var(--tm);font-weight:600">本週進度 ${pct}%，全隊共同累計！</div>`
+        }
+      </div>`;
+    }).join('');
+
+    tabContentHtml = `
+      <div class="stit">🎯 每週同盟任務 (${WEEKLY_TEAM_QUESTS.length})</div>
+      ${questsHtml}
+    `;
+  } else if(teamActiveTab === 'monthly'){
+    const monthlyCardsHtml = MONTHLY_TEAM_QUESTS.map(q => {
+      const allMet = q.subGoals.every(sg => (typeof sg.cur === 'function' ? sg.cur() : 0) >= sg.goal);
+      const claimed = !!(S.monthlyClaimed && S.monthlyClaimed[q.id]);
+      const canClaim = allMet && !claimed;
+
+      const subGoalsHtml = q.subGoals.map(sg => {
+        const curVal = typeof sg.cur === 'function' ? sg.cur() : 0;
+        const subPct = Math.min(100, Math.round(curVal / sg.goal * 100));
+        const met = curVal >= sg.goal;
+        return `
+          <div style="margin-bottom:8px;background:rgba(255,255,255,0.75);padding:8px 10px;border-radius:10px;border:1px solid var(--bd)">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;margin-bottom:4px">
+              <span style="color:var(--t)">${met ? '✅' : '⏳'} ${sg.label}</span>
+              <span style="color:${met ? '#059669' : 'var(--tm)'}">${curVal.toLocaleString()} / ${sg.goal.toLocaleString()} ${sg.unit}</span>
+            </div>
+            <div class="barw" style="height:6px"><div class="barf" style="width:${subPct}%;background:${met ? '#10B981' : q.col}"></div></div>
+          </div>
+        `;
+      }).join('');
+
+      const rewardsHtml = q.rewards.map(r => `
+        <span class="chip" style="margin:2px;background:#fff;border:1px solid ${q.col}40;color:${q.col};font-weight:800;font-size:11px">
+          ${r.icon} ${r.label}
+        </span>
+      `).join('');
+
+      return `
+      <div class="card" style="margin-bottom:14px;border:1.5px solid ${q.col}30;background:${q.bg}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span class="chip" style="margin:0;background:${q.col};color:#fff;font-size:10px;font-weight:800">${q.tag}</span>
+          <span style="font-size:11px;color:var(--tm);font-weight:700">次月1日重置</span>
+        </div>
+        <div style="font-size:15px;font-weight:900;color:var(--t);margin-bottom:4px">${q.title}</div>
+        <div style="font-size:11.5px;color:var(--tm);margin-bottom:10px;font-weight:600">${q.desc}</div>
+        
+        <div style="font-size:11.5px;font-weight:800;color:var(--t);margin-bottom:6px">🎯 複合任務達成條件：</div>
+        ${subGoalsHtml}
+        
+        <div style="font-size:11.5px;font-weight:800;color:var(--t);margin-top:10px;margin-bottom:4px">💎 超豐厚限定獎勵一覽：</div>
+        <div style="display:flex;flex-wrap:wrap;margin-bottom:10px">${rewardsHtml}</div>
+        
+        ${canClaim ? 
+          `<button class="btn btn-full btn-sm" style="background:linear-gradient(135deg,${q.col},#B91C1C);color:#fff;box-shadow:0 4px 14px ${q.col}50;font-weight:900;animation:pulse 1s infinite" onclick="claimMonthlyTeamQuest('${q.id}')">🎁 條件全達標！領取月度史詩大獎！</button>` : 
+          claimed ? 
+          `<div style="text-align:center;font-size:13px;color:#059669;font-weight:800;padding:6px;background:#ECFDF5;border-radius:10px">✅ 本月史詩大獎已領取！</div>` : 
+          `<div style="text-align:center;font-size:11.5px;color:var(--tm);font-weight:700;padding:6px;background:rgba(255,255,255,0.6);border-radius:10px">複合目標進行中，全體成員協同攻克！</div>`
+        }
+      </div>`;
+    }).join('');
+
+    tabContentHtml = `
+      <div class="stit">🌕 每月限定同盟史詩任務 (${MONTHLY_TEAM_QUESTS.length})</div>
+      ${monthlyCardsHtml}
+    `;
+  } else {
+    // alliance tab
+    const memberLocMap = {
+      'MM-MIMI23': { key: '3,3', desc: '西北獨立領地' },
+      'MM-JAY456': { key: '11,3', desc: '西南獨立領地' },
+      'MM-FLOWER': { key: '11,11', desc: '東南獨立領地' }
+    };
+    const membersListHtml = (S.teamMembers || []).map(m => {
+      const loc = memberLocMap[m.code];
+      return `
+      <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--bd)">
+        <div style="width:38px;height:38px;border-radius:50%;background:var(--c2);display:flex;align-items:center;justify-content:center;font-size:20px">${m.emo}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:14px;font-weight:800;color:var(--t)">${m.name} ${m.isMe ? '(我)' : ''}</span>
+            <span class="chip ${m.isMe ? 'cp' : 'cg'}" style="margin:0;font-size:10px">${m.role || '成員'}</span>
+          </div>
+          <div style="font-size:11px;color:var(--tm);font-weight:600;margin-top:2px">
+            ${m.isMe ? `本週貢獻 ${S.actDone * 150} 步 / ${S.water} 杯 / ${userSquat} 深蹲 / ${userPlank} 平板撐` : `Lv.${m.lv || 5} 冒險者 · ${loc ? loc.desc : '活躍同盟夥伴'}`}
+          </div>
+        </div>
+        <div style="display:flex;gap:4px">
+          ${loc ? `<button class="btn btn-gh btn-sm" onclick="go('home');panToSpecificCoord('${loc.key}','🛡️ 巡視【${m.name}】${loc.desc}！','${m.emo}')">🗺️ 領地</button>` : ''}
+          ${!m.isMe ? `<button class="btn btn-gh btn-sm" onclick="toast('已向【${m.name}】發送同盟集結信號！','⚔️')">📣 呼叫</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+
+    const inviteFriends = (S.friends || []).filter(f => !(S.teamMembers || []).some(m => m.code === f.code));
+    const inviteHtml = inviteFriends.length > 0 ? `
+      <div class="stit" style="margin-top:20px">➕ 邀請好友加入同盟</div>
+      <div class="card">
+        ${inviteFriends.map(f => `
+          <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--bd)">
+            <div style="font-size:22px">${f.emo}</div>
+            <div style="flex:1">
+              <div style="font-size:13.5px;font-weight:800;color:var(--t)">${f.name} <span style="font-size:11px;color:var(--tm)">Lv.${f.lv}</span></div>
+            </div>
+            <button class="btn btn-s btn-sm" onclick="inviteFriendToTeam('${f.code}')">邀請入盟</button>
+          </div>
+        `).join('')}
+      </div>
+    ` : '';
+
+    tabContentHtml = `
+      <div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:1.5px solid #93C5FD">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="font-size:26px">⚔️</div>
+          <div>
+            <div style="font-size:14px;font-weight:900;color:#1E40AF">同盟領地作戰指揮中心</div>
+            <div style="font-size:11.5px;color:#2563EB">世界各區塊各自獨立，共同鎖定非同盟領地進攻！</div>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="color:var(--tm)">🎯 敵對勢力：</span>
+            <b style="color:#DC2626">勁敵・艾瑞克 🦁 的領地 (東北海域)</b>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="color:var(--tm)">⚔️ 背包進攻卡：</span>
+            <b style="color:#DC2626">${cardQty} 張（每週同盟任務掉落）</b>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="color:var(--tm)">🤝 同盟助攻狀態：</span>
+            <b style="color:${S.teamAssistToday ? 'var(--tm)' : '#059669'}">${S.teamAssistToday ? '今日已支援 (明日重置)' : '✅ 隨時可呼叫助攻'}</b>
+          </div>
+        </div>
+        <div style="font-size:11.5px;color:#1D4ED8;margin-bottom:10px;line-height:1.4">
+          💡 <b>世界各區塊各自獨立歸屬個人</b>：你與 3 位同盟夥伴各自擁有獨立領地島嶼，互不相卡！同盟條約下雙方<b>互相無法攻擊</b>，但可<b>一起進攻非同盟領地</b>，攻克後納入個人版圖！
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <button class="btn btn-p btn-sm" style="background:linear-gradient(135deg,#DC2626,#B91C1C);box-shadow:0 3px 10px rgba(220,38,38,0.28)" onclick="go('home');panToRival()">
+            ⚔️ 鎖定艾瑞克 (東北)
+          </button>
+          <button class="btn btn-ol btn-sm" style="border:1.5px solid #3B82F6;color:#1D4ED8;background:#EFF6FF" onclick="go('home');panToSpecificCoord('3,3','🛡️ 巡視【小米 🐱】西北獨立領地！','🐱')">
+            🐱 巡視小米 (西北)
+          </button>
+          <button class="btn btn-ol btn-sm" style="border:1.5px solid #F59E0B;color:#B45309;background:#FFFBEB" onclick="go('home');panToSpecificCoord('11,3','🛡️ 巡視【阿傑 🦊】西南獨立領地！','🦊')">
+            🦊 巡視阿傑 (西南)
+          </button>
+          <button class="btn btn-ol btn-sm" style="border:1.5px solid #EC4899;color:#BE185D;background:#FDF2F8" onclick="go('home');panToSpecificCoord('11,11','🛡️ 巡視【小花花 🌸】東南獨立領地！','🌸')">
+            🌸 巡視小花花 (東南)
+          </button>
+        </div>
+      </div>
+
+      <div class="stit">🧑‍🤝‍🧑 同盟成員名單 (${(S.teamMembers||[]).length})</div>
+      <div class="card">
+        ${membersListHtml}
+      </div>
+      ${inviteHtml}
+    `;
+  }
+
+  return `
   <div class="ph">
-    <div class="ph1">👥 ${S.teamName}</div>
-    <button class="btn btn-gh btn-sm" onclick="openRank()">🏆 排行榜</button>
+    <div>
+      <div class="ph1" style="display:flex;align-items:center;gap:6px">
+        <span>👥</span><span>${S.teamName}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+        <span class="chip cp" style="margin:0;font-size:10px">🛡️ 同盟結盟中</span>
+        <span style="font-size:11px;color:var(--tm);font-weight:600">${(S.teamMembers||[]).length} 位同盟成員</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-gh btn-sm" onclick="openRank()">🏆 排行榜</button>
+    </div>
   </div>
-  <div style="padding:0 16px 16px">
-    
-    <div class="stit">🎯 今日團隊任務</div>
-
-    ${renderTeamQuest('steps', '👟 團隊步數挑戰', curSteps, 10000, '步', pctSteps, S.teamClaimedSteps, 50, '#10B981', '#34D399')}
-    ${renderTeamQuest('water', '💧 團隊喝水挑戰', curWater, 30, '杯', pctWater, S.teamClaimedWater, 30, '#3B82F6', '#60A5FA')}
-    ${renderTeamQuest('squats', '🏋️ 團隊深蹲馬拉松', curSquats, 50, '次', pctSquats, S.teamClaimedSquats, 60, '#F59E0B', '#FBBF24')}
-    ${renderTeamQuest('planks', '🔥 團隊平板撐鐵人', curPlanks, 30, '次', pctPlanks, S.teamClaimedPlanks, 80, '#EF4444', '#F87171')}
-    ${renderTeamQuest('quests', '⚡ 團隊任務挑戰', curQs, 20, '個', pctQs, S.teamClaimedQuests, 40, '#8B5CF6', '#A78BFA')}
-
-    <div class="stit" style="margin-top:24px">🧑‍🤝‍🧑 隊伍成員</div>
-    <div class="card">
-      <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--bd)">
-        <div style="width:36px;height:36px;border-radius:50%;background:var(--c2);display:flex;align-items:center;justify-content:center;font-size:18px">${CHARS.find(c=>c.id===S.charId)?.emo||'🐰'}</div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--t)">我 (${S.name})</div><div style="font-size:11px;color:var(--tm)">貢獻 ${S.actDone*150} 步 / ${S.water} 杯 / ${userSquat} 深蹲 / ${userPlank} 平板撐</div></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
-        <div style="width:36px;height:36px;border-radius:50%;background:var(--c2);display:flex;align-items:center;justify-content:center;font-size:18px">🌸</div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--t)">小花花</div><div style="font-size:11px;color:var(--tm)">活躍度極高</div></div>
-      </div>
+  
+  <div style="padding:0 16px 12px">
+    <div class="team-tab-bar">
+      <button class="team-tab-btn ${teamActiveTab === 'weekly' ? 'active' : ''}" onclick="switchTeamTab('weekly')">📅 每週任務</button>
+      <button class="team-tab-btn ${teamActiveTab === 'monthly' ? 'active' : ''}" onclick="switchTeamTab('monthly')">🌕 每月限定</button>
+      <button class="team-tab-btn ${teamActiveTab === 'alliance' ? 'active' : ''}" onclick="switchTeamTab('alliance')">🛡️ 同盟作戰</button>
+    </div>
+    ${tabContentHtml}
+    <div style="margin-top:24px;margin-bottom:20px;text-align:center">
+      <button class="btn btn-gh btn-sm" style="color:#EF4444;border:1px solid #FCA5A5;padding:8px 20px;border-radius:10px;font-weight:700" onclick="leaveTeam()">🚪 退出同盟</button>
     </div>
   </div>`;
 }
 
-window.createTeam = function(){
-  S.hasTeam = true; S.teamName = 'MicroMove 先鋒隊';
-  chkBadges(); saveS();
-  toast('成功建立隊伍！', '🤝');
+// 保留相容性函數
+window.claimTeam = function(type, reward) {
+  if(type === 'steps') S.teamClaimedSteps = true;
+  if(type === 'water') S.teamClaimedWater = true;
+  if(type === 'quests') S.teamClaimedQuests = true;
+  if(type === 'squats') S.teamClaimedSquats = true;
+  if(type === 'planks') S.teamClaimedPlanks = true;
+  S.gcoin += reward;
+  saveS();
+  toast(`成功領取同盟獎勵 ${reward} G幣！`, '🎁');
   go('team');
-}
+};
 
 function renderTeamQuest(id, title, cur, goal, unit, pct, claimed, reward, col1, col2) {
   const canClaim = cur >= goal && !claimed;
@@ -4846,26 +5819,13 @@ function renderTeamQuest(id, title, cur, goal, unit, pct, claimed, reward, col1,
       <div style="font-size:12px;color:var(--tm)">${unit}</div>
     </div>
     <div class="barw" style="height:8px"><div class="barf" style="width:${pct}%;background:linear-gradient(90deg,${col1},${col2})"></div></div>
-    
     ${canClaim ? 
       `<button class="btn btn-s btn-full btn-sm" style="margin-top:16px;animation:pulse 1s infinite;box-shadow:0 4px 12px ${col1}40" onclick="claimTeam('${id}', ${reward})">🎁 達標！領取 ${reward} G幣</button>` : 
       claimed ? 
-      `<div style="text-align:center;margin-top:12px;font-size:13px;color:${col1};font-weight:800">✅ 今日獎勵已領取</div>` :
+      `<div style="text-align:center;margin-top:12px;font-size:13px;color:${col1};font-weight:800">✅ 獎勵已領取</div>` :
       `<div style="text-align:center;margin-top:12px;font-size:12px;color:var(--tm)">進度 ${pct}%，大家一起加油！</div>`
     }
   </div>`;
-}
-
-window.claimTeam = function(type, reward) {
-  if(type==='steps') S.teamClaimedSteps = true;
-  if(type==='water') S.teamClaimedWater = true;
-  if(type==='quests') S.teamClaimedQuests = true;
-  if(type==='squats') S.teamClaimedSquats = true;
-  if(type==='planks') S.teamClaimedPlanks = true;
-  S.gcoin += reward; 
-  saveS();
-  toast(`成功領取團隊獎勵 ${reward} G幣！`,'🎁');
-  go('team');
 }
 
 window.openRank = function(){
@@ -4956,6 +5916,8 @@ function pgProfile(){
         return `<div class="card2" style="min-width:110px;text-align:center;cursor:pointer;border-color:${isActive?'var(--s)':'var(--bd)'};background:${isActive?'#FFFBEB':'var(--c1)'}" onclick="S.charId=${id};saveS();go('profile')"><div style="font-size:28px">${c.emo}</div><div style="font-size:11px;margin-top:4px;font-weight:800;color:${isActive?'var(--s)':'var(--t)'}">${c.name}</div><div style="font-size:9px;color:var(--tm);margin-top:2px">${c.type}</div></div>`;
       }).join('')}
     </div>
+
+    ${friendsSectionHTML()}
 
     <div class="divider"></div>
     <button class="btn btn-gh btn-full" style="margin-bottom:10px" onclick="resetHelp()">📘 重新顯示新手教學</button>
@@ -5225,6 +6187,11 @@ window.useBagItem = function(idx) {
     closeBag();
     go('home');
     toast('請點擊地圖上已佔領的「一般地形」來更換為特殊地形！', '🗺️');
+    return;
+  } else if (item.id === 'attack_card') {
+    closeBag();
+    go('home');
+    toast('請點擊地圖上的【非同盟領地】使用道具卡發動突襲！', '⚔️');
     return;
   } else if (item.id && item.id.startsWith('goods_')) {
     toast(`已使用【${item.name}】兌換券，請至合作門市出示兌換！`, '🛒');
