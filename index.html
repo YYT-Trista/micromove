@@ -208,9 +208,9 @@ img{display:block;max-width:100%}
 #map-viewport::-webkit-scrollbar{display:none}
 #map-viewport.dragging{cursor:grabbing}
 .map-world{
-  min-width:860px;min-height:960px;
+  min-width:1450px;min-height:1600px;
   display:flex;align-items:center;justify-content:center;
-  padding:80px 56px 130px;
+  padding:100px 70px 140px;
   position:relative;
   background-image:
     radial-gradient(ellipse at 50% 35%, rgba(255,255,255,0.22) 0%, transparent 65%),
@@ -232,10 +232,10 @@ img{display:block;max-width:100%}
   transform-origin:center center;
 }
 #map-container.zoomed-out{
-  transform:scale(0.76);
+  transform:scale(0.62);
 }
 
-/* 六角形無縫拼合網格 (15x15 Flat-topped Seamless Hexagonal Grid) */
+/* 六角形無縫拼合網格 (25x25 Flat-topped Seamless Hexagonal Grid) */
 .hex-col{
   display:flex;
   flex-direction:column;
@@ -366,6 +366,20 @@ img{display:block;max-width:100%}
 }
 .map-tile.enemy.special-terrain:not(.enemy-castle)::after{
   border:1.8px solid #FDE68A;
+}
+
+/* 接壤可進攻敵方領地 (Adjacent Attackable Enemy Territory) */
+.map-tile.enemy.adjacent-attackable{
+  z-index: 6;
+  animation: pulseAttackTile 2s ease-in-out infinite;
+}
+.map-tile.enemy.adjacent-attackable::after{
+  border: 2px dashed #FDE047 !important;
+  filter: drop-shadow(0 0 6px rgba(253, 224, 71, 0.95));
+}
+@keyframes pulseAttackTile {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 4px 0 #881337) drop-shadow(0 6px 12px rgba(239,68,68,0.5)); }
+  50% { transform: scale(1.05); filter: drop-shadow(0 4px 0 #881337) drop-shadow(0 8px 18px rgba(239,68,68,0.85)); }
 }
 
 /* 【已佔領】：一般地形 (Normal Terrain) - 純淨六角形翠綠草地（進攻難度 2） */
@@ -1211,9 +1225,7 @@ img{display:block;max-width:100%}
       <span>🧭</span>
       <span>已鎖定相鄰海域，請選擇挑戰方式開拓領土</span>
     </div>
-    <div id="conquest-alliance-banner" style="display:none;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:1.5px solid #93C5FD;border-radius:14px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#1E40AF"></div>
     <div id="conquest-attack-card-box" style="display:none;margin-bottom:12px"></div>
-    <div id="conquest-alliance-assist-box" style="display:none;margin-bottom:12px"></div>
     <div style="display:flex;flex-direction:column;gap:12px">
       <button class="btn btn-p btn-full btn-lg" id="btn-conquest-desk" style="background:linear-gradient(135deg,#3B82F6,#2563EB);box-shadow:0 8px 24px rgba(59,130,246,0.28)" onclick="startConquestQuest('desk')">
         🪑 選擇辦公桌任務 (輕鬆佔領)
@@ -1270,8 +1282,8 @@ const ITEM_DEFS = {
   'clover': { name: '幸運四葉草', icon: '🍀', desc: '神秘的植物！使用後，下一次完成任務開啟的驚喜禮物盒必定獲得稀有獎勵。', usable: true },
   'shield': { name: '防護盾', icon: '🛡️', desc: '保護這塊領地', usable: true },
   'tent': { name: '健身帳篷', icon: '⛺', desc: '蓋在領地上，每日自動產出 5 G幣', usable: true },
-  'terrain_card': { name: '地形卡', icon: '🗺️', desc: '對一般地形使用可更換為特殊地形，他人進攻難度提高為 4 個進度', usable: true },
-  'attack_card': { name: '進攻道具卡', icon: '⚔️', desc: '每週同盟任務限定掉落！一張進攻道具卡可進攻非同盟一塊領地（推進 1 次進攻進度，達標直接攻陷）！', usable: true }
+  'terrain_card': { name: '地形卡', icon: '🗺️', desc: '對一般地形使用可更換為特殊地形，他人進攻難度提高為 4 個進度（僅限每週同盟任務取得）', usable: true },
+  'attack_card': { name: '進攻道具卡', icon: '⚔️', desc: '進攻他人領地必備道具！消耗 1 張可發起進攻任務！可由商城、每週同盟任務取得。', usable: true }
 };
 
 const MOODS={
@@ -1454,7 +1466,8 @@ const DS={
     { id: 'double_exp', name: '雙倍經驗卡', icon: '⚡', desc: '使用後接下來 3 次任務獲得 2 倍 EXP！', qty: 1 },
     { id: 'tent', name: '健身帳篷', icon: '⛺', desc: '蓋在領地上，每日自動產出 5 G幣', qty: 1 },
     { id: 'shield', name: '防護盾', icon: '🛡️', desc: '保護這塊領地', qty: 1 },
-    { id: 'terrain_card', name: '地形卡', icon: '🗺️', desc: '對一般地形使用可更換為特殊地形，他人進攻難度提高為 4 個進度', qty: 1 }
+    { id: 'terrain_card', name: '地形卡', icon: '🗺️', desc: '對一般地形使用可更換為特殊地形，他人進攻難度提高為 4 個進度', qty: 1 },
+    { id: 'attack_card', name: '進攻道具卡', icon: '⚔️', desc: '進攻他人領地必備道具！消耗 1 張可向敵方接壤領地發起進攻，推進 1 點進度！', qty: 3 }
   ],
   chkInStreak: 0, chkToday: false, lastChkDate: null, brokenChkStreak: 0, brokenDate: null,
   unlockedVids: [], isVIP: false, qsSinceLastRec: 0,
@@ -1477,8 +1490,12 @@ function loadS(){
       { id: 'repair_pen', name: '補簽修復筆', icon: '✏️', desc: '可修復中斷的連續簽到紀錄，重置連續天數！', qty: 1 },
       { id: 'tent', name: '健身帳篷', icon: '⛺', desc: '蓋在領地上，每日自動產出 5 G幣', qty: 1 },
       { id: 'shield', name: '防護盾', icon: '🛡️', desc: '保護這塊領地', qty: 1 },
-      { id: 'terrain_card', name: '地形卡', icon: '🗺️', desc: '對一般地形使用可更換為特殊地形，他人進攻難度提高為 4 個進度', qty: 1 }
+      { id: 'terrain_card', name: '地形卡', icon: '🗺️', desc: '對一般地形使用可更換為特殊地形，他人進攻難度提高為 4 個進度', qty: 1 },
+      { id: 'attack_card', name: '進攻道具卡', icon: '⚔️', desc: '進攻他人領地必備道具！消耗 1 張可向敵方接壤領地發起進攻，推進 1 點進度！', qty: 3 }
     ];
+    if(!S.inventory.some(i => i.id === 'attack_card')){
+      S.inventory.push({ id: 'attack_card', name: '進攻道具卡', icon: '⚔️', desc: '進攻他人領地必備道具！消耗 1 張可向敵方接壤領地發起進攻，推進 1 點進度！', qty: 3 });
+    }
     if(!S.unlockedVids) S.unlockedVids = [];
     if(S.food === undefined) S.food = 3;
     if(S.satiety === undefined) S.satiety = 80;
@@ -1533,19 +1550,29 @@ function loadS(){
       S.monthlyTeamWater = 280;
       S.monthlyTeamStreak = 22;
     }
-    // 遷移舊版 7x7 主城預設值，統一將 15x15 我方主城設於中心點 (7,7) -> index = 112
-    if(S.mapGrid['3,3'] && S.mapGrid['3,3'].type === 'castle' && !S.mapGrid['7,7']){
-      delete S.mapGrid['3,3'];
-      delete S.mapGrid[24];
+    // 遷移舊版主城預設值，統一將 25x25 我方主城設於中心點 (12,12) -> index = 312
+    if(S.mapGrid){
+      if(S.mapGrid['7,7'] && S.mapGrid['7,7'].type === 'castle'){
+        delete S.mapGrid['7,7'];
+        delete S.mapGrid[112];
+      }
+      if(S.mapGrid['3,3'] && S.mapGrid['3,3'].type === 'castle'){
+        delete S.mapGrid['3,3'];
+        delete S.mapGrid[24];
+      }
+      // 清除舊版 15x15 的舊敵方座標
+      if(S.mapGrid['4,10'] && S.mapGrid['4,10'].owner === 'enemy') delete S.mapGrid['4,10'];
+      if(S.mapGrid[70] && S.mapGrid[70].owner === 'enemy') delete S.mapGrid[70];
+      if(S.mapGrid['3,10'] && S.mapGrid['3,10'].owner === 'enemy') delete S.mapGrid['3,10'];
+      if(S.mapGrid['4,9'] && S.mapGrid['4,9'].owner === 'enemy') delete S.mapGrid['4,9'];
+      if(S.mapGrid['5,10'] && S.mapGrid['5,10'].owner === 'enemy') delete S.mapGrid['5,10'];
     }
-    if(!S.mapGrid['7,7'] && !S.mapGrid[112]) {
+    if(!S.mapGrid['12,12'] || S.mapGrid['12,12'].type !== 'castle') {
       const castleInit = { type: 'castle', owner: 'me', lv: 1 };
-      S.mapGrid['7,7'] = castleInit;
-      S.mapGrid[112] = castleInit;
-    } else if(S.mapGrid['7,7'] && !S.mapGrid[112]) {
-      S.mapGrid[112] = S.mapGrid['7,7'];
-    } else if(S.mapGrid[112] && !S.mapGrid['7,7']) {
-      S.mapGrid['7,7'] = S.mapGrid[112];
+      S.mapGrid['12,12'] = castleInit;
+      S.mapGrid[312] = castleInit;
+    } else if(!S.mapGrid[312]){
+      S.mapGrid[312] = S.mapGrid['12,12'];
     }
     // 清理舊版過度靠近的同盟格，確保各大區塊獨立分佈於四角與中央，互不卡位
     if(S.mapGrid){
@@ -1558,64 +1585,66 @@ function loadS(){
       if(S.mapGrid['3,3'] && S.mapGrid['3,3'].owner === 'me') delete S.mapGrid['3,3'];
       if(S.mapGrid[48] && S.mapGrid[48].owner === 'me') delete S.mapGrid[48];
     }
-    // 初始化三大同盟夥伴的專屬獨立領地區塊（分別坐落於西北、西南、東南海域，各大區塊獨立歸屬個人，互不卡位）
-    const allySeeds = [
-      // 1. 西北海域獨立領地：同盟夥伴・小米 🐱
-      { r: 3, c: 3, data: { type: 'land', owner: 'ally', allyCode: 'mimi', allyName: '同盟夥伴・小米 🐱', ico: '🐱', terrain: 'normal', lbl: '小米的主城營地', desc: '【同盟夥伴・小米 🐱】的獨立主城・西北海域據點，同盟友好條約保護中，互相無法攻擊！' } },
-      { r: 3, c: 4, data: { type: 'land', owner: 'ally', allyCode: 'mimi', allyName: '同盟夥伴・小米 🐱', ico: '🐱', terrain: 'normal', lbl: '小米的開拓領地', desc: '【同盟夥伴・小米 🐱】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } },
-      { r: 4, c: 3, data: { type: 'land', owner: 'ally', allyCode: 'mimi', allyName: '同盟夥伴・小米 🐱', ico: '🐱', terrain: 'normal', lbl: '小米的開拓領地', desc: '【同盟夥伴・小米 🐱】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } },
-
-      // 2. 西南海域獨立領地：同盟戰友・阿傑 🦊
-      { r: 11, c: 3, data: { type: 'land', owner: 'ally', allyCode: 'jay', allyName: '同盟戰友・阿傑 🦊', ico: '🦊', terrain: 'normal', lbl: '阿傑的主城營地', desc: '【同盟戰友・阿傑 🦊】的獨立主城・西南海域據點，同盟友好條約保護中，互相無法攻擊！' } },
-      { r: 12, c: 3, data: { type: 'land', owner: 'ally', allyCode: 'jay', allyName: '同盟戰友・阿傑 🦊', ico: '🦊', terrain: 'normal', lbl: '阿傑的開拓領地', desc: '【同盟戰友・阿傑 🦊】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } },
-      { r: 11, c: 2, data: { type: 'land', owner: 'ally', allyCode: 'jay', allyName: '同盟戰友・阿傑 🦊', ico: '🦊', terrain: 'normal', lbl: '阿傑的開拓領地', desc: '【同盟戰友・阿傑 🦊】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } },
-
-      // 3. 東南海域獨立領地：同盟戰友・小花花 🌸
-      { r: 11, c: 11, data: { type: 'land', owner: 'ally', allyCode: 'flower', allyName: '同盟戰友・小花花 🌸', ico: '🌸', terrain: 'normal', lbl: '小花花的主城營地', desc: '【同盟戰友・小花花 🌸】的獨立主城・東南海域據點，同盟友好條約保護中，互相無法攻擊！' } },
-      { r: 11, c: 12, data: { type: 'land', owner: 'ally', allyCode: 'flower', allyName: '同盟戰友・小花花 🌸', ico: '🌸', terrain: 'normal', lbl: '小花花的開拓領地', desc: '【同盟戰友・小花花 🌸】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } },
-      { r: 12, c: 11, data: { type: 'land', owner: 'ally', allyCode: 'flower', allyName: '同盟戰友・小花花 🌸', ico: '🌸', terrain: 'normal', lbl: '小花花的開拓領地', desc: '【同盟戰友・小花花 🌸】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } }
-    ];
-    allySeeds.forEach(({ r, c, data }) => {
-      const ak = `${r},${c}`;
-      const aidx = r * 15 + c;
-      if(!S.mapGrid[ak] && !S.mapGrid[aidx]){
-        S.mapGrid[ak] = { ...data };
-        S.mapGrid[aidx] = S.mapGrid[ak];
-      } else {
-        const curAlly = S.mapGrid[ak] || S.mapGrid[aidx];
-        if(curAlly && curAlly.owner === 'ally'){
-          curAlly.allyCode = data.allyCode;
-          curAlly.allyName = data.allyName;
-          curAlly.ico = data.ico;
-          curAlly.lbl = data.lbl;
-          curAlly.desc = data.desc;
-          S.mapGrid[ak] = curAlly;
-          S.mapGrid[aidx] = curAlly;
-        }
-      }
-    });
-    checkAllyDynamicExpansion();
-    // 初始化遠方另一位玩家（勁敵・艾瑞克 🦁）的主城 (4,10) 與周邊領地（僅分「一般地形：進攻進度 2」與「特殊地形：進攻進度 4」）
+    // 依據玩家是否已加入同盟 (S.hasTeam) 同步同盟領地（未加入同盟時地圖僅有我方區塊與敵人區塊）
+    syncAllyMapTiles();
+    // 初始化 25x25 多方敵對勢力（四大敵方要塞＋靠近中心的前線前哨站，激發進攻征服樂趣）
     const rivalSeeds = [
-      { r: 4, c: 10, data: { type: 'enemy_castle', owner: 'enemy', rivalName: '勁敵・艾瑞克', ico: '🦁', terrain: 'special', lbl: '敵方主城', lv: 3, attackNeed: 4, attackProg: 0 } },
-      { r: 3, c: 10, data: { type: 'land', owner: 'enemy', rivalName: '勁敵・艾瑞克', terrain: 'normal', lbl: '一般地形', item: 'shield', attackNeed: 2, attackProg: 0 } },
-      { r: 4, c: 9,  data: { type: 'land', owner: 'enemy', rivalName: '勁敵・艾瑞克', terrain: 'normal', lbl: '一般地形', attackNeed: 2, attackProg: 0 } },
-      { r: 5, c: 10, data: { type: 'land', owner: 'enemy', rivalName: '勁敵・艾瑞克', terrain: 'special', lbl: '特殊地形', attackNeed: 4, attackProg: 0 } }
+      // 1. 獅王・艾瑞克 🦁（東北猛獸要塞）
+      { r: 6, c: 18, data: { type: 'enemy_castle', owner: 'enemy', rivalName: '獅王・艾瑞克', ico: '🦁', terrain: 'special', lbl: '敵方主城', lv: 3, attackNeed: 4, attackProg: 0 } },
+      { r: 5, c: 18, data: { type: 'land', owner: 'enemy', rivalName: '獅王・艾瑞克', terrain: 'special', lbl: '特殊地形', attackNeed: 4, attackProg: 0 } },
+      { r: 6, c: 19, data: { type: 'land', owner: 'enemy', rivalName: '獅王・艾瑞克', terrain: 'normal', lbl: '一般地形', item: 'shield', attackNeed: 2, attackProg: 0 } },
+      { r: 7, c: 18, data: { type: 'land', owner: 'enemy', rivalName: '獅王・艾瑞克', terrain: 'normal', lbl: '一般地形', attackNeed: 2, attackProg: 0 } },
+      // 東北前線突擊哨（距我方主城僅 2 格）
+      { r: 10, c: 14, data: { type: 'land', owner: 'enemy', rivalName: '獅王・艾瑞克', ico: '🦁', terrain: 'normal', lbl: '一般地形', attackNeed: 2, attackProg: 0 } },
+      { r: 9, c: 14,  data: { type: 'land', owner: 'enemy', rivalName: '獅王・艾瑞克', ico: '🦁', terrain: 'normal', lbl: '一般地形', attackNeed: 2, attackProg: 0 } },
+      { r: 9, c: 15,  data: { type: 'land', owner: 'enemy', rivalName: '獅王・艾瑞克', ico: '🦁', terrain: 'special', lbl: '特殊地形', attackNeed: 4, attackProg: 0 } },
+
+      // 2. 影狼・巴隆 🐺（西北幽影要塞）
+      { r: 6, c: 6, data: { type: 'enemy_castle', owner: 'enemy', rivalName: '影狼・巴隆', ico: '🐺', terrain: 'special', lbl: '敵方主城', lv: 3, attackNeed: 4, attackProg: 0 } },
+      { r: 5, c: 6, data: { type: 'land', owner: 'enemy', rivalName: '影狼・巴隆', terrain: 'normal', lbl: '一般地形', item: 'shield', attackNeed: 2, attackProg: 0 } },
+      { r: 6, c: 5, data: { type: 'land', owner: 'enemy', rivalName: '影狼・巴隆', terrain: 'special', lbl: '特殊地形', attackNeed: 4, attackProg: 0 } },
+      { r: 7, c: 6, data: { type: 'land', owner: 'enemy', rivalName: '影狼・巴隆', terrain: 'normal', lbl: '一般地形', attackNeed: 2, attackProg: 0 } },
+      // 西北前線突擊哨（距我方主城僅 2 格）
+      { r: 10, c: 10, data: { type: 'land', owner: 'enemy', rivalName: '影狼・巴隆', ico: '🐺', terrain: 'normal', lbl: '一般地形', attackNeed: 2, attackProg: 0 } },
+      { r: 9, c: 10,  data: { type: 'land', owner: 'enemy', rivalName: '影狼・巴隆', ico: '🐺', terrain: 'normal', lbl: '一般地形', attackNeed: 2, attackProg: 0 } },
+      { r: 9, c: 9,   data: { type: 'land', owner: 'enemy', rivalName: '影狼・巴隆', ico: '🐺', terrain: 'special', lbl: '特殊地形', attackNeed: 4, attackProg: 0 } },
+
+      // 3. 狂熊・庫曼 🐻（西南鐵拳要塞）
+      { r: 18, c: 6, data: { type: 'enemy_castle', owner: 'enemy', rivalName: '狂熊・庫曼', ico: '🐻', terrain: 'special', lbl: '敵方主城', lv: 3, attackNeed: 4, attackProg: 0 } },
+      { r: 18, c: 5, data: { type: 'land', owner: 'enemy', rivalName: '狂熊・庫曼', terrain: 'normal', lbl: '一般地形', item: 'shield', attackNeed: 2, attackProg: 0 } },
+      { r: 19, c: 6, data: { type: 'land', owner: 'enemy', rivalName: '狂熊・庫曼', terrain: 'special', lbl: '特殊地形', attackNeed: 4, attackProg: 0 } },
+      { r: 17, c: 6, data: { type: 'land', owner: 'enemy', rivalName: '狂熊・庫曼', terrain: 'normal', lbl: '一般地形', attackNeed: 2, attackProg: 0 } },
+      // 西南前線突擊哨（距我方主城僅 2 格）
+      { r: 14, c: 10, data: { type: 'land', owner: 'enemy', rivalName: '狂熊・庫曼', ico: '🐻', terrain: 'normal', lbl: '一般地形', attackNeed: 2, attackProg: 0 } },
+      { r: 15, c: 10, data: { type: 'land', owner: 'enemy', rivalName: '狂熊・庫曼', ico: '🐻', terrain: 'normal', lbl: '一般地形', attackNeed: 2, attackProg: 0 } },
+      { r: 15, c: 9,  data: { type: 'land', owner: 'enemy', rivalName: '狂熊・庫曼', ico: '🐻', terrain: 'special', lbl: '特殊地形', attackNeed: 4, attackProg: 0 } },
+
+      // 4. 毒蠍・雷克斯 🦂（東南沙漠要塞）
+      { r: 18, c: 18, data: { type: 'enemy_castle', owner: 'enemy', rivalName: '毒蠍・雷克斯', ico: '🦂', terrain: 'special', lbl: '敵方主城', lv: 3, attackNeed: 4, attackProg: 0 } },
+      { r: 19, c: 18, data: { type: 'land', owner: 'enemy', rivalName: '毒蠍・雷克斯', terrain: 'normal', lbl: '一般地形', item: 'shield', attackNeed: 2, attackProg: 0 } },
+      { r: 18, c: 19, data: { type: 'land', owner: 'enemy', rivalName: '毒蠍・雷克斯', terrain: 'special', lbl: '特殊地形', attackNeed: 4, attackProg: 0 } },
+      { r: 17, c: 18, data: { type: 'land', owner: 'enemy', rivalName: '毒蠍・雷克斯', terrain: 'normal', lbl: '一般地形', attackNeed: 2, attackProg: 0 } },
+      // 東南前線突擊哨（距我方主城僅 2 格）
+      { r: 14, c: 14, data: { type: 'land', owner: 'enemy', rivalName: '毒蠍・雷克斯', ico: '🦂', terrain: 'normal', lbl: '一般地形', attackNeed: 2, attackProg: 0 } },
+      { r: 15, c: 14, data: { type: 'land', owner: 'enemy', rivalName: '毒蠍・雷克斯', ico: '🦂', terrain: 'normal', lbl: '一般地形', attackNeed: 2, attackProg: 0 } },
+      { r: 15, c: 15, data: { type: 'land', owner: 'enemy', rivalName: '毒蠍・雷克斯', ico: '🦂', terrain: 'special', lbl: '特殊地形', attackNeed: 4, attackProg: 0 } }
     ];
     rivalSeeds.forEach(({ r, c, data }) => {
       const k = `${r},${c}`;
-      const idx = r * 15 + c;
+      const idx = r * 25 + c;
       if(!S.mapGrid[k] && !S.mapGrid[idx]){
         S.mapGrid[k] = { ...data };
         S.mapGrid[idx] = S.mapGrid[k];
       } else {
         const cur = S.mapGrid[k] || S.mapGrid[idx];
         if(cur && cur.owner === 'enemy'){
-          if(r === 3 && c === 10 && cur.item === undefined) cur.item = 'shield';
-          cur.terrain = (r === 5 && c === 10) || cur.type === 'enemy_castle' ? 'special' : (cur.terrain || 'normal');
+          cur.rivalName = data.rivalName;
+          cur.ico = data.ico || cur.ico;
+          cur.terrain = data.terrain || cur.terrain || 'normal';
           cur.lbl = cur.type === 'enemy_castle' ? '敵方主城' : (cur.terrain === 'special' ? '特殊地形' : '一般地形');
           cur.attackNeed = cur.terrain === 'special' ? 4 : 2;
           if(cur.attackProg === undefined) cur.attackProg = 0;
+          if(data.item && cur.item === undefined) cur.item = data.item;
           S.mapGrid[k] = cur;
           S.mapGrid[idx] = cur;
         }
@@ -1626,26 +1655,78 @@ function loadS(){
 }
 function saveS(){localStorage.setItem('mm_s',JSON.stringify(S))}
 
-function checkAllyDynamicExpansion(){
+const ALLY_SEEDS = [
+  // 1. 北部海域獨立領地：同盟夥伴・小米 🐱
+  { r: 2, c: 7, data: { type: 'land', owner: 'ally', allyCode: 'mimi', allyName: '同盟夥伴・小米 🐱', ico: '🐱', terrain: 'normal', lbl: '小米的主城營地', desc: '【同盟夥伴・小米 🐱】的獨立主城據點，同盟友好條約保護中，互相無法攻擊！' } },
+  { r: 2, c: 8, data: { type: 'land', owner: 'ally', allyCode: 'mimi', allyName: '同盟夥伴・小米 🐱', ico: '🐱', terrain: 'normal', lbl: '小米的開拓領地', desc: '【同盟夥伴・小米 🐱】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } },
+  { r: 3, c: 7, data: { type: 'land', owner: 'ally', allyCode: 'mimi', allyName: '同盟夥伴・小米 🐱', ico: '🐱', terrain: 'normal', lbl: '小米的開拓領地', desc: '【同盟夥伴・小米 🐱】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } },
+
+  // 2. 南部海域獨立領地：同盟戰友・阿傑 🦊
+  { r: 22, c: 7, data: { type: 'land', owner: 'ally', allyCode: 'jay', allyName: '同盟戰友・阿傑 🦊', ico: '🦊', terrain: 'normal', lbl: '阿傑的主城營地', desc: '【同盟戰友・阿傑 🦊】的獨立主城據點，同盟友好條約保護中，互相無法攻擊！' } },
+  { r: 22, c: 8, data: { type: 'land', owner: 'ally', allyCode: 'jay', allyName: '同盟戰友・阿傑 🦊', ico: '🦊', terrain: 'normal', lbl: '阿傑的開拓領地', desc: '【同盟戰友・阿傑 🦊】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } },
+  { r: 21, c: 7, data: { type: 'land', owner: 'ally', allyCode: 'jay', allyName: '同盟戰友・阿傑 🦊', ico: '🦊', terrain: 'normal', lbl: '阿傑的開拓領地', desc: '【同盟戰友・阿傑 🦊】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } },
+
+  // 3. 東南海域獨立領地：同盟戰友・小花花 🌸
+  { r: 22, c: 17, data: { type: 'land', owner: 'ally', allyCode: 'flower', allyName: '同盟戰友・小花花 🌸', ico: '🌸', terrain: 'normal', lbl: '小花花的主城營地', desc: '【同盟戰友・小花花 🌸】的獨立主城據點，同盟友好條約保護中，互相無法攻擊！' } },
+  { r: 22, c: 18, data: { type: 'land', owner: 'ally', allyCode: 'flower', allyName: '同盟戰友・小花花 🌸', ico: '🌸', terrain: 'normal', lbl: '小花花的開拓領地', desc: '【同盟戰友・小花花 🌸】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } },
+  { r: 21, c: 17, data: { type: 'land', owner: 'ally', allyCode: 'flower', allyName: '同盟戰友・小花花 🌸', ico: '🌸', terrain: 'normal', lbl: '小花花的開拓領地', desc: '【同盟戰友・小花花 🌸】自主開拓的綠地・同盟友好條約保護中，互相無法攻擊！' } }
+];
+
+function syncAllyMapTiles(){
   if(!S || !S.mapGrid) return;
+  if(!S.hasTeam){
+    // 未加入同盟：清除所有同盟格子，地圖上只保留我方區塊與敵人區塊，其餘全為純淨海洋
+    Object.keys(S.mapGrid).forEach(k => {
+      const cur = S.mapGrid[k];
+      if(cur && (cur.owner === 'ally' || cur.type === 'ally_land')){
+        delete S.mapGrid[k];
+      }
+    });
+    return;
+  }
+  // 已加入同盟：初始化三大同盟夥伴的專屬獨立領地區塊
+  ALLY_SEEDS.forEach(({ r, c, data }) => {
+    const ak = `${r},${c}`;
+    const aidx = r * 25 + c;
+    if(!S.mapGrid[ak] && !S.mapGrid[aidx]){
+      S.mapGrid[ak] = { ...data };
+      S.mapGrid[aidx] = S.mapGrid[ak];
+    } else {
+      const curAlly = S.mapGrid[ak] || S.mapGrid[aidx];
+      if(curAlly && curAlly.owner === 'ally'){
+        curAlly.allyCode = data.allyCode;
+        curAlly.allyName = data.allyName;
+        curAlly.ico = data.ico;
+        curAlly.lbl = data.lbl;
+        curAlly.desc = data.desc;
+        S.mapGrid[ak] = curAlly;
+        S.mapGrid[aidx] = curAlly;
+      }
+    }
+  });
+  checkAllyDynamicExpansion();
+}
+
+function checkAllyDynamicExpansion(){
+  if(!S || !S.mapGrid || !S.hasTeam) return;
   const totalSteps = (S.weeklyTeamSteps || 22000) + (S.actDone || 0) * 150;
   const totalWater = (S.weeklyTeamWater || 42) + (S.water || 0);
   const totalSquats = (S.weeklyTeamSquats || 75) + ((S.todayDone && S.todayDone.includes('q7')) ? 1 : 0);
 
-  // 1. 小米 🐱（步數達到 23,000 步，自主向外擴張 2,3）
-  if(totalSteps >= 23000 && !S.mapGrid['2,3'] && !S.mapGrid[2 * 15 + 3]){
+  // 1. 小米 🐱（步數達到 23,000 步，自主向外擴張 3,8）
+  if(totalSteps >= 23000 && !S.mapGrid['3,8'] && !S.mapGrid[3 * 25 + 8]){
     const tile = { type: 'land', owner: 'ally', allyCode: 'mimi', allyName: '同盟夥伴・小米 🐱', ico: '🐱', terrain: 'normal', lbl: '小米的擴張領地', desc: '【同盟夥伴・小米 🐱】因每週步數達標自主開拓的新綠地！同盟條約保護中，互相無法攻擊！' };
-    S.mapGrid['2,3'] = tile; S.mapGrid[2 * 15 + 3] = tile;
+    S.mapGrid['3,8'] = tile; S.mapGrid[3 * 25 + 8] = tile;
   }
-  // 2. 阿傑 🦊（深蹲達到 75 次，自主向外擴張 10,3）
-  if(totalSquats >= 75 && !S.mapGrid['10,3'] && !S.mapGrid[10 * 15 + 3]){
+  // 2. 阿傑 🦊（深蹲達到 75 次，自主向外擴張 20,7）
+  if(totalSquats >= 75 && !S.mapGrid['20,7'] && !S.mapGrid[20 * 25 + 7]){
     const tile = { type: 'land', owner: 'ally', allyCode: 'jay', allyName: '同盟戰友・阿傑 🦊', ico: '🦊', terrain: 'normal', lbl: '阿傑的擴張領地', desc: '【同盟戰友・阿傑 🦊】因每週深蹲達標自主開拓的新綠地！同盟條約保護中，互相無法攻擊！' };
-    S.mapGrid['10,3'] = tile; S.mapGrid[10 * 15 + 3] = tile;
+    S.mapGrid['20,7'] = tile; S.mapGrid[20 * 25 + 7] = tile;
   }
-  // 3. 小花花 🌸（飲水達到 42 杯，自主向外擴張 12,12）
-  if(totalWater >= 42 && !S.mapGrid['12,12'] && !S.mapGrid[12 * 15 + 12]){
+  // 3. 小花花 🌸（飲水達到 42 杯，自主向外擴張 20,18）
+  if(totalWater >= 42 && !S.mapGrid['20,18'] && !S.mapGrid[20 * 25 + 18]){
     const tile = { type: 'land', owner: 'ally', allyCode: 'flower', allyName: '同盟戰友・小花花 🌸', ico: '🌸', terrain: 'normal', lbl: '小花花的擴張領地', desc: '【同盟戰友・小花花 🌸】因每週補水達標自主開拓的新綠地！同盟條約保護中，互相無法攻擊！' };
-    S.mapGrid['12,12'] = tile; S.mapGrid[12 * 15 + 12] = tile;
+    S.mapGrid['20,18'] = tile; S.mapGrid[20 * 25 + 18] = tile;
   }
 }
 
@@ -1731,7 +1812,10 @@ function dailyReset(){
         let normKey = String(k);
         if(normKey.includes(',')){
           const [r, c] = normKey.split(',').map(Number);
-          if(!Number.isNaN(r) && !Number.isNaN(c)) normKey = String(r * 15 + c);
+          if(!Number.isNaN(r) && !Number.isNaN(c)) normKey = `${r},${c}`;
+        }else if(!Number.isNaN(Number(normKey))){
+          const idxNum = Number(normKey);
+          normKey = `${Math.floor(idxNum / MAP_SIZE)},${idxNum % MAP_SIZE}`;
         }
         if(!countedTentTiles.has(normKey)){
           countedTentTiles.add(normKey);
@@ -2363,11 +2447,11 @@ function go(page,data){
 // 每頁第一次進入時自動顯示，之後可點右下角 ❓ 重新開啟
 const HELP = {
   home: { name: '首頁 ', slides: [
-    { ico: '🏰', t: '歡迎來到 15×15 六角形戰略地圖', items: [
-      '畫面中央是可自由拖曳／滑動的 15×15 六角形群島地圖，中心為你的「主城」與目前出戰夥伴',
+    { ico: '🏰', t: '歡迎來到 25×25 六角形戰略地圖', items: [
+      '畫面中央是可自由拖曳／滑動的 25×25 六角形群島地圖，中心為你的「主城」與目前出戰夥伴',
       '深藍色為未佔領的「海洋」，點擊相鄰空地即可開拓佔領並擴張版圖！',
       '上方懸浮膠囊即時顯示「⚔️ 等級與 EXP 條」、「🪙 G幣 / 💰 W幣」與「🥫 罐頭」，點等級膠囊可開啟升級地圖',
-      '點右下角 🎯 可隨時將鏡頭置中回到我方主城，點 🔭 可望向遠方敵方玩家領地' ] },
+      '點右下角 🎯 可隨時將鏡頭置中回到我方主城，點 🦁 可巡視遠方四大敵對勢力要塞' ] },
     { ico: '💧', t: '右下懸浮按鈕：喝水打卡 & 喬山 QR', items: [
       '點右下角藍色圓形「💧 喝水打卡」按鈕，AI 會即時識別喝水動作，每杯間隔 15 分鐘，目標一天 8 杯',
       '點右下角綠色圓形「📷 喬山 QR」按鈕，到合作健身房或喬山門市掃描器材專屬 QR Code 立領 10 G幣 + 10 EXP' ] },
@@ -2416,17 +2500,17 @@ const HELP = {
     { ico: '🤝', t: '加入同盟結為夥伴', items: [
       '加入或建立同盟後，與同盟成員結盟，解鎖「同盟夥伴」勳章',
       '世界地圖由許多獨立區塊組成，每個區塊土地均歸個人所有，同盟成員各自擁有獨立領地、互不相卡',
-      '同盟條約受保護「互相無法攻擊」，但可以「一起進攻非同盟領地」，攻下後歸個人版圖！' ] },
-    { ico: '⚔️', t: '每週同盟任務 & 進攻道具卡', items: [
+      '同盟條約受保護「互相無法攻擊」，但可以「一起進攻敵方領地」，攻下後歸個人版圖！' ] },
+    { ico: '⚔️', t: '每週同盟任務 & 戰略道具', items: [
       '包含步數、喝水、深蹲、平板撐、全能任務等每週挑戰，全隊共同累計進度',
-      '每週同盟任務完成時，可獲得限定「⚔️ 進攻道具卡」！',
-      '一張進攻道具卡可直接進攻非同盟一塊領地（推進 1 次進攻進度，達標直接攻陷納入個人版圖）' ] },
+      '每週同盟任務完成時，可獲得限定「⚔️ 進攻道具卡」與「🗺️ 地形卡」！',
+      '持有進攻道具卡可發起進攻任務（完成運動推進進度，達標直接攻陷納入個人版圖）' ] },
     { ico: '🌕', t: '每月限定同盟任務', items: [
-      '每月 1 日重置，包含五大戰略指標（進攻非同盟領地、攻陷領地、累計步數、飲水、核心訓練）',
+      '每月 1 日重置，包含五大戰略指標（進攻敵方領地、攻陷領地、累計步數、飲水、核心訓練）',
       '達成即可領取超豐厚大獎：2,000 G幣、50 W幣、進攻道具卡與稀有道具！' ] },
     { ico: '🫂', t: '同盟助攻與邀請', items: [
       '可邀請好友加入同盟，或呼叫同盟戰友！',
-      '進攻非同盟領地時，每日可呼叫同盟戰友發起協同突襲支援助攻！' ] },
+      '進攻敵方領地時，同盟戰友協同並肩作戰！' ] },
   ]},
   shop: { name: '商城', slides: [
     { ico: '🔄', t: '貨幣兌換', items: [
@@ -2552,14 +2636,23 @@ function startGame(){
   go('home'); toast(`歡迎加入 MicroMove！`,'🎉');
 }
 
-// ===== Game HUD 首頁：15x15 六角形無縫拼合戰略地圖（含遠方另一位玩家領地） =====
-const MAP_SIZE = 15;
-const CASTLE_R = 7, CASTLE_C = 7, CASTLE_KEY = '7,7', CASTLE_IDX = 112;
-const RIVAL_CASTLE_R = 4, RIVAL_CASTLE_C = 10, RIVAL_CASTLE_KEY = '4,10', RIVAL_CASTLE_IDX = 70;
+// ===== Game HUD 首頁：25x25 六角形無縫拼合戰略地圖（多方敵對勢力） =====
+const MAP_SIZE = 25;
+const CASTLE_R = 12, CASTLE_C = 12, CASTLE_KEY = '12,12', CASTLE_IDX = 312;
+
+const RIVAL_STRONGHOLDS = [
+  { code: 'eric', name: '獅王・艾瑞克 🦁', short: '艾瑞克 🦁', r: 6, c: 18, key: '6,18', region: '東北猛獸要塞' },
+  { code: 'baron', name: '影狼・巴隆 🐺', short: '巴隆 🐺', r: 6, c: 6, key: '6,6', region: '西北幽影要塞' },
+  { code: 'kuman', name: '狂熊・庫曼 🐻', short: '庫曼 🐻', r: 18, c: 6, key: '18,6', region: '西南鐵拳要塞' },
+  { code: 'rex', name: '毒蠍・雷克斯 🦂', short: '雷克斯 🦂', r: 18, c: 18, key: '18,18', region: '東南沙漠要塞' }
+];
+const RIVAL_CASTLE_R = 6, RIVAL_CASTLE_C = 18, RIVAL_CASTLE_KEY = '6,18', RIVAL_CASTLE_IDX = 6 * 25 + 18;
+let rivalPanIndex = 0;
+
 const ALLY_BASES = [
-  { code: 'mimi', name: '同盟夥伴・小米 🐱', short: '小米 🐱', r: 3, c: 3, key: '3,3', region: '西北海域' },
-  { code: 'jay', name: '同盟戰友・阿傑 🦊', short: '阿傑 🦊', r: 11, c: 3, key: '11,3', region: '西南海域' },
-  { code: 'flower', name: '同盟戰友・小花花 🌸', short: '小花花 🌸', r: 11, c: 11, key: '11,11', region: '東南海域' }
+  { code: 'mimi', name: '同盟夥伴・小米 🐱', short: '小米 🐱', r: 2, c: 7, key: '2,7', region: '北部海域' },
+  { code: 'jay', name: '同盟戰友・阿傑 🦊', short: '阿傑 🦊', r: 22, c: 7, key: '22,7', region: '南部海域' },
+  { code: 'flower', name: '同盟戰友・小花花 🌸', short: '小花花 🌸', r: 22, c: 17, key: '22,17', region: '東南海域' }
 ];
 let allyPanIndex = 0;
 let homeDailyOpen = false;
@@ -2617,19 +2710,37 @@ function consumePendingConquest(){
     return null;
   }
 
-  // 若目標為敵方領地：檢查是否有防護盾，並依地形決定進攻進度（一般地形 2、特殊地形 4）
+  // 若目標為敵方領地：檢查是否接壤、是否有防護盾、是否持有進攻道具卡，並依地形決定進攻進度（一般地形 2、特殊地形 4）
   if(existing && existing.owner === 'enemy'){
+    const m = getHomeTileMeta(r, c);
+    if(!m.isAdjacentToMe){
+      pendingTargetGrid = null;
+      window.pendingTargetGrid = null;
+      return null;
+    }
     if(existing.item === 'shield'){
       pendingTargetGrid = null;
       window.pendingTargetGrid = null;
       return null;
     }
-    const isEnemyCastle = (existing.type === 'enemy_castle') || (r === RIVAL_CASTLE_R && c === RIVAL_CASTLE_C);
+    if(!S.inventory) S.inventory = [];
+    const cardIdx = S.inventory.findIndex(i => i.id === 'attack_card' && (i.qty || 0) > 0);
+    if(cardIdx === -1){
+      pendingTargetGrid = null;
+      window.pendingTargetGrid = null;
+      toast('⚔️ 進攻他人領地需要持有【進攻道具卡】！進攻未能生效。', '⚔️');
+      return null;
+    }
+    // 扣除 1 張進攻道具卡
+    S.inventory[cardIdx].qty -= 1;
+    if(S.inventory[cardIdx].qty <= 0) S.inventory.splice(cardIdx, 1);
+
+    const isEnemyCastle = (existing.type === 'enemy_castle') || RIVAL_STRONGHOLDS.some(s => s.r === r && s.c === c);
     const isSpecial = (existing.terrain === 'special') || isEnemyCastle;
     const need = existing.attackNeed || (isSpecial ? 4 : 2);
     const prog = (existing.attackProg || 0) + 1;
     const rivalName = existing.rivalName || '勁敵・艾瑞克';
-    const targetLbl = isEnemyCastle ? '非同盟主城' : (isSpecial ? '非同盟特殊地形' : '非同盟一般地形');
+    const targetLbl = isEnemyCastle ? '主城' : (isSpecial ? '特殊地形' : '一般地形');
 
     S.allianceAttacks = (S.allianceAttacks || 0) + 1;
 
@@ -2661,7 +2772,7 @@ function consumePendingConquest(){
       };
     }
 
-    // 進攻任務次數已達標，正式攻陷非同盟領地並納入個人版圖
+    // 進攻任務次數已達標，正式攻陷敵方領地並納入個人版圖
     const normalDef = TERRAIN_TYPES.normal;
     const tileData = {
       type: 'land',
@@ -2727,8 +2838,9 @@ function getOccupiedTerrainPreset(r, c, terrainType){
   if(r === CASTLE_R && c === CASTLE_C){
     return { terrain: 'castle', ico: '🏰', lbl: '主城', cls: 'castle', attackNeed: 4, desc: '我方核心據點・出戰夥伴駐守中' };
   }
-  if(r === RIVAL_CASTLE_R && c === RIVAL_CASTLE_C){
-    return { terrain: 'special', ico: '🦁', lbl: '敵方主城', cls: 'enemy-castle', attackNeed: 4, desc: '遠方玩家【勁敵・艾瑞克 🦁】主城據點' };
+  const rivalMatch = RIVAL_STRONGHOLDS.find(s => s.r === r && s.c === c);
+  if(rivalMatch){
+    return { terrain: 'special', ico: rivalMatch.short.split(' ')[1] || '🦁', lbl: '敵方主城', cls: 'enemy-castle', attackNeed: 4, desc: `遠方勢力【${rivalMatch.name}】主城據點` };
   }
   return terrainType === 'special' ? TERRAIN_TYPES.special : TERRAIN_TYPES.normal;
 }
@@ -2759,6 +2871,7 @@ function isEnemyTile(r, c){
 }
 
 function isAllyTile(r, c){
+  if(!S || !S.hasTeam) return false;
   if(!S.mapGrid || typeof S.mapGrid !== 'object') return false;
   const key = `${r},${c}`;
   const idx = r * MAP_SIZE + c;
@@ -2797,9 +2910,9 @@ function getHomeTileMeta(r, c){
   const tileItem = (savedIdx && savedIdx.item) || (savedKey && savedKey.item) || null;
   const itemDef = (tileItem && ITEM_DEFS[tileItem]) ? ITEM_DEFS[tileItem] : null;
   const isOccupied = isTileOccupied(r, c);
-  const isAlly = !isOccupied && isAllyTile(r, c);
+  const isAlly = !!(S.hasTeam && !isOccupied && isAllyTile(r, c));
   const isEnemy = !isOccupied && !isAlly && isEnemyTile(r, c);
-  const isEnemyCastle = isEnemy && ((saved && saved.type === 'enemy_castle') || (r === RIVAL_CASTLE_R && c === RIVAL_CASTLE_C));
+  const isEnemyCastle = isEnemy && ((saved && saved.type === 'enemy_castle') || RIVAL_STRONGHOLDS.some(s => s.r === r && s.c === c));
   const isAdjacent = !isOccupied && !isAlly && !isEnemy && isTileAdjacentToOccupied(r, c);
   const isAdjacentToMe = isEnemy && getHexNeighbors(r, c).some(([nr, nc]) => isTileOccupied(nr, nc));
 
@@ -2857,10 +2970,11 @@ function getHomeTileMeta(r, c){
     const rivalIco = (saved && saved.ico) || '🦁';
     const isSpecialTerrain = (saved && saved.terrain === 'special') || isEnemyCastle;
     const terrain = isSpecialTerrain ? 'special' : 'normal';
-    const lbl = isEnemyCastle ? '非同盟主城' : (isSpecialTerrain ? '非同盟特殊地形' : '非同盟一般地形');
+    const lbl = isEnemyCastle ? '主城' : (isSpecialTerrain ? '特殊地形' : '一般地形');
     const attackNeed = (saved && saved.attackNeed) || (isSpecialTerrain ? 4 : 2);
     const attackProg = (saved && saved.attackProg) || 0;
     const hasShield = (tileItem === 'shield');
+    const borderCls = (isAdjacentToMe && !hasShield) ? ' adjacent-attackable' : '';
     return {
       key, index, r, c,
       isOccupied: false,
@@ -2875,7 +2989,7 @@ function getHomeTileMeta(r, c){
       rivalName,
       ico: rivalIco,
       lbl,
-      cls: isEnemyCastle ? 'enemy enemy-castle' : (isSpecialTerrain ? 'enemy special-terrain' : 'enemy'),
+      cls: (isEnemyCastle ? 'enemy enemy-castle' : (isSpecialTerrain ? 'enemy special-terrain' : 'enemy')) + borderCls,
       item: tileItem,
       itemIcon: itemDef ? itemDef.icon : '',
       itemName: itemDef ? itemDef.name : '',
@@ -2883,10 +2997,12 @@ function getHomeTileMeta(r, c){
       attackNeed,
       attackProg,
       desc: hasShield
-        ? `🛡️ 【非同盟・${rivalName}】的${lbl}・設有防護盾保護中，無法進攻！`
-        : (isEnemyCastle
-          ? `🏯 【非同盟・${rivalName}】主城・點擊與同盟成員合力進攻（需完成 ${attackNeed} 次，進度 ${attackProg}/${attackNeed}）！`
-          : `⚔️ 【非同盟・${rivalName}】的${lbl}・點擊與同盟成員合力進攻（需完成 ${attackNeed} 次，進度 ${attackProg}/${attackNeed}）！`)
+        ? `🛡️ 【${rivalName}】的${lbl}・設有防護盾保護中，無法進攻！`
+        : (!isAdjacentToMe
+          ? `⚔️ 【${rivalName}】的${lbl}・尚未接壤！必須持續向外擴張領地直到碰觸邊界才能進攻！`
+          : (isEnemyCastle
+            ? `🏯 【${rivalName}】主城・已與我方接壤！點擊發起進攻（需完成 ${attackNeed} 次，進度 ${attackProg}/${attackNeed}）！`
+            : `⚔️ 【${rivalName}】的${lbl}・已與我方接壤！點擊發起進攻（需完成 ${attackNeed} 次，進度 ${attackProg}/${attackNeed}）！`))
     };
   }
 
@@ -3222,9 +3338,14 @@ window.openConquestModal = function(index, r, c){
     index = idxNum;
   }
   const m = getHomeTileMeta(r, c);
+  if(m.isEnemy && !m.isAdjacentToMe){
+    closeConquestModal();
+    toast('⚔️ 尚未與該敵方領地接壤！必須持續向外擴張領地直到碰觸邊界才能進攻！', '🗺️');
+    return;
+  }
   if(m.isEnemy && m.hasShield){
     closeConquestModal();
-    toast(`🛡️ 目標非同盟領地【${m.lbl}】設有防護盾保護，無法發起進攻！`, '🛡️');
+    toast(`🛡️ 目標領地【${m.lbl}】設有防護盾保護，無法發起進攻！`, '🛡️');
     return;
   }
 
@@ -3236,94 +3357,87 @@ window.openConquestModal = function(index, r, c){
   const btnDesk = document.getElementById('btn-conquest-desk');
   const btnActive = document.getElementById('btn-conquest-active');
   const footEl = document.getElementById('conquest-modal-foot');
-  const allianceBanner = document.getElementById('conquest-alliance-banner');
   const attackCardBox = document.getElementById('conquest-attack-card-box');
-  const allianceAssistBox = document.getElementById('conquest-alliance-assist-box');
 
   if(m.isEnemy){
     const need = m.attackNeed || (m.isSpecialTerrain ? 4 : 2);
     const prog = m.attackProg || 0;
     const rem = Math.max(1, need - prog);
     const terrainTag = m.isSpecialTerrain ? '⛰️ 特殊地形（高難度防禦・需 4 個進度）' : '🌱 一般地形（標準防禦・需 2 個進度）';
-    if(ttlEl) ttlEl.textContent = '🔥 進攻非同盟領地！';
+    if(ttlEl) ttlEl.textContent = '🔥 進攻敵方領地！';
     if(infoEl){
-      infoEl.innerHTML = `<span>⚔️</span><span>鎖定【<b>非同盟・${m.rivalName}</b>】的「<b>${m.lbl}</b>」（${terrainTag}）・進攻進度 <b>${prog}/${need}</b>（還需 <b>${rem}</b> 次即可攻克！）</span>`;
+      infoEl.innerHTML = `<span>⚔️</span><span>鎖定【<b>${m.rivalName}</b>】的「<b>${m.lbl}</b>」（${terrainTag}）・進攻進度 <b>${prog}/${need}</b>（還需 <b>${rem}</b> 次即可攻克！）</span>`;
     }
-    if(allianceBanner){
-      allianceBanner.style.display = 'block';
-      const teamName = S.teamName || 'MicroMove 先鋒同盟';
-      allianceBanner.innerHTML = `
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
-          <span style="font-size:16px">🛡️</span>
-          <span style="font-weight:900;color:#1E40AF">【${teamName}】同盟協同作戰中</span>
-        </div>
-        <div style="font-size:11.5px;color:#2563EB;line-height:1.4">
-          你與同盟夥伴（小米 🐱、阿傑 🦊、小花花 🌸）已結盟！可使用<b>每週任務掉落的進攻道具卡</b>或<b>呼叫同盟戰友助攻</b>，一起進攻非同盟領地！
-        </div>
-      `;
-    }
+    const cardItem = (S.inventory || []).find(i => i.id === 'attack_card');
+    const cardQty = cardItem ? (cardItem.qty || 0) : 0;
     if(attackCardBox){
       attackCardBox.style.display = 'block';
-      const cardItem = (S.inventory || []).find(i => i.id === 'attack_card');
-      const cardQty = cardItem ? (cardItem.qty || 0) : 0;
       if(cardQty > 0){
         attackCardBox.innerHTML = `
-          <button class="btn btn-full btn-lg" style="background:linear-gradient(135deg,#DC2626,#B91C1C);color:#fff;box-shadow:0 6px 20px rgba(220,38,38,0.32);display:flex;align-items:center;justify-content:center;gap:8px;font-weight:900;margin-bottom:4px" onclick="useAttackCardOnCurrentTile()">
-            <span style="font-size:20px">⚔️</span>
-            <span>使用進攻道具卡突襲 (擁有 x${cardQty})</span>
-          </button>
-          <div style="font-size:11px;color:#DC2626;text-align:center;font-weight:700">⚡ 消耗 1 張道具卡立即推進 1 點進攻進度（每週同盟任務限定掉落）</div>
+          <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:9px 12px;font-size:12px;color:#991B1B;display:flex;align-items:center;gap:8px">
+            <span style="font-size:18px">⚔️</span>
+            <div style="line-height:1.4">持有<b>進攻道具卡 x${cardQty}</b>（進攻必需品，完成進攻任務時消耗 1 張）</div>
+          </div>
         `;
       }else{
         attackCardBox.innerHTML = `
           <div style="background:var(--c2);border:1.5px dashed var(--bd);border-radius:12px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px">
             <div style="display:flex;align-items:center;gap:8px">
               <span style="font-size:20px;opacity:0.6">⚔️</span>
-              <div style="font-size:11.5px;color:var(--tm);font-weight:700">進攻道具卡 (0張・每週同盟任務限定掉落)</div>
+              <div style="font-size:12px;color:#DC2626;font-weight:700">進攻道具卡不足 (0張・進攻必需品)</div>
             </div>
             <button class="btn btn-gh btn-sm" style="font-weight:800;color:var(--p-d)" onclick="closeConquestModal();go('team');switchTeamTab('weekly');toast('每週同盟任務可獲得進攻道具卡！','⚔️')">去每週任務 ➔</button>
           </div>
         `;
       }
     }
-    if(allianceAssistBox){
-      allianceAssistBox.style.display = 'block';
-      if(S.hasTeam){
-        if(!S.teamAssistToday){
-          allianceAssistBox.innerHTML = `
-            <button class="btn btn-ol btn-full" style="border:1.5px solid #3B82F6;color:#1D4ED8;background:#EFF6FF;font-weight:800;padding:10px;display:flex;align-items:center;justify-content:center;gap:6px" onclick="callAllianceAssist()">
-              <span>🤝</span>
-              <span>呼叫同盟戰友協同突襲 (今日可用 1 次・推進 +1)</span>
-            </button>
-          `;
-        }else{
-          allianceAssistBox.innerHTML = `
-            <div style="text-align:center;font-size:11.5px;color:var(--tm);font-weight:700;padding:6px;background:var(--c2);border-radius:10px">
-              🤝 今日同盟協同助攻次數已使用，明日重置
-            </div>
-          `;
-        }
+    // 單一進攻按鈕（取代分開的辦公桌與全身按鈕）
+    if(btnActive) btnActive.style.display = 'none';
+    if(btnDesk){
+      btnDesk.style.display = 'block';
+      btnDesk.className = 'btn btn-full btn-lg';
+      btnDesk.style.boxShadow = '0 8px 24px rgba(220,38,38,0.28)';
+      if(cardQty > 0){
+        btnDesk.style.background = 'linear-gradient(135deg,#DC2626,#B91C1C)';
+        btnDesk.style.color = '#fff';
+        btnDesk.style.cursor = 'pointer';
+        btnDesk.innerHTML = '⚔️ 發起進攻 (前往運動任務)';
+        btnDesk.onclick = () => startConquestQuest('all');
       }else{
-        allianceAssistBox.innerHTML = `
-          <div style="text-align:center;font-size:11.5px;color:var(--tm);font-weight:700;padding:6px;background:var(--c2);border-radius:10px">
-            💡 加入同盟後，可解鎖「同盟成員每日協同突襲」支援！
-          </div>
-        `;
+        btnDesk.style.background = 'var(--c3)';
+        btnDesk.style.color = 'var(--tm)';
+        btnDesk.style.cursor = 'not-allowed';
+        btnDesk.innerHTML = '🔒 進攻道具卡不足 (無法發起進攻)';
+        btnDesk.onclick = () => { toast('⚔️ 進攻他人領地需要持有【進攻道具卡】！可由每週同盟任務、商城或登入獎勵取得！', '⚔️'); };
       }
     }
-    if(btnDesk) btnDesk.textContent = `🪑 選擇辦公桌任務 (推進進攻 +1)`;
-    if(btnActive) btnActive.textContent = `🚶 選擇全身微運動 (推進進攻 +1)`;
-    if(footEl) footEl.textContent = `⚔️ 進攻非同盟領地需完成 ${need} 次進攻（可透過道具卡、同盟協同或完成運動），達標即可攻破並納入個人版圖！`;
+    if(footEl) footEl.textContent = `⚔️ 進攻敵方領地必須持有【進攻道具卡】（每次進攻消耗 1 張），完成 ${need} 次進攻即可攻破並納入個人版圖！`;
   }else{
     if(ttlEl) ttlEl.textContent = '⚔️ 發起佔領挑戰！';
     if(infoEl){
       infoEl.innerHTML = `<span>🧭</span><span>已鎖定相鄰空地（佔領後為：<b>🌱 一般地形</b>，防禦進度 2），請選擇挑戰類型：</span>`;
     }
-    if(allianceBanner) allianceBanner.style.display = 'none';
     if(attackCardBox) attackCardBox.style.display = 'none';
-    if(allianceAssistBox) allianceAssistBox.style.display = 'none';
-    if(btnDesk) btnDesk.textContent = '🪑 選擇辦公桌任務 (輕鬆佔領)';
-    if(btnActive) btnActive.textContent = '🚶 選擇全身微運動 (高難度佔領)';
+    if(btnDesk){
+      btnDesk.style.display = 'block';
+      btnDesk.className = 'btn btn-p btn-full btn-lg';
+      btnDesk.style.background = 'linear-gradient(135deg,#3B82F6,#2563EB)';
+      btnDesk.style.boxShadow = '0 8px 24px rgba(59,130,246,0.28)';
+      btnDesk.style.color = '#fff';
+      btnDesk.style.cursor = 'pointer';
+      btnDesk.textContent = '🪑 選擇辦公桌任務 (輕鬆佔領)';
+      btnDesk.onclick = () => startConquestQuest('desk');
+    }
+    if(btnActive){
+      btnActive.style.display = 'block';
+      btnActive.className = 'btn btn-s btn-full btn-lg';
+      btnActive.style.background = 'linear-gradient(135deg,#F59E0B,#EF4444)';
+      btnActive.style.boxShadow = '0 8px 24px rgba(239,68,68,0.28)';
+      btnActive.style.color = '#fff';
+      btnActive.style.cursor = 'pointer';
+      btnActive.textContent = '🚶 選擇全身微運動 (高難度佔領)';
+      btnActive.onclick = () => startConquestQuest('active');
+    }
     if(footEl) footEl.textContent = '完成任何一項任務，即可將此地納入你的版圖！';
   }
 
@@ -3332,105 +3446,8 @@ window.openConquestModal = function(index, r, c){
 };
 
 window.useAttackCardOnCurrentTile = function(){
-  const target = (pendingTargetGrid !== null && pendingTargetGrid !== undefined)
-    ? pendingTargetGrid
-    : ((window.pendingTargetGrid !== null && window.pendingTargetGrid !== undefined) ? window.pendingTargetGrid : null);
-  if(target === null || target === undefined){
-    toast('請先選擇要進攻的非同盟領地！', '⚔️');
-    return;
-  }
-  let r = CASTLE_R, c = CASTLE_C, idx = CASTLE_IDX, key = CASTLE_KEY;
-  if(typeof target === 'string' && target.includes(',')){
-    const parts = target.split(',').map(Number);
-    r = parts[0]; c = parts[1];
-    idx = r * MAP_SIZE + c;
-    key = `${r},${c}`;
-  }else{
-    idx = Number(target);
-    r = Math.floor(idx / MAP_SIZE);
-    c = idx % MAP_SIZE;
-    key = `${r},${c}`;
-  }
-  if(!S.mapGrid || typeof S.mapGrid !== 'object') S.mapGrid = {};
-  const existing = S.mapGrid[idx] || S.mapGrid[key] || null;
-  if(!existing || existing.owner !== 'enemy'){
-    if(existing && existing.owner === 'ally'){
-      toast('🛡️ 這是同盟成員的領地！同盟之間受條約保護，互相無法攻擊！', '🤝');
-      return;
-    }
-    toast('進攻道具卡只能對【非同盟領地】使用！', '⚔️');
-    return;
-  }
-  if(existing.item === 'shield'){
-    toast('🛡️ 目標領地有防護盾保護，無法進攻！', '🛡️');
-    return;
-  }
-  if(!S.inventory) S.inventory = [];
-  const cardIdx = S.inventory.findIndex(i => i.id === 'attack_card' && (i.qty || 0) > 0);
-  if(cardIdx === -1){
-    toast('進攻道具卡不足！只有每週同盟任務會掉落喔！', '⚔️');
-    return;
-  }
-
-  // 扣除 1 張進攻道具卡
-  S.inventory[cardIdx].qty -= 1;
-  if(S.inventory[cardIdx].qty <= 0) S.inventory.splice(cardIdx, 1);
-
-  const isEnemyCastle = (existing.type === 'enemy_castle') || (r === RIVAL_CASTLE_R && c === RIVAL_CASTLE_C);
-  const isSpecial = (existing.terrain === 'special') || isEnemyCastle;
-  const need = existing.attackNeed || (isSpecial ? 4 : 2);
-  const prog = (existing.attackProg || 0) + 1;
-  const rivalName = existing.rivalName || '勁敵・艾瑞克';
-  const targetLbl = isEnemyCastle ? '非同盟主城' : (isSpecial ? '非同盟特殊地形' : '非同盟一般地形');
-
-  S.allianceAttacks = (S.allianceAttacks || 0) + 1;
-
-  if(prog < need){
-    const updatedEnemy = {
-      ...existing,
-      terrain: isSpecial ? 'special' : 'normal',
-      lbl: targetLbl,
-      attackNeed: need,
-      attackProg: prog
-    };
-    S.mapGrid[idx] = updatedEnemy;
-    S.mapGrid[key] = updatedEnemy;
-    saveS();
-    openConquestModal(idx, r, c);
-    const mc = document.getElementById('map-container');
-    if(mc) mc.innerHTML = renderHomeMapGrid();
-    toast(`⚔️ 進攻道具卡發動！摧毀敵方防禦 1 點！進度 ${prog}/${need}（還需 ${need - prog} 次攻克）！`, '🔥');
-    fireConfetti();
-  }else{
-    // 攻克領地！
-    const normalDef = TERRAIN_TYPES.normal;
-    const tileData = {
-      type: 'land',
-      owner: 'me',
-      terrain: 'normal',
-      ico: normalDef.ico,
-      lbl: normalDef.lbl,
-      cls: normalDef.cls,
-      attackNeed: normalDef.attackNeed,
-      attackProg: 0,
-      desc: `一般地形・使用進攻道具卡自【${rivalName}】手中攻佔的個人領地（他人進攻進度：2）`,
-      conqueredFrom: rivalName,
-      conqueredAt: Date.now()
-    };
-    S.mapGrid[idx] = tileData;
-    S.mapGrid[key] = tileData;
-    S.conqueredEnemyTiles = (S.conqueredEnemyTiles || 0) + 1;
-    pendingTargetGrid = null;
-    window.pendingTargetGrid = null;
-    lastConqueredKey = key;
-    selectedTileKey = key;
-    saveS();
-    closeConquestModal();
-    const mc = document.getElementById('map-container');
-    if(mc) mc.innerHTML = renderHomeMapGrid();
-    toast(`🚩 進攻道具卡大獲全勝！成功攻陷非同盟領地【${targetLbl}】！已納入個人版圖！`, '🎉');
-    fireConfetti();
-  }
+  toast('⚔️ 進攻道具卡為進攻必需品，請透過運動任務推進進攻！', '⚔️');
+  startConquestQuest('all');
 };
 
 window.callAllianceAssist = function(){
@@ -3438,7 +3455,7 @@ window.callAllianceAssist = function(){
     ? pendingTargetGrid
     : ((window.pendingTargetGrid !== null && window.pendingTargetGrid !== undefined) ? window.pendingTargetGrid : null);
   if(target === null || target === undefined){
-    toast('請先選擇要進攻的非同盟領地！', '🤝');
+    toast('請先選擇要進攻的敵方領地！', '🤝');
     return;
   }
   let r = CASTLE_R, c = CASTLE_C, idx = CASTLE_IDX, key = CASTLE_KEY;
@@ -3460,7 +3477,12 @@ window.callAllianceAssist = function(){
       toast('🛡️ 這是同盟成員的領地！同盟之間受條約保護，互相無法攻擊！', '🤝');
       return;
     }
-    toast('同盟協同助攻只能對【非同盟領地】發動！', '🤝');
+    toast('同盟協同助攻只能對【敵方領地】發動！', '🤝');
+    return;
+  }
+  const m = getHomeTileMeta(r, c);
+  if(!m.isAdjacentToMe){
+    toast('⚔️ 尚未與該敵方領地接壤！必須持續擴張至邊界才能呼叫同盟協同助攻！', '🤝');
     return;
   }
   if(existing.item === 'shield'){
@@ -3482,12 +3504,12 @@ window.callAllianceAssist = function(){
   ];
   const chosen = allies[Math.floor(Math.random() * allies.length)];
 
-  const isEnemyCastle = (existing.type === 'enemy_castle') || (r === RIVAL_CASTLE_R && c === RIVAL_CASTLE_C);
+  const isEnemyCastle = (existing.type === 'enemy_castle') || RIVAL_STRONGHOLDS.some(s => s.r === r && s.c === c);
   const isSpecial = (existing.terrain === 'special') || isEnemyCastle;
   const need = existing.attackNeed || (isSpecial ? 4 : 2);
   const prog = (existing.attackProg || 0) + 1;
   const rivalName = existing.rivalName || '勁敵・艾瑞克';
-  const targetLbl = isEnemyCastle ? '非同盟主城' : (isSpecial ? '非同盟特殊地形' : '非同盟一般地形');
+  const targetLbl = isEnemyCastle ? '主城' : (isSpecial ? '特殊地形' : '一般地形');
 
   if(prog < need){
     const updatedEnemy = {
@@ -3531,7 +3553,7 @@ window.callAllianceAssist = function(){
     closeConquestModal();
     const mc = document.getElementById('map-container');
     if(mc) mc.innerHTML = renderHomeMapGrid();
-    toast(`🏆 同盟戰友【${chosen.name} ${chosen.emo}】與你合力攻破非同盟領地【${targetLbl}】！已納入個人版圖！`, '🎉');
+    toast(`🏆 同盟戰友【${chosen.name} ${chosen.emo}】與你合力攻破領地【${targetLbl}】！已納入個人版圖！`, '🎉');
     fireConfetti();
   }
 };
@@ -3542,11 +3564,35 @@ window.closeConquestModal = function(){
 };
 
 window.startConquestQuest = function(tabType){
+  const target = (pendingTargetGrid !== null && pendingTargetGrid !== undefined) ? pendingTargetGrid : window.pendingTargetGrid;
+  if(target !== null && target !== undefined){
+    let r, c;
+    if(typeof target === 'string' && target.includes(',')){
+      const parts = target.split(',').map(Number);
+      r = parts[0]; c = parts[1];
+    }else{
+      r = Math.floor(Number(target) / MAP_SIZE);
+      c = Number(target) % MAP_SIZE;
+    }
+    const m = getHomeTileMeta(r, c);
+    if(m.isEnemy){
+      const cardItem = (S.inventory || []).find(i => i.id === 'attack_card' && (i.qty || 0) > 0);
+      if(!cardItem){
+        closeConquestModal();
+        toast('⚔️ 進攻他人領地需要持有【進攻道具卡】！請先至商城購買或完成每週同盟任務獲取！', '⚔️');
+        return;
+      }
+    }
+  }
   closeConquestModal();
   go('quests');
-  const tabBtn = document.querySelector(`#ftabs .ftab[data-f="${tabType}"]`);
+  const targetTab = (tabType && tabType !== 'all') ? tabType : 'all';
+  const tabBtn = document.querySelector(`#ftabs .ftab[data-f="${targetTab}"]`);
   if(tabBtn){
-    fltr(tabType, tabBtn);
+    fltr(targetTab, tabBtn);
+  }else{
+    const allBtn = document.querySelector(`#ftabs .ftab[data-f="all"]`);
+    if(allBtn) fltr('all', allBtn);
   }
 };
 
@@ -3583,9 +3629,20 @@ window.selectMapTile = function(r, c){
   }
 
   if(m.isEnemy){
+    if(!m.isAdjacentToMe){
+      closeConquestModal();
+      toast('⚔️ 尚未與該敵方領地接壤！必須持續向外擴張領地直到碰觸邊界才能進攻！', '🗺️');
+      return;
+    }
     if(m.hasShield || m.item === 'shield'){
       closeConquestModal();
-      toast(`🛡️ 目標非同盟領地【${m.lbl}】設有防護盾保護，無法發起進攻！`, '🛡️');
+      toast(`🛡️ 目標領地【${m.lbl}】設有防護盾保護，無法發起進攻！`, '🛡️');
+      return;
+    }
+    const cardItem = (S.inventory || []).find(i => i.id === 'attack_card' && (i.qty || 0) > 0);
+    if(!cardItem){
+      closeConquestModal();
+      toast('⚔️ 進攻他人領地需要持有【進攻道具卡】！可由每週同盟任務、商城或登入獎勵取得！', '⚔️');
       return;
     }
     openConquestModal(index, r, c);
@@ -3635,10 +3692,16 @@ window.panToSpecificCoord = function(coordKey, toastMsg, toastIcon){
 };
 
 window.panToRival = function(){
-  panToSpecificCoord(RIVAL_CASTLE_KEY, '🔭 鏡頭已移至東北海域【勁敵・艾瑞克 🦁】的獨立領地！', '🦁');
+  const target = RIVAL_STRONGHOLDS[rivalPanIndex % RIVAL_STRONGHOLDS.length];
+  rivalPanIndex++;
+  panToSpecificCoord(target.key, `🎯 鏡頭已定位至【${target.name}】的${target.region}主城據點！`, '⚔️');
 };
 
 window.panToAlly = function(){
+  if(!S.hasTeam){
+    toast('尚未加入同盟！可前往「同盟」分頁加入或創建同盟！', '🛡️');
+    return;
+  }
   const target = ALLY_BASES[allyPanIndex % ALLY_BASES.length];
   allyPanIndex++;
   panToSpecificCoord(target.key, `🛡️ 鏡頭移至【${target.name}】${target.region}獨立領地！`, '🛡️');
@@ -3756,7 +3819,7 @@ function pgHome(){
       </div>
     </div>
 
-    <!-- 【底層地圖】：可自由拖曳/滑動的 15x15 六角形戰略網格 (#map-container) -->
+    <!-- 【底層地圖】：可自由拖曳/滑動的 25x25 六角形戰略網格 (#map-container) -->
     <div id="map-viewport">
       <div class="map-world">
         <div id="map-container" class="${mapZoomedOut ? 'zoomed-out' : ''}">
@@ -3774,9 +3837,9 @@ function pgHome(){
     <!-- 【底部/右下懸浮】：鏡頭控制、喝水打卡 與 喬山 QR 掃描 圓形懸浮按鈕 (FAB) -->
     <div class="hud-fab-col">
       <button class="hud-fab center-fab" id="btn-map-zoom" onclick="toggleMapZoom()" title="切換全覽縮放">${mapZoomedOut ? '🔍+' : '🔍-'}</button>
-      <button class="hud-fab center-fab" onclick="panToRival()" title="查看東北敵方玩家領地">🔭</button>
-      <button class="hud-fab center-fab" onclick="panToAlly()" title="查看西南同盟戰友領地">🛡️</button>
-      <button class="hud-fab center-fab" onclick="centerHomeMap(true)" title="回到我方主城">🎯</button>
+      <button class="hud-fab center-fab" onclick="panToRival()" title="巡視敵對勢力要塞">🦁</button>
+      <button class="hud-fab center-fab" onclick="panToAlly()" title="查看同盟戰友據點">🤝</button>
+      <button class="hud-fab center-fab" onclick="centerHomeMap(true)" title="回到我方主城">🏰</button>
 
       <button class="hud-fab water-fab" onclick="handleWaterFabClick()" title="喝水打卡 (${S.water}/8 杯)">
         <span class="hud-fab-ico">💧</span>
@@ -3862,7 +3925,12 @@ function renderPendingTargetBanner(){
   }
   const m = getHomeTileMeta(r, c);
   if(m.isEnemy){
-    const need = m.attackNeed || (m.isEnemyCastle ? 3 : 2);
+    if(!m.isAdjacentToMe){
+      pendingTargetGrid = null;
+      window.pendingTargetGrid = null;
+      return '';
+    }
+    const need = m.attackNeed || (m.isSpecialTerrain ? 4 : 2);
     const prog = m.attackProg || 0;
     const rem = Math.max(1, need - prog);
     return `
@@ -5114,6 +5182,40 @@ function pgShop(){
       ${VIDEOS.map(v => renderVidCard(v)).join('')}
     </div>
 
+    <div class="stit" style="margin-top:24px">⚔️ 戰略道具補給站</div>
+    <div class="store-item" style="background:var(--c1)">
+      <div style="font-size:32px">⚔️</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:800;color:var(--t)">進攻道具卡</div>
+        <div style="font-size:12px;color:var(--tm)">進攻敵方領地必備道具！消耗 1 張可發起進攻</div>
+      </div>
+      <button class="btn btn-p btn-sm" onclick="buyStrategyItem('attack_card', 30)">30 G幣 購買</button>
+    </div>
+    <div class="store-item" style="background:var(--c1)">
+      <div style="font-size:32px">🛡️</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:800;color:var(--t)">防護盾</div>
+        <div style="font-size:12px;color:var(--tm)">保護一塊領地免受敵方進攻</div>
+      </div>
+      <button class="btn btn-gh btn-sm" onclick="buyStrategyItem('shield', 40)">40 G幣 購買</button>
+    </div>
+    <div class="store-item" style="background:var(--c1)">
+      <div style="font-size:32px">⛺</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:800;color:var(--t)">健身帳篷</div>
+        <div style="font-size:12px;color:var(--tm)">蓋在領地上，每日自動產出 5 G幣！</div>
+      </div>
+      <button class="btn btn-gh btn-sm" onclick="buyStrategyItem('tent', 50)">50 G幣 購買</button>
+    </div>
+    <div class="store-item" style="background:var(--c1)">
+      <div style="font-size:32px">🗺️</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:800;color:var(--t)">地形卡</div>
+        <div style="font-size:12px;color:#7C3AED;font-weight:700">🔒 每週同盟任務限定取得（非賣品）</div>
+      </div>
+      <button class="btn btn-gh btn-sm" onclick="go('team');switchTeamTab('weekly');toast('每週同盟任務達標即可獲得地形卡！','🗺️')">去每週任務 ➔</button>
+    </div>
+
     <div class="stit" style="margin-top:24px">🎁 吉祥物盲盒抽卡</div>
     <div class="store-item" style="border:1.5px solid var(--p-l);background:#F5F3FF">
       <div style="font-size:32px">✨</div>
@@ -5156,6 +5258,24 @@ window.buyItem = function(cost, name, icon){
     go('shop'); 
   }
   else toast(`W幣不足！需要 ${cost} W幣`,'⚠️');
+}
+
+window.buyStrategyItem = function(itemId, costG){
+  if(itemId === 'terrain_card'){
+    toast('🗺️ 地形卡為每週同盟任務限定獎勵，無法於商城購買！請至每週同盟任務領取！', '🗺️');
+    return;
+  }
+  const def = ITEM_DEFS[itemId];
+  if(!def) return;
+  if((S.gcoin || 0) >= costG){
+    S.gcoin -= costG;
+    addItemToBag(itemId, 1);
+    saveS();
+    toast(`成功購買【${def.name}】！已放入背包。`, def.icon);
+    go('shop');
+  } else {
+    toast(`G幣不足！需要 ${costG} G幣，快多做運動賺取吧！`, '⚠️');
+  }
 }
 
 window.rollGacha = function(){
@@ -5344,11 +5464,11 @@ const WEEKLY_TEAM_QUESTS = [
     goal: 60,
     unit: '次',
     rewardCoins: 150,
-    rewardItem: 'attack_card',
+    rewardItem: 'terrain_card',
     rewardItemQty: 1,
-    col1: '#EF4444',
-    col2: '#F87171',
-    desc: '核心肌群特訓 60 次，鍛造鋼鐵意志與防守韌性！'
+    col1: '#8B5CF6',
+    col2: '#A78BFA',
+    desc: '核心肌群特訓 60 次，鍛造防守韌性！獲得限定【🗺️ 地形卡】！'
   },
   {
     id: 'w_quests',
@@ -5357,12 +5477,12 @@ const WEEKLY_TEAM_QUESTS = [
     goal: 40,
     unit: '個',
     rewardCoins: 200,
-    rewardItem: 'attack_card',
-    rewardItemQty: 2,
-    bonusItem: 'clover',
-    col1: '#8B5CF6',
-    col2: '#A78BFA',
-    desc: '全體隊員完成微運動 40 次，同盟全員士氣高昂！'
+    rewardItem: 'terrain_card',
+    rewardItemQty: 1,
+    bonusItem: 'attack_card',
+    col1: '#EC4899',
+    col2: '#F472B6',
+    desc: '全體隊員完成微運動 40 次，獲得限定【🗺️ 地形卡】與【⚔️ 進攻道具卡】！'
   }
 ];
 
@@ -5373,10 +5493,10 @@ const MONTHLY_TEAM_QUESTS = [
     tag: '月度史詩・限定挑戰',
     col: '#8B5CF6',
     bg: 'linear-gradient(135deg, #FAF5FF, #F3E8FF)',
-    desc: '同盟全員攜手進軍非同盟領地、刷新全隊運動與飲水極限，達成五大複合戰略指標！',
+    desc: '同盟全員攜手進軍敵方領地、刷新全隊運動與飲水極限，達成五大複合戰略指標！',
     subGoals: [
-      { id: 'attacks', label: '⚔️ 對非同盟領地發動進攻', cur: () => (S.monthlyAllianceAttacks || 4) + (S.allianceAttacks || 0), goal: 8, unit: '次' },
-      { id: 'conquers', label: '🚩 攻陷並佔領非同盟領地', cur: () => (S.monthlyConqueredTiles || 1) + (S.conqueredEnemyTiles || 0), goal: 2, unit: '塊' },
+      { id: 'attacks', label: '⚔️ 對敵方領地發動進攻', cur: () => (S.monthlyAllianceAttacks || 4) + (S.allianceAttacks || 0), goal: 8, unit: '次' },
+      { id: 'conquers', label: '🚩 攻陷並佔領敵方領地', cur: () => (S.monthlyConqueredTiles || 1) + (S.conqueredEnemyTiles || 0), goal: 2, unit: '塊' },
       { id: 'steps', label: '👟 全隊本月累計總步數', cur: () => (S.monthlyTeamSteps || 68500) + S.actDone * 300, goal: 100000, unit: '步' },
       { id: 'water', label: '💧 全隊本月累計飲水', cur: () => (S.monthlyTeamWater || 280) + S.water, goal: 350, unit: '杯' },
       { id: 'squats_planks', label: '🏋️ 深蹲與平板撐總次數', cur: () => (S.monthlyTeamCore || 210) + (S.todayDone.includes('q7') ? 5 : 0) + (S.todayDone.includes('q12') ? 5 : 0), goal: 300, unit: '次' }
@@ -5466,10 +5586,11 @@ window.joinPublicTeam = function(name, leader, emo){
     { id: 'jay', name: '阿傑', emo: '🦊', lv: 5, role: '同盟成員', code: 'MM-JAY456', active: true },
     { id: 'flower', name: '小花花', emo: '🌸', lv: 6, role: '同盟副隊長', code: 'MM-FLOWER', active: true }
   ];
+  syncAllyMapTiles();
   chkBadges();
   saveS();
   fireConfetti();
-  toast(`🎉 成功加入【${S.teamName}】！已與全員結為同盟，可一起進攻非同盟領地！`, '🛡️');
+  toast(`🎉 成功加入【${S.teamName}】！已與全員結為同盟，地圖已點亮同盟戰友據點！`, '🛡️');
   go('team');
 };
 
@@ -5482,18 +5603,20 @@ window.createTeam = function(){
     { id: 'jay', name: '阿傑', emo: '🦊', lv: 5, role: '同盟成員', code: 'MM-JAY456', active: true },
     { id: 'flower', name: '小花花', emo: '🌸', lv: 6, role: '同盟副隊長', code: 'MM-FLOWER', active: true }
   ];
+  syncAllyMapTiles();
   chkBadges();
   saveS();
   fireConfetti();
-  toast('🎉 成功建立專屬同盟！戰友已結盟，隨時準備出擊！', '🤝');
+  toast('🎉 成功建立專屬同盟！戰友已結盟，地圖已點亮同盟戰友據點！', '🤝');
   go('team');
 };
 
 window.leaveTeam = function(){
   if(confirm('確定要退出目前的同盟嗎？退出後將無法參與同盟進攻與領取同盟任務獎勵。')){
     S.hasTeam = false;
+    syncAllyMapTiles();
     saveS();
-    toast('已退出同盟', '🚪');
+    toast('已退出同盟，地圖上的同盟戰友據點已撤離', '🚪');
     go('team');
   }
 };
@@ -5521,7 +5644,7 @@ function pgTeamMain(){
       <div style="font-size:56px;margin:12px 0;animation:bounceSolo 2.4s infinite">🛡️</div>
       <div style="font-size:20px;font-weight:900;color:var(--t);margin-bottom:6px">加入同盟，攜手征伐！</div>
       <div style="font-size:13px;color:var(--tm);line-height:1.5;max-width:320px;margin:0 auto 18px">
-        與同盟成員結盟，可以<b>一起進攻非同盟領地</b>、挑戰每週任務獲取<b>【進攻道具卡】</b>，並奪取<b>每月限定史詩大獎</b>！
+        與同盟成員結盟，可以<b>一起進攻敵方領地</b>、挑戰每週任務獲取<b>【進攻道具卡】與【地形卡】</b>，並奪取<b>每月限定史詩大獎</b>！
         <div style="font-size:11.5px;color:var(--p-d);margin-top:6px;font-weight:700">💡 領地為個人獨立開拓與管理，同盟成員協同提供進攻助攻！</div>
       </div>
       <button class="btn btn-ol btn-full btn-lg" style="margin-bottom:16px;border:1.5px solid var(--p);color:var(--p-d);font-weight:800" onclick="createTeam()">
@@ -5596,14 +5719,22 @@ function pgTeamMain(){
         <div style="display:flex;align-items:center;justify-content:space-between;background:var(--c2);padding:7px 10px;border-radius:10px;margin-top:10px">
           <div style="font-size:12px;font-weight:700;color:var(--t);display:flex;align-items:center;gap:6px">
             <span>🎁 任務掉落：</span>
-            <span style="color:#DC2626;font-weight:800;background:#FEE2E2;padding:2px 6px;border-radius:6px">⚔️ 進攻道具卡 x${q.rewardItemQty || 1}</span>
+            ${(() => {
+              const rDef = ITEM_DEFS[q.rewardItem] || { name: '道具', icon: '🎁' };
+              const color = q.rewardItem === 'terrain_card' ? '#7C3AED' : '#DC2626';
+              const bg = q.rewardItem === 'terrain_card' ? '#EDE9FE' : '#FEE2E2';
+              return `<span style="color:${color};font-weight:800;background:${bg};padding:2px 6px;border-radius:6px">${rDef.icon} ${rDef.name} x${q.rewardItemQty || 1}</span>`;
+            })()}
             <span style="color:var(--tm)">+ ${q.rewardCoins} G幣</span>
-            ${q.bonusItem ? `<span style="color:#059669">+ 🍀 四葉草</span>` : ''}
+            ${q.bonusItem ? (() => {
+              const bDef = ITEM_DEFS[q.bonusItem] || { name: '加贈', icon: '🎁' };
+              return `<span style="color:#059669">+ ${bDef.icon} ${bDef.name}</span>`;
+            })() : ''}
           </div>
         </div>
 
         ${canClaim ? 
-          `<button class="btn btn-full btn-sm" style="margin-top:10px;background:linear-gradient(135deg,#DC2626,#EF4444);color:#fff;font-weight:900;animation:pulse 1s infinite;box-shadow:0 4px 14px rgba(220,38,38,0.32)" onclick="claimWeeklyTeamQuest('${q.id}')">🎁 達標！領取進攻道具卡 + G幣</button>` : 
+          `<button class="btn btn-full btn-sm" style="margin-top:10px;background:linear-gradient(135deg,#DC2626,#EF4444);color:#fff;font-weight:900;animation:pulse 1s infinite;box-shadow:0 4px 14px rgba(220,38,38,0.32)" onclick="claimWeeklyTeamQuest('${q.id}')">🎁 達標！領取 ${ITEM_DEFS[q.rewardItem]?.name || '道具'} + G幣</button>` : 
           claimed ? 
           `<div style="text-align:center;margin-top:10px;font-size:12.5px;color:#059669;font-weight:800;padding:6px;background:#ECFDF5;border-radius:8px">✅ 本週獎勵已領取</div>` :
           `<div style="text-align:center;margin-top:10px;font-size:12px;color:var(--tm);font-weight:600">本週進度 ${pct}%，全隊共同累計！</div>`
@@ -5673,9 +5804,9 @@ function pgTeamMain(){
   } else {
     // alliance tab
     const memberLocMap = {
-      'MM-MIMI23': { key: '3,3', desc: '西北獨立領地' },
-      'MM-JAY456': { key: '11,3', desc: '西南獨立領地' },
-      'MM-FLOWER': { key: '11,11', desc: '東南獨立領地' }
+      'MM-MIMI23': { key: '2,7', desc: '北部海域領地' },
+      'MM-JAY456': { key: '22,7', desc: '南部海域領地' },
+      'MM-FLOWER': { key: '22,17', desc: '東南海域領地' }
     };
     const membersListHtml = (S.teamMembers || []).map(m => {
       const loc = memberLocMap[m.code];
@@ -5720,17 +5851,17 @@ function pgTeamMain(){
           <div style="font-size:26px">⚔️</div>
           <div>
             <div style="font-size:14px;font-weight:900;color:#1E40AF">同盟領地作戰指揮中心</div>
-            <div style="font-size:11.5px;color:#2563EB">世界各區塊各自獨立，共同鎖定非同盟領地進攻！</div>
+            <div style="font-size:11.5px;color:#2563EB">25×25 廣闊世界，與戰友共同鎖定四大敵對陣營發動進攻！</div>
           </div>
         </div>
         <div style="background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px">
           <div style="display:flex;justify-content:space-between;margin-bottom:4px">
             <span style="color:var(--tm)">🎯 敵對勢力：</span>
-            <b style="color:#DC2626">勁敵・艾瑞克 🦁 的領地 (東北海域)</b>
+            <b style="color:#DC2626">四大敵對要塞（艾瑞克🦁、巴隆🐺、庫曼🐻、雷克斯🦂）</b>
           </div>
           <div style="display:flex;justify-content:space-between;margin-bottom:4px">
             <span style="color:var(--tm)">⚔️ 背包進攻卡：</span>
-            <b style="color:#DC2626">${cardQty} 張（每週同盟任務掉落）</b>
+            <b style="color:#DC2626">${cardQty} 張（進攻敵方必備）</b>
           </div>
           <div style="display:flex;justify-content:space-between">
             <span style="color:var(--tm)">🤝 同盟助攻狀態：</span>
@@ -5738,19 +5869,19 @@ function pgTeamMain(){
           </div>
         </div>
         <div style="font-size:11.5px;color:#1D4ED8;margin-bottom:10px;line-height:1.4">
-          💡 <b>世界各區塊各自獨立歸屬個人</b>：你與 3 位同盟夥伴各自擁有獨立領地島嶼，互不相卡！同盟條約下雙方<b>互相無法攻擊</b>，但可<b>一起進攻非同盟領地</b>，攻克後納入個人版圖！
+          💡 <b>世界各區塊各自獨立歸屬個人</b>：你與 3 位同盟夥伴各自擁有獨立領地島嶼，互不相卡！同盟條約下雙方<b>互相無法攻擊</b>，但可<b>一起進攻敵方領地</b>，攻克後納入個人版圖！
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
           <button class="btn btn-p btn-sm" style="background:linear-gradient(135deg,#DC2626,#B91C1C);box-shadow:0 3px 10px rgba(220,38,38,0.28)" onclick="go('home');panToRival()">
-            ⚔️ 鎖定艾瑞克 (東北)
+            ⚔️ 巡視敵方要塞
           </button>
-          <button class="btn btn-ol btn-sm" style="border:1.5px solid #3B82F6;color:#1D4ED8;background:#EFF6FF" onclick="go('home');panToSpecificCoord('3,3','🛡️ 巡視【小米 🐱】西北獨立領地！','🐱')">
-            🐱 巡視小米 (西北)
+          <button class="btn btn-ol btn-sm" style="border:1.5px solid #3B82F6;color:#1D4ED8;background:#EFF6FF" onclick="go('home');panToSpecificCoord('2,7','🛡️ 巡視【小米 🐱】北部獨立領地！','🐱')">
+            🐱 巡視小米 (北部)
           </button>
-          <button class="btn btn-ol btn-sm" style="border:1.5px solid #F59E0B;color:#B45309;background:#FFFBEB" onclick="go('home');panToSpecificCoord('11,3','🛡️ 巡視【阿傑 🦊】西南獨立領地！','🦊')">
-            🦊 巡視阿傑 (西南)
+          <button class="btn btn-ol btn-sm" style="border:1.5px solid #F59E0B;color:#B45309;background:#FFFBEB" onclick="go('home');panToSpecificCoord('22,7','🛡️ 巡視【阿傑 🦊】南部獨立領地！','🦊')">
+            🦊 巡視阿傑 (南部)
           </button>
-          <button class="btn btn-ol btn-sm" style="border:1.5px solid #EC4899;color:#BE185D;background:#FDF2F8" onclick="go('home');panToSpecificCoord('11,11','🛡️ 巡視【小花花 🌸】東南獨立領地！','🌸')">
+          <button class="btn btn-ol btn-sm" style="border:1.5px solid #EC4899;color:#BE185D;background:#FDF2F8" onclick="go('home');panToSpecificCoord('22,17','🛡️ 巡視【小花花 🌸】東南獨立領地！','🌸')">
             🌸 巡視小花花 (東南)
           </button>
         </div>
@@ -6095,12 +6226,14 @@ window.openQuestGiftBox = function() {
     { title: '獲得幸運四葉草 x1！', desc: '使用後，下一次任務禮物盒必出稀有獎勵', icon: '🍀', action: () => { addItemToBag('clover', 1); } },
     { title: '獲得寵物豪華大餐 x1！', desc: '使用後寵物飽食度直接補滿 100%', icon: '🍱', action: () => { addItemToBag('pet_feast', 1); } },
     { title: '獲得健身帳篷 x1！', desc: '蓋在領地上，每日自動產出 5 G幣', icon: '⛺', action: () => { addItemToBag('tent', 1); } },
-    { title: '獲得防護盾 x1！', desc: '保護這塊領地', icon: '🛡️', action: () => { addItemToBag('shield', 1); } }
+    { title: '獲得防護盾 x1！', desc: '保護這塊領地', icon: '🛡️', action: () => { addItemToBag('shield', 1); } },
+    { title: '獲得進攻道具卡 x1！', desc: '進攻敵方領地必備道具！', icon: '⚔️', action: () => { addItemToBag('attack_card', 1); } }
   ];
 
   // 幸運四葉草生效：本次必出稀有獎勵
   const rareDrops = [
     { title: '🍀 幸運！雙倍經驗卡 x2！', desc: '四葉草發揮作用，獲得 2 張雙倍經驗卡', icon: '⚡', action: () => { addItemToBag('double_exp', 2); } },
+    { title: '🍀 幸運！進攻道具卡 x2！', desc: '四葉草發揮作用，獲得 2 張進攻道具卡', icon: '⚔️', action: () => { addItemToBag('attack_card', 2); } },
     { title: '🍀 幸運！寵物豪華大餐 x1！', desc: '四葉草發揮作用，寵物可以飽餐一頓', icon: '🍱', action: () => { addItemToBag('pet_feast', 1); } },
     { title: '🍀 幸運！尋寶加速鞋 x2！', desc: '四葉草發揮作用，獲得 2 雙加速鞋', icon: '👟', action: () => { addItemToBag('expedition_boots', 2); } },
     { title: '🍀 幸運！獲得 150 G幣！', desc: '四葉草發揮作用，G幣大豐收', icon: '🪙', action: () => { S.gcoin += 150; } }
@@ -6191,7 +6324,7 @@ window.useBagItem = function(idx) {
   } else if (item.id === 'attack_card') {
     closeBag();
     go('home');
-    toast('請點擊地圖上的【非同盟領地】使用道具卡發動突襲！', '⚔️');
+    toast('請點擊地圖上的【敵方領地】使用道具卡發動進攻！', '⚔️');
     return;
   } else if (item.id && item.id.startsWith('goods_')) {
     toast(`已使用【${item.name}】兌換券，請至合作門市出示兌換！`, '🛒');
