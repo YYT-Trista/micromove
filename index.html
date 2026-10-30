@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>MicroMove</title>
 <meta name="description" content="透過遊戲化微運動降低運動門檻，每天1-5分鐘，輕鬆建立健康習慣！">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏃</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -1380,7 +1381,7 @@ img{display:block;max-width:100%}
       太棒了！成功擴張第一塊領地！🎉
     </div>
     <div style="font-size:13px;color:var(--p-d);font-weight:700;margin-bottom:16px">
-      🌱 一般地形（防禦進度 2）已正式納入你的王國版圖
+      🌱 一般地形（防禦進度 2）已正式納入你的島嶼版圖
     </div>
 
     <!-- 核心運作概念三部曲 -->
@@ -1396,13 +1397,13 @@ img{display:block;max-width:100%}
         <div style="width:28px;height:28px;border-radius:50%;background:rgba(52,211,153,0.15);color:#059669;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">2</div>
         <div>
           <div style="font-size:13.5px;font-weight:800;color:var(--t)">🚩 開拓擴張領土</div>
-          <div style="font-size:12px;color:var(--tm);line-height:1.45;margin-top:2px">每一次運動都能推進開拓進度，逐步將海洋化為你的王國國土！</div>
+          <div style="font-size:12px;color:var(--tm);line-height:1.45;margin-top:2px">每一次運動都能推進開拓進度，逐步將海洋化為你的冒險小島！</div>
         </div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:10px">
         <div style="width:28px;height:28px;border-radius:50%;background:rgba(251,191,36,0.18);color:#D97706;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">3</div>
         <div>
-          <div style="font-size:13.5px;font-weight:800;color:var(--t)">⛺ 經營冒險王國</div>
+          <div style="font-size:13.5px;font-weight:800;color:var(--t)">⛺ 經營冒險小島</div>
           <div style="font-size:12px;color:var(--tm);line-height:1.45;margin-top:2px">在領地上建造帳篷產 G幣、裝備防護盾、解鎖同盟協同作戰！</div>
         </div>
       </div>
@@ -1424,7 +1425,7 @@ img{display:block;max-width:100%}
       大獲全勝！成功攻克敵方領地！🎉
     </div>
     <div style="font-size:13px;color:#DC2626;font-weight:700;margin-bottom:16px">
-      🦁 勁敵【獅王・艾瑞克】前哨已被你攻陷，正式化為你的王國國土！
+      🦁 勁敵【獅王・艾瑞克】前哨已被你攻陷，正式化為你的島嶼領地！
     </div>
 
     <!-- 敵方進攻核心概念三部曲 -->
@@ -1433,7 +1434,7 @@ img{display:block;max-width:100%}
         <div style="width:28px;height:28px;border-radius:50%;background:rgba(239,68,68,0.15);color:#DC2626;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">1</div>
         <div>
           <div style="font-size:13.5px;font-weight:800;color:var(--t)">⚔️ 進攻道具卡與邊界接壤</div>
-          <div style="font-size:12px;color:var(--tm);line-height:1.45;margin-top:2px">領地必須互相接壤才能發起進攻；每次進攻消耗 1 張進攻卡（可由每週同盟任務、商城獲取）！</div>
+          <div style="font-size:12px;color:var(--tm);line-height:1.45;margin-top:2px">領地必須互相接壤才能發起進攻；每次進攻消耗 1 張進攻卡（可由團隊任務、個人任務或寵物探險取得）！</div>
         </div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:10px">
@@ -1487,10 +1488,10 @@ const ITEM_DEFS = {
   'pet_feast': { name: '寵物豪華大餐', icon: '🍱', desc: '頂級美食，使用後直接將目前寵物飽食度補滿 100%，並獲得極佳心情！', usable: true },
   'expedition_boots': { name: '尋寶加速鞋', icon: '👟', desc: '具有魔法的鞋子，使用後讓正在進行中的尋寶速度變為 1.5 倍（每趟尋寶限用一次）！', usable: true },
   'clover': { name: '幸運四葉草', icon: '🍀', desc: '神秘的植物！使用後，下一次完成任務開啟的驚喜禮物盒必定獲得稀有獎勵。', usable: true },
-  'shield': { name: '防護盾', icon: '🛡️', desc: '保護這塊領地', usable: true },
-  'tent': { name: '健身帳篷', icon: '⛺', desc: '蓋在領地上，每日自動產出 5 G幣', usable: true },
+  'shield': { name: '防護盾', icon: '🛡️', desc: '保護這塊領地免受敵方進攻！可由團隊任務、個人任務或寵物探險取得。', usable: true },
+  'tent': { name: '健身帳篷', icon: '⛺', desc: '蓋在領地上，每日自動產出 5 G幣！可由團隊任務、個人任務或寵物探險取得。', usable: true },
   'terrain_card': { name: '地形卡', icon: '🗺️', desc: '對一般地形使用可更換為特殊地形，他人進攻難度提高為 4 個進度（僅限每週同盟任務取得）', usable: true },
-  'attack_card': { name: '進攻道具卡', icon: '⚔️', desc: '進攻他人領地必備道具！消耗 1 張可發起進攻任務！可由商城、每週同盟任務取得。', usable: true }
+  'attack_card': { name: '進攻道具卡', icon: '⚔️', desc: '進攻敵方領地必備道具！消耗 1 張可發起進攻任務！可由團隊任務、個人任務或寵物探險取得。', usable: true }
 };
 
 const MOODS={
@@ -2232,10 +2233,10 @@ window.openCamera = async function(type) {
       if (videoEl) { videoEl.srcObject = stream; videoEl.style.display = 'block'; }
       if (modeTag) modeTag.textContent = '📷 真實鏡頭 AI 識別中';
     } catch (err) {
-      if (modeTag) modeTag.textContent = '🤖 模擬展示模式（未偵測到相機權限）';
+      if (modeTag) modeTag.textContent = '🤖 智慧識別模式（未偵測到相機權限）';
     }
   } else {
-    if (modeTag) modeTag.textContent = '🤖 模擬展示模式';
+    if (modeTag) modeTag.textContent = '🤖 智慧識別模式';
   }
 
   const stages = [
@@ -2434,11 +2435,11 @@ function renderQRScannerModal(scanningLabel = ''){
       </div>
     </div>
 
-    <div style="font-size:12px;font-weight:800;color:var(--t);margin-bottom:6px">1️⃣ 選擇所在合作場館／門市（示範切換）</div>
+    <div style="font-size:12px;font-weight:800;color:var(--t);margin-bottom:6px">1️⃣ 選擇所在合作場館／門市</div>
     <div class="qr-loc-tabs">${tabsHtml}</div>
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <div style="font-size:12px;font-weight:800;color:var(--t)">2️⃣ 點擊器材模擬掃描專屬 QR Code</div>
+      <div style="font-size:12px;font-weight:800;color:var(--t)">2️⃣ 點擊器材掃描專屬 QR Code</div>
       <span class="chip cg" style="font-size:10px">${curV.brand}</span>
     </div>
     <div>${eqsHtml}</div>
@@ -2770,7 +2771,7 @@ const HELP = {
     { ico: '⏱', t: '辦公桌計時 vs 起身 AI 關節辨識', items: [
       '🪑 辦公桌微運動：採「純計時模式」，不需開鏡頭，跟隨全螢幕倒數計時放鬆即可過關',
       '🚶 起身與喬山器材運動：啟動「全螢幕 AI 骨架辨識」，依您的身體比例與關節角度自動計次，不受固定標準線高度限制',
-      '右上角可一鍵切換「⚡ 極速流暢 Lightning」與「🎯 高精準 Thunder」模型，或點「🤖 自動演示」體驗' ] },
+      '右上角可切換「⚡ 極速流暢 Lightning」與「🎯 高精準 Thunder」AI 識別模型' ] },
     { ico: '🎉', t: '領取獎勵', items: [
       '完成任務後會自動退出全螢幕並彈出獎勵結算畫面',
       '完成畫面可以按「🎁 開啟任務驚喜禮物盒」（每次任務限開 1 次）',
@@ -3689,7 +3690,7 @@ window.openConquestModal = function(index, r, c){
     if(ttlEl) ttlEl.textContent = (!S.tutorialEnemyConquestDone) ? '🔥 首次進攻敵方領地實戰！' : '🔥 進攻敵方領地！';
     if(infoEl){
       infoEl.innerHTML = (!S.tutorialEnemyConquestDone)
-        ? `<span>⚔️</span><span>鎖定【<b>${m.rivalName}</b>】的「<b>${m.lbl}</b>」・完成進攻任務即可攻陷並納入個人王國版圖！</span>`
+        ? `<span>⚔️</span><span>鎖定【<b>${m.rivalName}</b>】的「<b>${m.lbl}</b>」・完成進攻任務即可攻陷並納入個人島嶼版圖！</span>`
         : `<span>⚔️</span><span>鎖定【<b>${m.rivalName}</b>】的「<b>${m.lbl}</b>」（${terrainTag}）・進攻進度 <b>${prog}/${need}</b>（還需 <b>${rem}</b> 次即可攻克！）</span>`;
     }
     const cardItem = (S.inventory || []).find(i => i.id === 'attack_card');
@@ -3759,7 +3760,7 @@ window.openConquestModal = function(index, r, c){
         btnDesk.style.color = 'var(--tm)';
         btnDesk.style.cursor = 'not-allowed';
         btnDesk.innerHTML = '🔒 進攻道具卡不足 (無法發起進攻)';
-        btnDesk.onclick = () => { toast('⚔️ 進攻他人領地需要持有【進攻道具卡】！可由每週同盟任務、商城或登入獎勵取得！', '⚔️'); };
+        btnDesk.onclick = () => { toast('⚔️ 進攻他人領地需要持有【進攻道具卡】！可由團隊任務、個人任務或寵物探險取得！', '⚔️'); };
       }
     }
     if(footEl) footEl.textContent = (!S.tutorialEnemyConquestDone)
@@ -3769,7 +3770,7 @@ window.openConquestModal = function(index, r, c){
     if(!S.tutorialStep1Done){
       if(ttlEl) ttlEl.textContent = '✨ 讓我們來擴張第一塊土地吧！';
       if(infoEl){
-        infoEl.innerHTML = `<span>🧭</span><span>完成一項簡單微運動，就能將這塊海域納入你的王國！</span>`;
+        infoEl.innerHTML = `<span>🧭</span><span>完成一項簡單微運動，就能將這塊海域納入你的島嶼！</span>`;
       }
       if(attackCardBox){
         attackCardBox.style.display = 'block';
@@ -3813,11 +3814,11 @@ window.openConquestModal = function(index, r, c){
         btnActive.textContent = '挑選其他運動任務 ➔';
         btnActive.onclick = () => startConquestQuest('all');
       }
-      if(footEl) footEl.textContent = '完成後將立即為你演示領土擴張動態與概念！';
+      if(footEl) footEl.textContent = '完成微運動後將立即擴張你的島嶼領土！';
     }else if(S.tutorialStep1Done && !S.tutorialConquestDone){
       if(ttlEl) ttlEl.textContent = '🧭 推進邊界・開拓第二塊土地！';
       if(infoEl){
-        infoEl.innerHTML = `<span>🧭</span><span>完成一項輕鬆微運動，將王國版圖向前延伸，正式與【獅王・艾瑞克】前哨接壤！</span>`;
+        infoEl.innerHTML = `<span>🧭</span><span>完成一項輕鬆微運動，將島嶼版圖向前延伸，正式與【獅王・艾瑞克】前哨接壤！</span>`;
       }
       if(attackCardBox){
         attackCardBox.style.display = 'block';
@@ -4098,7 +4099,7 @@ window.playTutorialStep2ExpansionDemo = function(tileKey){
     tileEl.classList.add('tutorial-expansion-anim');
   }
   fireConfetti();
-  toast('🎉 第二塊領地開拓成功！你的王國版圖已正式與【獅王・艾瑞克】前哨接壤！', '🦁');
+  toast('🎉 第二塊領地開拓成功！你的島嶼版圖已正式與【獅王・艾瑞克】前哨接壤！', '🦁');
 };
 
 window.finishTutorialConquest = function(){
@@ -4139,7 +4140,7 @@ window.finishTutorialEnemyConquest = function(){
   S.tutorialEnemyConquestDone = true;
   saveS();
   if(curPage === 'home') go('home');
-  toast('🌟 敵方領地已化為你的國土！持續開拓，向更遠大的要塞邁進吧！', '🚀');
+  toast('🌟 敵方領地已化為你的島嶼！持續開拓，向更遠大的要塞邁進吧！', '🚀');
   fireConfetti();
 };
 
@@ -4159,7 +4160,7 @@ window.startConquestQuest = function(tabType){
       const cardItem = (S.inventory || []).find(i => i.id === 'attack_card' && (i.qty || 0) > 0);
       if(!cardItem){
         closeConquestModal();
-        toast('⚔️ 進攻他人領地需要持有【進攻道具卡】！請先至商城購買或完成每週同盟任務獲取！', '⚔️');
+        toast('⚔️ 進攻他人領地需要持有【進攻道具卡】！可由團隊任務、個人任務或寵物探險取得！', '⚔️');
         return;
       }
     }
@@ -4241,7 +4242,7 @@ window.selectMapTile = function(r, c){
     const cardItem = (S.inventory || []).find(i => i.id === 'attack_card' && (i.qty || 0) > 0);
     if(!cardItem){
       closeConquestModal();
-      toast('⚔️ 進攻他人領地需要持有【進攻道具卡】！可由每週同盟任務、商城或登入獎勵取得！', '⚔️');
+      toast('⚔️ 進攻他人領地需要持有【進攻道具卡】！可由團隊任務、個人任務或寵物探險取得！', '⚔️');
       return;
     }
     openConquestModal(index, r, c);
@@ -4780,7 +4781,7 @@ function pgQA(qid){
     <div style="margin:0 16px 14px;background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(59,130,246,0.12));border:1.5px solid var(--p-l);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px">
       <span style="font-size:24px">🧭</span>
       <div style="font-size:12.5px;color:var(--t);line-height:1.45">
-        <b>新手開拓實戰（第 1/2 步）：</b>完成這個輕鬆的伸展，就能成功將海域開拓為你的第一塊王國領土囉！
+        <b>新手開拓實戰（第 1/2 步）：</b>完成這個輕鬆的伸展，就能成功將海域開拓為你的第一塊冒險小島囉！
       </div>
     </div>` : ((S.tutorialStep1Done && !S.tutorialConquestDone && (pendingTargetGrid !== null || qid === 'q1')) ? `
     <div style="margin:0 16px 14px;background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(59,130,246,0.12));border:1.5px solid rgba(16,185,129,0.4);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px">
@@ -4806,13 +4807,6 @@ function pgQA(qid){
       <button class="btn btn-p btn-full btn-lg" id="t-start" onclick="startT()">
         ${useAI ? '▶️ 開始任務（進入全螢幕 AI 運動畫面）' : '▶️ 開始任務（進入全螢幕倒數計時）'}
       </button>
-      ${(!S.tutorialConquestDone && (pendingTargetGrid !== null || qid === 'q21' || qid === 'q1')) ? `
-      <button class="btn btn-gh btn-full" style="margin-top:10px;border:1.5px dashed var(--p-l);color:var(--p-d);font-weight:700" onclick="quickFinishTutorialQuest()">
-        ${!S.tutorialStep1Done ? '✨ 快速演示完成（體驗開拓演示）' : '✨ 快速演示推進（體驗邊界推進演示）'}
-      </button>` : ((S.tutorialConquestDone && !S.tutorialEnemyConquestDone && pendingTargetGrid !== null) ? `
-      <button class="btn btn-gh btn-full" style="margin-top:10px;border:1.5px dashed #F87171;color:#DC2626;font-weight:700" onclick="quickFinishTutorialEnemyQuest()">
-        ✨ 快速演示進攻（體驗攻克演示）
-      </button>` : '')}
     </div>
 
     <!-- 點擊「開始任務」後彈出的全螢幕運動畫面 (#qa-fs-ov) -->
@@ -4849,11 +4843,9 @@ function pgQA(qid){
             <div class="t-val" id="t-disp">${fmtTimer(q.dur)}</div>
           </div>
 
-          <!-- 右側輔助按鈕（模型切換 + 展示輔助） -->
+          <!-- 右側輔助按鈕（模型切換） -->
           <div class="ai-cam-Ctrl">
             <button class="ai-mini-btn" id="ai-model-btn" onclick="switchAIModel()" title="切換 MoveNet Lightning(極速) / Thunder(高精準)">${modelLabel}</button>
-            ${isRep ? `<button class="ai-mini-btn" onclick="manualAddRep()" title="展示用：手動增加 1 下動作">➕ 動作+1</button>` : ''}
-            <button class="ai-mini-btn" id="ai-mode-btn" onclick="toggleAICamMode()">🤖 自動演示</button>
           </div>
 
           <!-- 底部精簡控制塢：動作完成度能量條 + AI 即時提示 + 暫停返回按鈕 -->
@@ -5019,8 +5011,7 @@ async function startAICamera(){
     aiSt.camReady = false;
     aiSt.camError = true;
   }
-  if (modeBtn) modeBtn.textContent = '🤖 開啟自動演示';
-  aiSetState('lost', '⚠️ 未偵測到相機權限，請允許相機或點右側「🤖 自動演示」/「➕ 動作+1」');
+  aiSetState('lost', '⚠️ 未偵測到相機權限，請於瀏覽器設定中允許相機存取以進行 AI 識別');
 }
 
 async function ensurePoseDetector(forceReload = false){
@@ -5680,7 +5671,7 @@ function aiTick(){
       const accEl=document.getElementById('ai-acc'); if(accEl) accEl.textContent=`準確度 ${acc}%`;
     }
   } else if (aiSt.camError) {
-    aiSetState('lost', '⚠️ 未偵測到相機，請允許相機權限或點右側「🤖 自動演示」/「➕ 動作+1」');
+    aiSetState('lost', '⚠️ 未偵測到相機，請於瀏覽器設定中允許相機存取以進行 AI 識別');
     return false;
   }
 
@@ -5917,31 +5908,35 @@ function pgShop(){
       <div style="font-size:32px">⚔️</div>
       <div style="flex:1">
         <div style="font-size:15px;font-weight:800;color:var(--t)">進攻道具卡</div>
-        <div style="font-size:12px;color:var(--tm)">進攻敵方領地必備道具！消耗 1 張可發起進攻</div>
+        <div style="font-size:12px;color:var(--tm);margin-bottom:2px">進攻敵方領地必備道具！消耗 1 張可發起進攻</div>
+        <div style="font-size:11.5px;color:var(--p-d);font-weight:700">🔒 團隊任務・個人任務・寵物探險限定取得（非賣品）</div>
       </div>
-      <button class="btn btn-p btn-sm" onclick="buyStrategyItem('attack_card', 30)">30 G幣 購買</button>
+      <button class="btn btn-gh btn-sm" onclick="go('team');switchTeamTab('weekly');toast('每週同盟任務達標即可獲得進攻道具卡！','⚔️')">去團隊任務 ➔</button>
     </div>
     <div class="store-item" style="background:var(--c1)">
       <div style="font-size:32px">🛡️</div>
       <div style="flex:1">
         <div style="font-size:15px;font-weight:800;color:var(--t)">防護盾</div>
-        <div style="font-size:12px;color:var(--tm)">保護一塊領地免受敵方進攻</div>
+        <div style="font-size:12px;color:var(--tm);margin-bottom:2px">保護一塊領地免受敵方進攻</div>
+        <div style="font-size:11.5px;color:var(--p-d);font-weight:700">🔒 團隊任務・個人任務・寵物探險限定取得（非賣品）</div>
       </div>
-      <button class="btn btn-gh btn-sm" onclick="buyStrategyItem('shield', 40)">40 G幣 購買</button>
+      <button class="btn btn-gh btn-sm" onclick="go('team');switchTeamTab('weekly');toast('每週同盟任務達標即可獲得防護盾！','🛡️')">去團隊任務 ➔</button>
     </div>
     <div class="store-item" style="background:var(--c1)">
       <div style="font-size:32px">⛺</div>
       <div style="flex:1">
         <div style="font-size:15px;font-weight:800;color:var(--t)">健身帳篷</div>
-        <div style="font-size:12px;color:var(--tm)">蓋在領地上，每日自動產出 5 G幣！</div>
+        <div style="font-size:12px;color:var(--tm);margin-bottom:2px">蓋在領地上，每日自動產出 5 G幣！</div>
+        <div style="font-size:11.5px;color:var(--p-d);font-weight:700">🔒 團隊任務・個人任務・寵物探險限定取得（非賣品）</div>
       </div>
-      <button class="btn btn-gh btn-sm" onclick="buyStrategyItem('tent', 50)">50 G幣 購買</button>
+      <button class="btn btn-gh btn-sm" onclick="openExpedition();toast('派遣寵物尋寶或完成任務禮盒可獲得健身帳篷！','⛺')">去寵物探險 ➔</button>
     </div>
     <div class="store-item" style="background:var(--c1)">
       <div style="font-size:32px">🗺️</div>
       <div style="flex:1">
         <div style="font-size:15px;font-weight:800;color:var(--t)">地形卡</div>
-        <div style="font-size:12px;color:#7C3AED;font-weight:700">🔒 每週同盟任務限定取得（非賣品）</div>
+        <div style="font-size:12px;color:var(--tm);margin-bottom:2px">對一般地形使用更換為特殊地形（他人進攻進度：4）</div>
+        <div style="font-size:11.5px;color:#7C3AED;font-weight:700">🔒 每週同盟任務限定取得（非賣品）</div>
       </div>
       <button class="btn btn-gh btn-sm" onclick="go('team');switchTeamTab('weekly');toast('每週同盟任務達標即可獲得地形卡！','🗺️')">去每週任務 ➔</button>
     </div>
@@ -5956,7 +5951,7 @@ function pgShop(){
       <button class="btn btn-s btn-sm" onclick="rollGacha()">抽卡</button>
     </div>
 
-    <div class="stit" style="margin-top:24px">🛒 實體健康商品 (測試)</div>
+    <div class="stit" style="margin-top:24px">🛒 實體健康商品</div>
     <div class="store-item">
       <div style="font-size:32px">🥛</div>
       <div style="flex:1"><div style="font-size:15px;font-weight:800;color:var(--t)">無糖高纖豆漿</div><div style="font-size:12px;color:var(--s);font-weight:700">20 W幣</div></div>
@@ -5992,20 +5987,10 @@ window.buyItem = function(cost, name, icon){
 
 window.buyStrategyItem = function(itemId, costG){
   if(itemId === 'terrain_card'){
-    toast('🗺️ 地形卡為每週同盟任務限定獎勵，無法於商城購買！請至每週同盟任務領取！', '🗺️');
+    toast('🗺️ 地形卡為每週同盟任務限定取得（非賣品），無法於商城購買！請至每週同盟任務領取！', '🗺️');
     return;
   }
-  const def = ITEM_DEFS[itemId];
-  if(!def) return;
-  if((S.gcoin || 0) >= costG){
-    S.gcoin -= costG;
-    addItemToBag(itemId, 1);
-    saveS();
-    toast(`成功購買【${def.name}】！已放入背包。`, def.icon);
-    go('shop');
-  } else {
-    toast(`G幣不足！需要 ${costG} G幣，快多做運動賺取吧！`, '⚠️');
-  }
+  toast('⚔️ 戰略道具為非賣品，無法使用 G幣 購買！請由團隊任務、個人任務或寵物探險取得！', '🔒');
 }
 
 window.rollGacha = function(){
@@ -6173,11 +6158,11 @@ const WEEKLY_TEAM_QUESTS = [
     goal: 100,
     unit: '次',
     rewardCoins: 120,
-    rewardItem: 'attack_card',
+    rewardItem: 'shield',
     rewardItemQty: 1,
     col1: '#3B82F6',
     col2: '#60A5FA',
-    desc: '同盟成員合力完成開合跳 100 次，爆發心肺耐力與全身燃脂活力！獲得【⚔️ 進攻道具卡】！'
+    desc: '同盟成員合力完成開合跳 100 次，築起堅韌防線！獲得【🛡️ 防護盾】！'
   },
   {
     id: 'w_squats',
@@ -6186,11 +6171,11 @@ const WEEKLY_TEAM_QUESTS = [
     goal: 100,
     unit: '次',
     rewardCoins: 120,
-    rewardItem: 'attack_card',
+    rewardItem: 'tent',
     rewardItemQty: 1,
     col1: '#F59E0B',
     col2: '#FBBF24',
-    desc: '同盟全員深蹲 100 次，強化下盤爆發推進力！獲得【⚔️ 進攻道具卡】！'
+    desc: '同盟全員深蹲 100 次，鍛鍊下盤耐力！獲得每日產出 G幣的【⛺ 健身帳篷】！'
   },
   {
     id: 'w_planks',
@@ -6237,15 +6222,19 @@ const MONTHLY_TEAM_QUESTS = [
       { id: 'squats_planks', label: '🏋️ 深蹲與平板撐總次數', cur: () => (S.monthlyTeamCore || 210) + (S.todayDone.includes('q7') ? 5 : 0) + (S.todayDone.includes('q12') ? 5 : 0), goal: 300, unit: '次' }
     ],
     rewards: [
-      { type: 'coin', label: '3,000 G幣', icon: '💰' },
+      { type: 'coin', label: '2,000 G幣', icon: '💰' },
       { type: 'item', id: 'attack_card', label: '進攻道具卡 x3', icon: '⚔️', qty: 3 },
+      { type: 'item', id: 'shield', label: '防護盾 x2', icon: '🛡️', qty: 2 },
+      { type: 'item', id: 'tent', label: '健身帳篷 x2', icon: '⛺', qty: 2 },
       { type: 'item', id: 'pet_feast', label: '寵物豪華大餐 x1', icon: '🍱', qty: 1 },
       { type: 'item', id: 'double_exp', label: '雙倍經驗卡 x3', icon: '⚡', qty: 3 },
       { type: 'item', id: 'clover', label: '幸運四葉草 x2', icon: '🍀', qty: 2 }
     ],
     rewardAction: () => {
-      S.gcoin = (S.gcoin || 0) + 3000;
+      S.gcoin = (S.gcoin || 0) + 2000;
       addItemToBag('attack_card', 3);
+      addItemToBag('shield', 2);
+      addItemToBag('tent', 2);
       addItemToBag('pet_feast', 1);
       addItemToBag('double_exp', 3);
       addItemToBag('clover', 2);
@@ -6593,9 +6582,9 @@ function pgTeamMain(){
           </div>
         </div>
         <div style="background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-            <span style="color:var(--tm)">🎯 敵對勢力：</span>
-            <b style="color:#DC2626">四大敵對要塞（艾瑞克🦁、巴隆🐺、庫曼🐻、雷克斯🦂）</b>
+          <div style="margin-bottom:6px">
+            <div style="color:var(--tm);margin-bottom:2px">🎯 敵對勢力：</div>
+            <div style="color:#DC2626;font-weight:700;line-height:1.4">四大敵對要塞（艾瑞克🦁、巴隆🐺、庫曼🐻、雷克斯🦂）</div>
           </div>
           <div style="display:flex;justify-content:space-between;margin-bottom:4px">
             <span style="color:var(--tm)">⚔️ 背包進攻卡：</span>
@@ -6804,12 +6793,12 @@ window.closeExpedition = function() {
 }
 
 const EXP_OPTIONS=[
-  {ms:15000,   title:'15秒極速測試', label:'⏱ 15秒測試', cls:'btn-gh'},
+  {ms:1800000, title:'30分鐘短程探險', label:'🏃 30分短程', cls:'btn-gh'},
   {ms:7200000, title:'2小時日常探險', label:'🌲 2小時探險', cls:'btn-ol'},
   {ms:21600000,title:'6小時秘境',     label:'🏛 6小時秘境', cls:'btn-p'},
 ];
-// 冷卻時間 = 尋寶時間的一半（測試模式 10 秒）
-function expCooldownFor(ms){ return ms<=60000 ? 10000 : Math.round(ms/2); }
+// 冷卻時間 = 尋寶時間的一半
+function expCooldownFor(ms){ return Math.round(ms/2); }
 
 function renderExpeditionList() {
   const container = document.getElementById('expedition-content');
@@ -6905,9 +6894,32 @@ window.claimExpedition = function(idx) {
   S.gcoin += gGain;
   S.food = (S.food || 0) + foodGain;
 
-  if (Math.random() > 0.4) {
-    addItemToBag('repair_pen', 1);
-    toast(`尋寶成功！獲得 ${gGain} G幣、${foodGain} 罐頭 與 1 支補簽修復筆！✏️`, '🎉');
+  // 夥伴探險尋寶：高機率帶回戰略道具（進攻卡、防護盾、帳篷）與生存好禮
+  const r = Math.random();
+  let bonusItem = null;
+  let bonusName = '';
+  let bonusIcon = '';
+  if (r < 0.25) {
+    bonusItem = 'attack_card';
+    bonusName = '進攻道具卡';
+    bonusIcon = '⚔️';
+  } else if (r < 0.50) {
+    bonusItem = 'shield';
+    bonusName = '防護盾';
+    bonusIcon = '🛡️';
+  } else if (r < 0.70) {
+    bonusItem = 'tent';
+    bonusName = '健身帳篷';
+    bonusIcon = '⛺';
+  } else if (r < 0.88) {
+    bonusItem = 'repair_pen';
+    bonusName = '補簽修復筆';
+    bonusIcon = '✏️';
+  }
+
+  if (bonusItem) {
+    addItemToBag(bonusItem, 1);
+    toast(`尋寶成功！獲得 ${gGain} G幣、${foodGain} 罐頭 與 1 張【${bonusName} ${bonusIcon}】！`, '🎉');
   } else {
     toast(`尋寶成功！獲得 ${gGain} G幣 與 ${foodGain} 罐頭！🥫`, '🎉');
   }
@@ -6972,6 +6984,8 @@ window.openQuestGiftBox = function() {
   const rareDrops = [
     { title: '🍀 幸運！雙倍經驗卡 x2！', desc: '四葉草發揮作用，獲得 2 張雙倍經驗卡', icon: '⚡', action: () => { addItemToBag('double_exp', 2); } },
     { title: '🍀 幸運！進攻道具卡 x2！', desc: '四葉草發揮作用，獲得 2 張進攻道具卡', icon: '⚔️', action: () => { addItemToBag('attack_card', 2); } },
+    { title: '🍀 幸運！防護盾 x2！', desc: '四葉草發揮作用，獲得 2 個防護盾守護領地', icon: '🛡️', action: () => { addItemToBag('shield', 2); } },
+    { title: '🍀 幸運！健身帳篷 x2！', desc: '四葉草發揮作用，獲得 2 座每日產幣帳篷', icon: '⛺', action: () => { addItemToBag('tent', 2); } },
     { title: '🍀 幸運！寵物豪華大餐 x1！', desc: '四葉草發揮作用，寵物可以飽餐一頓', icon: '🍱', action: () => { addItemToBag('pet_feast', 1); } },
     { title: '🍀 幸運！尋寶加速鞋 x2！', desc: '四葉草發揮作用，獲得 2 雙加速鞋', icon: '👟', action: () => { addItemToBag('expedition_boots', 2); } },
     { title: '🍀 幸運！獲得 150 G幣！', desc: '四葉草發揮作用，G幣大豐收', icon: '🪙', action: () => { S.gcoin += 150; } }
@@ -7187,7 +7201,7 @@ window.showDexDetail = function(type, id) {
         <div style="font-size:12px; color:#D97706; font-weight:800; margin-bottom:6px;">📌 道具效果說明</div>
         <div style="font-size:14px; color:var(--t); font-weight:700; line-height:1.5;">${item.desc}</div>
       </div>
-      <div style="font-size:12px; color:var(--tm); margin-top:16px;">獲得方式：完成微運動開驚喜禮盒，或透過寵物尋寶隨機獲得。</div>
+      <div style="font-size:12px; color:var(--tm); margin-top:16px;">獲得方式：${id === 'terrain_card' ? '每週同盟任務達標限定領取（非賣品）。' : (['attack_card', 'shield', 'tent'].includes(id) ? '完成團隊任務、個人微運動開禮盒，或透過寵物尋寶獲得（非賣品）。' : '完成微運動開驚喜禮盒，或透過寵物尋寶隨機獲得。')}</div>
     `;
   }
 
